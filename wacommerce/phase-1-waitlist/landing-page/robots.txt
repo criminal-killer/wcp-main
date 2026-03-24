@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /admin.php
+Disallow: /export.php
+Disallow: /config.php
+Disallow: /submit.php
+Disallow: /count.php
+
+Sitemap: https://sella.kesug.com/sitemap.xml

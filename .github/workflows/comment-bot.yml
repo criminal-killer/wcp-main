@@ -1,0 +1,35 @@
+name: 🤖 Facebook Comment Bot
+on:
+  schedule:
+    - cron: '0 */3 * * *'
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        working-directory: wacommerce/phase-1-waitlist/automation
+        run: npm init -y && npm install axios
+
+      - name: Check and reply to comments
+        working-directory: wacommerce/phase-1-waitlist/automation
+        run: node scripts/comment-bot.js
+        env:
+          FACEBOOK_PAGE_ID: ${{ secrets.FACEBOOK_PAGE_ID }}
+          FACEBOOK_ACCESS_TOKEN: ${{ secrets.FACEBOOK_ACCESS_TOKEN }}
+          WAITLIST_URL: ${{ secrets.WAITLIST_URL }}
+
+      - name: Commit changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "🤖 Comment bot processed"
+          file_pattern: wacommerce/phase-1-waitlist/automation/scripts/dont-repeat.json
