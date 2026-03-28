@@ -28,9 +28,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const isOnTrial = org.plan === 'trial' && trialDaysLeft > 0
 
   return (
-    <div className="flex flex-col md:flex-row h-screen bg-secondary overflow-hidden">
+    <div className="flex h-screen bg-secondary overflow-hidden">
       <DashboardSidebar org={org} />
-      <div className="flex-1 flex flex-col min-w-0 pt-14 md:pt-0">
+      <div className="flex-1 flex flex-col min-w-0 pt-14 lg:pt-0">
         {/* Trial Banner */}
         {isOnTrial && (
           <div className="bg-[#FFF4E5] border-b border-[#FFE2C2] px-4 py-3 flex items-center justify-between shadow-sm">
