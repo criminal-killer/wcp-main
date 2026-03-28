@@ -152,8 +152,5 @@ function NavContent({ pathname, org }: { pathname: string; org: Org }) {
         </Link>
       </div>
     </nav>
-  );
-}
-  </>
   )
 }
