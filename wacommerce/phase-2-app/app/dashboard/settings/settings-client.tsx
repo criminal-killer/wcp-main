@@ -62,13 +62,13 @@ const SecureSection = ({ children, email, onUnlock }: { children: React.ReactNod
   if (unlocked) return <>{children}</>
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center space-y-6 max-w-xl">
+    <div className="bg-card rounded-2xl border border-border p-12 text-center space-y-6 max-w-xl">
       <div className="w-16 h-16 bg-primary/5 rounded-full flex items-center justify-center mx-auto text-primary">
         <Lock size={32} />
       </div>
       <div>
-        <h2 className="text-xl font-black text-gray-900">Secure Access Required</h2>
-        <p className="text-sm text-gray-500 mt-2 font-medium">To protect your API keys, we need to verify your identity.</p>
+        <h2 className="text-xl font-black text-foreground">Secure Access Required</h2>
+        <p className="text-sm text-muted-foreground mt-2 font-medium">To protect your API keys, we need to verify your identity.</p>
       </div>
 
       {!codeSent ? (
@@ -163,20 +163,20 @@ export default function SettingsClient({ org, autoReplies }: { org: Org, autoRep
   return (
     <div className="space-y-6 pb-20">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-black text-gray-900 italic font-serif">Workspace Settings</h1>
+        <h1 className="text-2xl font-black text-foreground italic font-serif">Workspace Settings</h1>
         <div className="flex items-center gap-2 bg-emerald-50 text-[#075E54] px-4 py-1.5 rounded-full border border-emerald-100">
            <ShieldCheck size={14} />
            <span className="text-[10px] font-black uppercase tracking-widest">Enterprise Encrypted</span>
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-1 bg-gray-100 rounded-xl p-1 w-fit">
+      <div className="flex flex-wrap gap-1 bg-secondary/50 rounded-xl p-1 w-fit">
         {TABS.map(t => (
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
             className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-              tab === t.id ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+              tab === t.id ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-muted-foreground'
             }`}
           >
             <t.icon size={14} className={t.secure ? 'text-amber-500' : ''} />
@@ -187,23 +187,23 @@ export default function SettingsClient({ org, autoReplies }: { org: Org, autoRep
 
       {/* Store Info Tab */}
       {tab === 'store' && (
-        <div className="bg-white rounded-2xl border border-gray-100 p-8 space-y-6 max-w-xl shadow-sm">
-          <h2 className="font-bold text-gray-900 italic font-serif text-lg text-primary">Store Identity</h2>
+        <div className="bg-card rounded-2xl border border-border p-8 space-y-6 max-w-xl shadow-sm">
+          <h2 className="font-bold text-foreground italic font-serif text-lg text-primary">Store Identity</h2>
           <div>
             <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Store Brand Name</label>
             <input value={storeForm.name} onChange={e => setStoreForm({ ...storeForm, name: e.target.value })}
-              className="w-full border border-gray-100 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50" />
+              className="w-full border border-border rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50" />
           </div>
           <div>
             <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Store Description</label>
             <textarea value={storeForm.description} onChange={e => setStoreForm({ ...storeForm, description: e.target.value })}
-              rows={3} className="w-full border border-gray-100 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50 resize-none" />
+              rows={3} className="w-full border border-border rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50 resize-none" />
           </div>
           <div className="grid grid-cols-2 gap-6">
             <div>
               <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Operational Currency</label>
               <select value={storeForm.currency} onChange={e => setStoreForm({ ...storeForm, currency: e.target.value })}
-                className="w-full border border-gray-100 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50">
+                className="w-full border border-border rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50">
                 {['KES', 'NGN', 'GHS', 'ZAR', 'UGX', 'TZS', 'USD', 'GBP', 'EUR', 'INR'].map(c => (
                   <option key={c} value={c}>{c}</option>
                 ))}
@@ -213,7 +213,7 @@ export default function SettingsClient({ org, autoReplies }: { org: Org, autoRep
               <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Signature Theme</label>
               <div className="flex items-center gap-3">
                 <input type="color" value={storeForm.theme_color} onChange={e => setStoreForm({ ...storeForm, theme_color: e.target.value })}
-                  className="w-12 h-12 rounded-xl border border-gray-100 cursor-pointer overflow-hidden p-0" />
+                  className="w-12 h-12 rounded-xl border border-border cursor-pointer overflow-hidden p-0" />
                 <span className="text-[10px] font-black font-mono bg-slate-100 px-2 py-1 rounded text-slate-500">{storeForm.theme_color}</span>
               </div>
             </div>
@@ -224,7 +224,7 @@ export default function SettingsClient({ org, autoReplies }: { org: Org, autoRep
           </div>
           <button onClick={async () => { setSaving(true); await fetch('/api/settings/store', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(storeForm) }); setSaving(false); setSaved(true); setTimeout(() => setSaved(false), 2000) }} disabled={saving}
             className="w-full bg-[#075E54] text-white py-4 rounded-xl font-bold hover:shadow-xl hover:shadow-[#075E54]/20 transition-all disabled:opacity-60">
-            {saved ? '✓ Changes Applied' : saving ? 'Syncing...' : 'Save Settings'}
+            {saved ? 'âœ“ Changes Applied' : saving ? 'Syncing...' : 'Save Settings'}
           </button>
         </div>
       )}
@@ -232,8 +232,8 @@ export default function SettingsClient({ org, autoReplies }: { org: Org, autoRep
       {/* WhatsApp Tab */}
       {tab === 'whatsapp' && (
         <SecureSection email="owner@email.com" onUnlock={() => setUnlockedTabs([...unlockedTabs, 'whatsapp'])}>
-          <div className="bg-white rounded-2xl border border-gray-100 p-8 space-y-6 max-w-xl shadow-sm">
-            <h2 className="font-bold text-gray-900 italic font-serif text-lg text-primary text-center">Engine Connectivity</h2>
+          <div className="bg-card rounded-2xl border border-border p-8 space-y-6 max-w-xl shadow-sm">
+            <h2 className="font-bold text-foreground italic font-serif text-lg text-primary text-center">Engine Connectivity</h2>
             <div className={`flex items-center justify-center gap-3 px-4 py-4 rounded-xl text-[10px] font-black uppercase tracking-widest border-2 ${org.wa_webhook_verified ? 'bg-green-50 text-green-700 border-green-100' : 'bg-amber-50 text-amber-700 border-amber-100'}`}>
               <div className={`w-2 h-2 rounded-full ${org.wa_webhook_verified ? 'bg-green-500 animate-pulse' : 'bg-amber-500'}`} />
               {org.wa_webhook_verified ? 'Webhook Status: Active' : 'Webhook Status: Pending Setup'}
@@ -242,18 +242,18 @@ export default function SettingsClient({ org, autoReplies }: { org: Org, autoRep
               <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">WhatsApp Phone ID</label>
               <input value={waForm.phone_number_id} onChange={e => setWaForm({ ...waForm, phone_number_id: e.target.value })}
                 placeholder="From Meta Developer Console"
-                className="w-full border border-gray-100 rounded-xl px-4 py-3 text-sm font-bold font-mono focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50" />
+                className="w-full border border-border rounded-xl px-4 py-3 text-sm font-bold font-mono focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50" />
             </div>
             <div>
               <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">System Access Token</label>
               <input type="password" value={waForm.access_token} onChange={e => setWaForm({ ...waForm, access_token: e.target.value })}
                 placeholder="Paste your permanent access token"
-                className="w-full border border-gray-100 rounded-xl px-4 py-3 text-sm font-bold font-mono focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50" />
-              <p className="text-[9px] text-gray-400 mt-2 font-bold uppercase tracking-tight">Token is AES-256 encrypted. Decryption only occurs at the edge during bot execution.</p>
+                className="w-full border border-border rounded-xl px-4 py-3 text-sm font-bold font-mono focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50" />
+              <p className="text-[9px] text-muted-foreground/70 mt-2 font-bold uppercase tracking-tight">Token is AES-256 encrypted. Decryption only occurs at the edge during bot execution.</p>
             </div>
             <button onClick={async () => { setSaving(true); await fetch('/api/settings/whatsapp', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(waForm) }); setSaving(false); setSaved(true); setTimeout(() => setSaved(false), 2000) }} disabled={saving}
               className="w-full bg-[#075E54] text-white py-4 rounded-xl font-bold hover:shadow-xl hover:shadow-[#075E54]/20 transition-all disabled:opacity-60">
-              {saved ? '✓ Connected' : saving ? 'Testing Link...' : 'Verify & Connect'}
+              {saved ? 'âœ“ Connected' : saving ? 'Testing Link...' : 'Verify & Connect'}
             </button>
           </div>
         </SecureSection>
@@ -262,8 +262,8 @@ export default function SettingsClient({ org, autoReplies }: { org: Org, autoRep
       {/* Payments Tab */}
       {tab === 'payments' && (
         <SecureSection email="owner@email.com" onUnlock={() => setUnlockedTabs([...unlockedTabs, 'payments'])}>
-          <div className="bg-white rounded-2xl border border-gray-100 p-8 space-y-6 max-w-xl shadow-sm">
-            <h2 className="font-bold text-gray-900 italic font-serif text-lg text-primary text-center">Revenue Gateway</h2>
+          <div className="bg-card rounded-2xl border border-border p-8 space-y-6 max-w-xl shadow-sm">
+            <h2 className="font-bold text-foreground italic font-serif text-lg text-primary text-center">Revenue Gateway</h2>
             <div className="space-y-4">
               <div className="bg-slate-50 border border-slate-100 rounded-2xl p-6">
                 <div className="flex items-center justify-between mb-4">
@@ -292,7 +292,7 @@ export default function SettingsClient({ org, autoReplies }: { org: Org, autoRep
             </div>
             <button onClick={async () => { setSaving(true); await fetch('/api/settings/payments', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payForm) }); setSaving(false); setSaved(true); setTimeout(() => setSaved(false), 2000) }} disabled={saving}
               className="w-full bg-[#075E54] text-white py-4 rounded-xl font-bold hover:shadow-xl hover:shadow-[#075E54]/20 transition-all disabled:opacity-60">
-              {saved ? '✓ Verified' : saving ? 'Validating...' : 'Enable Gateways'}
+              {saved ? 'âœ“ Verified' : saving ? 'Validating...' : 'Enable Gateways'}
             </button>
           </div>
         </SecureSection>
@@ -301,12 +301,12 @@ export default function SettingsClient({ org, autoReplies }: { org: Org, autoRep
       {/* Billing Tab */}
       {tab === 'billing' && (
         <div className="max-w-4xl space-y-8">
-          <div className="bg-white rounded-3xl border border-gray-100 p-8 flex items-center justify-between shadow-sm">
+          <div className="bg-card rounded-3xl border border-border p-8 flex items-center justify-between shadow-sm">
             <div>
               <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 mb-2">Current Commitment</p>
               <h3 className="text-3xl font-serif font-black text-[#075E54] italic capitalize">{org.plan || 'No Active'} Plan</h3>
               <p className="text-sm font-semibold text-slate-500 mt-1">
-                {org.plan === 'trial' ? `Free Trial · ${org.trial_ends_at ? Math.max(0, Math.ceil((new Date(org.trial_ends_at).getTime() - Date.now()) / 86400000)) : 0} days remaining` : 'Full Access'}
+                {org.plan === 'trial' ? `Free Trial Â· ${org.trial_ends_at ? Math.max(0, Math.ceil((new Date(org.trial_ends_at).getTime() - Date.now()) / 86400000)) : 0} days remaining` : 'Full Access'}
               </p>
             </div>
             <div className="w-20 h-20 bg-primary/5 rounded-full flex items-center justify-center border-4 border-white shadow-xl">
@@ -316,7 +316,7 @@ export default function SettingsClient({ org, autoReplies }: { org: Org, autoRep
 
           <div className="grid md:grid-cols-3 gap-6">
             {PLANS.map(plan => (
-              <div key={plan.id} className={`bg-white rounded-3xl p-8 border-2 transition-all ${org.plan === plan.id ? 'border-primary shadow-xl shadow-primary/10' : 'border-gray-100 opacity-90'}`}>
+              <div key={plan.id} className={`bg-card rounded-3xl p-8 border-2 transition-all ${org.plan === plan.id ? 'border-primary shadow-xl shadow-primary/10' : 'border-border opacity-90'}`}>
                 <div className="flex justify-between items-start mb-6">
                   <div>
                     <h4 className="text-xl font-black text-[#075E54] font-serif italic">{plan.name}</h4>
@@ -376,9 +376,9 @@ export default function SettingsClient({ org, autoReplies }: { org: Org, autoRep
 
       {/* Auto-Replies Tab */}
       {tab === 'auto-replies' && (
-        <div className="bg-white rounded-2xl border border-gray-100 p-8 space-y-6 max-w-2xl shadow-sm">
+        <div className="bg-card rounded-2xl border border-border p-8 space-y-6 max-w-2xl shadow-sm">
           <div className="flex items-center justify-between">
-            <h2 className="font-bold text-gray-900 italic font-serif text-lg text-primary">Intelligent Auto-Replies</h2>
+            <h2 className="font-bold text-foreground italic font-serif text-lg text-primary">Intelligent Auto-Replies</h2>
             <button
                onClick={() => { fetch('/api/auto-replies', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'keyword', keyword: '', response: '' }) }).then(() => window.location.reload()) }}
                className="bg-primary/10 text-primary px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-primary/20 transition-all"
@@ -388,9 +388,9 @@ export default function SettingsClient({ org, autoReplies }: { org: Org, autoRep
           </div>
           <div className="grid gap-4">
             {autoReplies.map(reply => (
-              <div key={reply.id} className="border border-gray-100 rounded-2xl p-6 hover:border-primary transition-all group bg-slate-50/50">
+              <div key={reply.id} className="border border-border rounded-2xl p-6 hover:border-primary transition-all group bg-slate-50/50">
                 <div className="flex items-center justify-between mb-4">
-                  <span className="text-[10px] font-black uppercase tracking-widest bg-white px-3 py-1 rounded-full border border-slate-100 text-slate-400 group-hover:text-primary group-hover:border-primary/20 transition-all">Matched {reply.type}</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest bg-card px-3 py-1 rounded-full border border-slate-100 text-slate-400 group-hover:text-primary group-hover:border-primary/20 transition-all">Matched {reply.type}</span>
                   <div className={`w-2 h-2 rounded-full ${reply.is_active ? 'bg-primary' : 'bg-slate-300'}`} />
                 </div>
                 <p className="text-sm font-black text-[#075E54] mb-1 italic">Keyword: "{reply.keyword}"</p>
@@ -403,14 +403,14 @@ export default function SettingsClient({ org, autoReplies }: { org: Org, autoRep
 
       {/* Appearance Tab */}
       {tab === 'appearance' && (
-        <div className="bg-white rounded-2xl border border-gray-100 p-8 space-y-8 max-w-xl shadow-sm">
+        <div className="bg-card rounded-2xl border border-border p-8 space-y-8 max-w-xl shadow-sm">
           <div className="flex items-center gap-4">
              <div className="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-100">
                <Palette size={28} />
              </div>
              <div>
-               <h2 className="font-bold text-gray-900 italic font-serif text-xl text-indigo-600">Visual Aesthetic</h2>
-               <p className="text-[10px] text-gray-400 font-black uppercase tracking-[0.2em] mt-1">Configure your dashboard theme</p>
+               <h2 className="font-bold text-foreground italic font-serif text-xl text-indigo-600">Visual Aesthetic</h2>
+               <p className="text-[10px] text-muted-foreground/70 font-black uppercase tracking-[0.2em] mt-1">Configure your dashboard theme</p>
              </div>
           </div>
           <ThemePicker />

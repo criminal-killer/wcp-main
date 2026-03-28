@@ -41,7 +41,7 @@ export async function POST(req: Request) {
     // Since this is a setup booking, we notify the platform owner.
     
     const adminWhatsApp = '254762667048'
-    const message = `🚀 *New Setup Booking*\n\n` +
+    const message = `ðŸš€ *New Setup Booking*\n\n` +
       `*From:* ${user.email}\n` +
       `*WhatsApp:* ${metadata?.whatsapp}\n` +
       `*Details:* ${description}\n` +

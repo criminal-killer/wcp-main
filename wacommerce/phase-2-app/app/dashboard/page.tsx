@@ -60,7 +60,7 @@ export default async function DashboardPage() {
       new: 'bg-blue-100 text-blue-700',
       confirmed: 'bg-green-100 text-green-700',
       shipped: 'bg-purple-100 text-purple-700',
-      delivered: 'bg-gray-100 text-gray-700',
+      delivered: 'bg-secondary/50 text-muted-foreground',
       cancelled: 'bg-red-100 text-red-700',
     }
 
@@ -68,15 +68,15 @@ export default async function DashboardPage() {
       <div className="space-y-8 max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-black text-gray-900 tracking-tight">Dashboard</h1>
-            <p className="text-gray-500 mt-1 font-medium text-sm">Overview of your WhatsApp commerce performance.</p>
+            <h1 className="text-2xl font-black text-foreground tracking-tight">Dashboard</h1>
+            <p className="text-muted-foreground mt-1 font-medium text-sm">Overview of your WhatsApp commerce performance.</p>
           </div>
           <div className="flex items-center gap-3">
             <a
               href="/dashboard/setup-booking"
-              className="bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-xl font-bold text-sm hover:border-gray-300 hover:bg-gray-50 transition-all flex items-center gap-2"
+              className="bg-card border border-border text-muted-foreground px-4 py-2 rounded-xl font-bold text-sm hover:border-gray-300 hover:bg-secondary transition-all flex items-center gap-2"
             >
-              <Users size={18} className="text-gray-400" />
+              <Users size={18} className="text-muted-foreground/70" />
               Book Setup
             </a>
             <a
@@ -92,17 +92,17 @@ export default async function DashboardPage() {
         {/* Metrics */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {metrics.map((m) => (
-            <div key={m.label} className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm hover:shadow-md transition-shadow">
+            <div key={m.label} className="bg-card rounded-xl border border-border p-6 shadow-sm hover:shadow-md transition-shadow">
               <div className="flex items-center justify-between mb-4">
                 <div className={`p-3 rounded-2xl ${m.bg}`}>
                   <m.icon size={24} className={m.color} />
                 </div>
-                <div className="text-xs font-bold text-gray-400 uppercase tracking-widest">{m.label.split(' ')[0]}</div>
+                <div className="text-xs font-bold text-muted-foreground/70 uppercase tracking-widest">{m.label.split(' ')[0]}</div>
               </div>
-              <div className="text-3xl font-black text-gray-900 mb-1">{m.value}</div>
-              <div className="text-sm font-bold text-gray-500">{m.label}</div>
-              <div className="h-px bg-gray-50 w-full my-3" />
-              <div className="text-xs font-semibold text-gray-400 flex items-center gap-1">
+              <div className="text-3xl font-black text-foreground mb-1">{m.value}</div>
+              <div className="text-sm font-bold text-muted-foreground">{m.label}</div>
+              <div className="h-px bg-secondary w-full my-3" />
+              <div className="text-xs font-semibold text-muted-foreground/70 flex items-center gap-1">
                 <TrendingUp size={12} className="text-green-500" />
                 {m.sub}
               </div>
@@ -112,38 +112,38 @@ export default async function DashboardPage() {
 
         <div className="grid lg:grid-cols-2 gap-8">
           {/* Recent Orders */}
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
-            <div className="p-6 border-b border-gray-50 flex items-center justify-between">
+          <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden flex flex-col">
+            <div className="p-6 border-b border-border/50 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-blue-50 rounded-lg">
                   <ShoppingCart size={20} className="text-blue-600" />
                 </div>
-                <h2 className="font-black text-gray-900 tracking-tight">Recent Orders</h2>
+                <h2 className="font-black text-foreground tracking-tight">Recent Orders</h2>
               </div>
               <a href="/dashboard/orders" className="text-sm text-[#25D366] font-bold hover:underline">View All</a>
             </div>
             <div className="flex-1 divide-y divide-gray-50">
               {recentOrders.length === 0 ? (
-                <div className="p-12 text-center text-gray-400">
-                  <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="p-12 text-center text-muted-foreground/70">
+                  <div className="w-16 h-16 bg-secondary rounded-full flex items-center justify-center mx-auto mb-4">
                     <ShoppingCart size={32} className="opacity-20" />
                   </div>
                   <p className="font-medium">No orders yet</p>
                   <p className="text-xs mt-1">Orders will appear once you connect WhatsApp.</p>
                 </div>
               ) : recentOrders.map((order) => (
-                <div key={order.id} className="px-6 py-4 flex items-center justify-between hover:bg-gray-50/50 transition-colors">
+                <div key={order.id} className="px-6 py-4 flex items-center justify-between hover:bg-secondary/50 transition-colors">
                   <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-xs font-bold text-gray-500">
+                    <div className="w-10 h-10 bg-secondary/50 rounded-full flex items-center justify-center text-xs font-bold text-muted-foreground">
                       {order.order_number.slice(-2)}
                     </div>
                     <div>
-                      <p className="font-bold text-gray-900 text-sm">{order.order_number}</p>
-                      <p className="text-xs text-gray-400 font-medium">{new Date(order.created_at!).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</p>
+                      <p className="font-bold text-foreground text-sm">{order.order_number}</p>
+                      <p className="text-xs text-muted-foreground/70 font-medium">{new Date(order.created_at!).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-black text-gray-900 text-sm">{org?.currency} {order.total.toLocaleString()}</p>
+                    <p className="font-black text-foreground text-sm">{org?.currency} {order.total.toLocaleString()}</p>
                     <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-tighter ${STATUS_COLORS[order.order_status || 'new']}`}>
                       {order.order_status}
                     </span>
@@ -154,33 +154,33 @@ export default async function DashboardPage() {
           </div>
 
           {/* Top Products */}
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
-            <div className="p-6 border-b border-gray-50 flex items-center justify-between">
+          <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden flex flex-col">
+            <div className="p-6 border-b border-border/50 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-orange-50 rounded-lg">
                   <Package size={20} className="text-orange-600" />
                 </div>
-                <h2 className="font-black text-gray-900 tracking-tight">Top Products</h2>
+                <h2 className="font-black text-foreground tracking-tight">Top Products</h2>
               </div>
               <a href="/dashboard/products" className="text-sm text-[#25D366] font-bold hover:underline">Manage</a>
             </div>
             <div className="flex-1 divide-y divide-gray-50">
               {topProducts.length === 0 ? (
-                <div className="p-12 text-center text-gray-400">
-                  <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="p-12 text-center text-muted-foreground/70">
+                  <div className="w-16 h-16 bg-secondary rounded-full flex items-center justify-center mx-auto mb-4">
                     <Package size={32} className="opacity-20" />
                   </div>
                   <p className="font-medium">Inventory is empty</p>
                   <p className="text-xs mt-1">Add products to see performance here.</p>
                 </div>
               ) : topProducts.map((p, i) => (
-                <div key={p.name} className="px-6 py-4 flex items-center gap-4 hover:bg-gray-50/50 transition-colors">
-                  <span className={`text-sm font-black w-8 h-8 rounded-lg flex items-center justify-center ${i === 0 ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-50 text-gray-400'}`}>
+                <div key={p.name} className="px-6 py-4 flex items-center gap-4 hover:bg-secondary/50 transition-colors">
+                  <span className={`text-sm font-black w-8 h-8 rounded-lg flex items-center justify-center ${i === 0 ? 'bg-yellow-100 text-yellow-700' : 'bg-secondary text-muted-foreground/70'}`}>
                     {i + 1}
                   </span>
                   <div className="flex-1 min-w-0">
-                    <p className="font-bold text-gray-900 text-sm truncate">{p.name}</p>
-                    <p className="text-xs text-gray-500 font-medium">{p.count} units sold</p>
+                    <p className="font-bold text-foreground text-sm truncate">{p.name}</p>
+                    <p className="text-xs text-muted-foreground font-medium">{p.count} units sold</p>
                   </div>
                   <TrendingUp size={16} className="text-green-500 opacity-50" />
                 </div>
@@ -199,7 +199,7 @@ export default async function DashboardPage() {
             <div className="flex items-center gap-3">
               <a
                 href="/dashboard/settings?tab=whatsapp"
-                className="bg-white text-primary px-8 py-4 rounded-xl font-black text-sm hover:scale-105 transition-all shadow-xl"
+                className="bg-card text-primary px-8 py-4 rounded-xl font-black text-sm hover:scale-105 transition-all shadow-xl"
               >
                 Connect Now <ArrowRight size={18} className="inline ml-2" />
               </a>
@@ -212,12 +212,12 @@ export default async function DashboardPage() {
     if (isRedirectError(error)) throw error
     console.error('Dashboard error:', error)
     return (
-      <div className="min-h-[400px] flex flex-col items-center justify-center p-8 text-center bg-white rounded-2xl border border-gray-100 shadow-sm">
+      <div className="min-h-[400px] flex flex-col items-center justify-center p-8 text-center bg-card rounded-2xl border border-border shadow-sm">
         <div className="w-16 h-16 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center mb-4">
           <Package size={32} />
         </div>
-        <h2 className="text-xl font-bold text-gray-900 mb-2">Database Connection Issue</h2>
-        <p className="text-gray-500 max-w-md mx-auto mb-6">
+        <h2 className="text-xl font-bold text-foreground mb-2">Database Connection Issue</h2>
+        <p className="text-muted-foreground max-w-md mx-auto mb-6">
           We couldn&apos;t connect to your database. This is usually due to invalid credentials in your environment variables.
           {error?.status === 401 && <span className="block mt-2 font-mono text-xs text-red-600">Error 401: Unauthorized</span>}
         </p>
@@ -225,7 +225,7 @@ export default async function DashboardPage() {
           <a href="/dashboard" className="bg-[#25D366] text-white px-6 py-2 rounded-xl font-bold hover:bg-green-600 transition-colors">
             Try Again
           </a>
-          <a href="/onboarding" className="bg-gray-100 text-gray-600 px-6 py-2 rounded-xl font-bold hover:bg-gray-200 transition-colors">
+          <a href="/onboarding" className="bg-secondary/50 text-muted-foreground px-6 py-2 rounded-xl font-bold hover:bg-gray-200 transition-colors">
             Go to Onboarding
           </a>
         </div>

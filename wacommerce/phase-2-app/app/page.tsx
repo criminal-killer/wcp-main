@@ -64,7 +64,7 @@ const LiveActivity = () => {
 
   return (
     <div className="fixed bottom-8 left-8 z-[100] animate-in fade-in slide-in-from-bottom-5 duration-500">
-      <div className="bg-white/90 backdrop-blur-xl border border-primary/20 rounded-2xl p-4 shadow-2xl flex items-center gap-4 max-w-sm">
+      <div className="bg-card/90 backdrop-blur-xl border border-primary/20 rounded-2xl p-4 shadow-2xl flex items-center gap-4 max-w-sm">
         <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
           {activity.name[0]}
         </div>
@@ -73,7 +73,7 @@ const LiveActivity = () => {
             {activity.name} from {activity.location}
           </p>
           <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-tight">
-            {activity.action} · 2m ago
+            {activity.action} Â· 2m ago
           </p>
         </div>
         <button onClick={() => setVisible(false)} className="text-slate-300 hover:text-slate-500">
@@ -94,8 +94,8 @@ const WhatsAppWalkthrough = () => {
       subtitle: 'Customer browses catalog',
       content: (
         <div className="space-y-3">
-          <div className="bg-white p-3 rounded-xl rounded-tl-none shadow-sm text-[10px] w-3/4">Welcome to our store! 👋 Check our latest drop.</div>
-          <div className="bg-white p-2 rounded-2xl shadow-lg border border-slate-50">
+          <div className="bg-card p-3 rounded-xl rounded-tl-none shadow-sm text-[10px] w-3/4">Welcome to our store! ðŸ‘‹ Check our latest drop.</div>
+          <div className="bg-card p-2 rounded-2xl shadow-lg border border-slate-50">
             <div className="aspect-square bg-slate-100 rounded-lg mb-2" />
             <div className="h-2 w-3/4 bg-slate-200 rounded-full mb-1" />
             <div className="h-3 w-1/2 bg-primary/20 rounded-full" />
@@ -109,8 +109,8 @@ const WhatsAppWalkthrough = () => {
       content: (
         <div className="space-y-3">
           <div className="bg-[#DCF8C6] p-3 rounded-xl rounded-tr-none shadow-sm text-[10px] w-3/4 ml-auto">I want to order the Silk Shirt in Blue.</div>
-          <div className="bg-white p-3 rounded-xl rounded-tl-none shadow-sm text-[10px] w-3/4">Great choice! Added to your cart. 🛒</div>
-          <div className="bg-white p-4 rounded-xl border border-primary/20 shadow-md flex items-center gap-3">
+          <div className="bg-card p-3 rounded-xl rounded-tl-none shadow-sm text-[10px] w-3/4">Great choice! Added to your cart. ðŸ›’</div>
+          <div className="bg-card p-4 rounded-xl border border-primary/20 shadow-md flex items-center gap-3">
              <div className="w-8 h-8 bg-primary/10 rounded flex items-center justify-center text-primary italic font-serif text-[10px]">S</div>
              <div className="flex-1">
                 <div className="h-2 w-20 bg-slate-200 rounded-full mb-1" />
@@ -126,9 +126,9 @@ const WhatsAppWalkthrough = () => {
       subtitle: 'Secure delivery details',
       content: (
         <div className="space-y-3">
-          <div className="bg-white p-3 rounded-xl rounded-tl-none shadow-sm text-[10px] w-3/4">Please provide your delivery address below.</div>
+          <div className="bg-card p-3 rounded-xl rounded-tl-none shadow-sm text-[10px] w-3/4">Please provide your delivery address below.</div>
           <div className="bg-[#DCF8C6] p-3 rounded-xl rounded-tr-none shadow-sm text-[10px] w-3/4 ml-auto">House 42, Victoria Island, Lagos.</div>
-          <div className="bg-white p-3 rounded-xl rounded-tl-none shadow-sm text-[10px] w-3/4 italic">Calculating delivery fee... 🚚</div>
+          <div className="bg-card p-3 rounded-xl rounded-tl-none shadow-sm text-[10px] w-3/4 italic">Calculating delivery fee... ðŸšš</div>
         </div>
       )
     },
@@ -137,8 +137,8 @@ const WhatsAppWalkthrough = () => {
       subtitle: 'Instant payment & sync',
       content: (
         <div className="space-y-3">
-          <div className="bg-white p-3 rounded-xl rounded-tl-none shadow-sm text-[10px] w-full border-l-4 border-primary">
-            ✅ Order #7721 Confirmed! <br />
+          <div className="bg-card p-3 rounded-xl rounded-tl-none shadow-sm text-[10px] w-full border-l-4 border-primary">
+            âœ… Order #7721 Confirmed! <br />
             Total: $45.00 <br />
             <button className="mt-2 w-full bg-primary text-white py-2 rounded-lg font-bold text-[10px]">Pay via Paystack</button>
           </div>
@@ -166,9 +166,9 @@ const WhatsAppWalkthrough = () => {
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/3 h-6 bg-slate-800 rounded-b-3xl z-10" />
         <div className="h-full bg-[#ECE5DD] rounded-[32px] overflow-hidden flex flex-col relative">
           <div className="bg-[#075E54] p-6 pt-10 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-white font-bold text-lg">S</div>
+            <div className="w-10 h-10 rounded-full bg-card/20 flex items-center justify-center text-white font-bold text-lg">S</div>
             <div className="flex-1">
-              <div className="h-3 w-24 bg-white/40 rounded-full mb-1" />
+              <div className="h-3 w-24 bg-card/40 rounded-full mb-1" />
               <div className="text-[10px] text-white/60 font-medium">Online</div>
             </div>
           </div>
@@ -177,8 +177,8 @@ const WhatsAppWalkthrough = () => {
             {steps[step].content}
           </div>
 
-          <div className="p-4 bg-white/80 backdrop-blur-md flex items-center gap-2">
-             <div className="flex-1 h-10 bg-white rounded-full border border-slate-200 px-4 flex items-center text-slate-300 text-xs">Message...</div>
+          <div className="p-4 bg-card/80 backdrop-blur-md flex items-center gap-2">
+             <div className="flex-1 h-10 bg-card rounded-full border border-slate-200 px-4 flex items-center text-slate-300 text-xs">Message...</div>
              <div className="w-10 h-10 bg-[#075E54] rounded-full flex items-center justify-center text-white">
                 <Zap size={18} fill="currentColor" />
              </div>
@@ -192,7 +192,7 @@ const WhatsAppWalkthrough = () => {
         </div>
       </div>
       
-      <div className="absolute -right-8 bottom-12 bg-white rounded-2xl p-4 shadow-xl border border-primary/10 max-w-[200px] animate-bounce">
+      <div className="absolute -right-8 bottom-12 bg-card rounded-2xl p-4 shadow-xl border border-primary/10 max-w-[200px] animate-bounce">
          <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1">{steps[step].title}</p>
          <p className="text-[11px] font-bold text-slate-500">{steps[step].subtitle}</p>
       </div>
@@ -202,11 +202,11 @@ const WhatsAppWalkthrough = () => {
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-white text-slate-900 selection:bg-primary/30 selection:text-primary-foreground font-sans overflow-x-hidden">
+    <div className="min-h-screen bg-card text-slate-900 selection:bg-primary/30 selection:text-primary-foreground font-sans overflow-x-hidden">
       <LiveActivity />
       
       {/* Premium Navigation Header */}
-      <header className="fixed top-0 left-0 right-0 z-[100] bg-white/70 backdrop-blur-2xl border-b border-slate-100/50">
+      <header className="fixed top-0 left-0 right-0 z-[100] bg-card/70 backdrop-blur-2xl border-b border-slate-100/50">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-12">
             <Link href="/" className="flex items-center gap-3 group">
@@ -281,7 +281,7 @@ export default function HomePage() {
           <div className="text-left">
             <div className="inline-flex items-center gap-2 bg-primary/5 border border-primary/20 rounded-full px-5 py-2 mb-10 group cursor-default">
               <span className="w-2 h-2 bg-primary rounded-full animate-ping"></span>
-              <span className="text-primary text-xs font-black tracking-[0.2em] uppercase">Phase 2 Premium · Invitation Only</span>
+              <span className="text-primary text-xs font-black tracking-[0.2em] uppercase">Phase 2 Premium Â· Invitation Only</span>
             </div>
 
             <h1 className="text-6xl md:text-8xl font-serif font-black mb-6 leading-[0.9] tracking-tight text-[#075E54]">
@@ -307,7 +307,7 @@ export default function HomePage() {
               </Link>
               <Link
                 href="/store/demo"
-                className="bg-white text-primary px-10 py-5 rounded-full font-black text-lg border border-primary/20 hover:bg-primary/5 transition-all shadow-sm"
+                className="bg-card text-primary px-10 py-5 rounded-full font-black text-lg border border-primary/20 hover:bg-primary/5 transition-all shadow-sm"
               >
                 Watch Demo
               </Link>
@@ -349,7 +349,7 @@ export default function HomePage() {
               { title: 'Safe Checkout', desc: 'Secure payment links sent directly in WhatsApp.', icon: <CreditCard className="w-6 h-6" /> },
               { title: 'Global Reach', desc: 'Sell to anyone, anywhere in their native currency.', icon: <Globe className="w-6 h-6" /> },
             ].map((f, i) => (
-              <div key={i} className="bg-white p-12 rounded-[40px] border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all group">
+              <div key={i} className="bg-card p-12 rounded-[40px] border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all group">
                 <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center text-primary mb-8 group-hover:scale-110 transition-transform">
                   {f.icon}
                 </div>
@@ -381,7 +381,7 @@ export default function HomePage() {
                 features: ['Unlimited Products', 'API Access', 'Dedicated Manager', 'White-labeling', 'Advanced AI'] 
               },
             ].map((plan) => (
-              <div key={plan.name} className={`relative p-12 rounded-[50px] border transition-all ${plan.popular ? 'bg-[#075E54] text-white shadow-2xl scale-105 z-10' : 'bg-white border-slate-100 shadow-sm'}`}>
+              <div key={plan.name} className={`relative p-12 rounded-[50px] border transition-all ${plan.popular ? 'bg-[#075E54] text-white shadow-2xl scale-105 z-10' : 'bg-card border-slate-100 shadow-sm'}`}>
                 {plan.popular && (
                   <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.2em]">
                     Best Value
@@ -410,7 +410,7 @@ export default function HomePage() {
                 <div className="space-y-4 mb-12">
                   {plan.features.map((f) => (
                     <div key={f} className="flex items-center gap-3">
-                      <div className={`w-5 h-5 rounded-full flex items-center justify-center border ${plan.popular ? 'bg-white/20 border-white/30' : 'bg-primary/10 border-primary/20'}`}>
+                      <div className={`w-5 h-5 rounded-full flex items-center justify-center border ${plan.popular ? 'bg-card/20 border-white/30' : 'bg-primary/10 border-primary/20'}`}>
                         <CheckCircle2 className={`w-3 h-3 ${plan.popular ? 'text-white' : 'text-primary'}`} />
                       </div>
                       <span className={`text-[11px] font-bold uppercase tracking-widest ${plan.popular ? 'opacity-80' : 'text-slate-500'}`}>
@@ -424,7 +424,7 @@ export default function HomePage() {
                   href="/sign-up"
                   className={`block w-full text-center py-5 rounded-full font-serif font-black text-lg transition-all ${
                     plan.popular 
-                      ? 'bg-white text-primary hover:bg-slate-50' 
+                      ? 'bg-card text-primary hover:bg-slate-50' 
                       : 'bg-[#075E54] text-white hover:opacity-90'
                   }`}
                 >
@@ -441,7 +441,7 @@ export default function HomePage() {
                     Your Brand, <br />
                     <span className="text-primary italic">Your Identity.</span>
                   </h2>
-                  <p className="text-gray-400 font-medium mb-12 max-w-md leading-relaxed">
+                  <p className="text-muted-foreground/70 font-medium mb-12 max-w-md leading-relaxed">
                     Sella adapts to your aesthetic. Choose from 10+ professional themes or create your own signature palette.
                   </p>
                   <div className="grid grid-cols-5 gap-4">
@@ -452,11 +452,11 @@ export default function HomePage() {
                </div>
                <div className="relative group">
                   <div className="absolute inset-0 bg-primary/20 blur-[80px] rounded-full group-hover:bg-primary/30 transition-all" />
-                  <div className="relative bg-white/5 backdrop-blur-3xl rounded-[40px] p-10 border border-white/10 shadow-2xl">
+                  <div className="relative bg-card/5 backdrop-blur-3xl rounded-[40px] p-10 border border-white/10 shadow-2xl">
                     <div className="h-64 w-full bg-slate-100 rounded-[30px] animate-pulse mb-6" />
                     <div className="space-y-3">
-                      <div className="h-4 w-1/2 bg-white/10 rounded-full" />
-                      <div className="h-4 w-3/4 bg-white/10 rounded-full" />
+                      <div className="h-4 w-1/2 bg-card/10 rounded-full" />
+                      <div className="h-4 w-3/4 bg-card/10 rounded-full" />
                     </div>
                   </div>
                </div>
@@ -465,7 +465,7 @@ export default function HomePage() {
         </section>
       </main>
 
-      <footer className="bg-white border-t border-slate-100 py-24 px-6 relative z-10">
+      <footer className="bg-card border-t border-slate-100 py-24 px-6 relative z-10">
         <div className="max-w-7xl mx-auto grid md:grid-cols-4 gap-12">
           <div className="col-span-2">
             <div className="flex items-center gap-3 mb-8">
@@ -494,7 +494,7 @@ export default function HomePage() {
           </div>
         </div>
         <div className="max-w-7xl mx-auto mt-20 pt-12 border-t border-slate-100 flex flex-col md:flex-row justify-between text-muted-foreground text-xs font-bold tracking-tight gap-4">
-          <p>© 2026 SELLA TECHNOLOGIES INC.</p>
+          <p>Â© 2026 SELLA TECHNOLOGIES INC.</p>
           <div className="flex gap-10">
             <Link href="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link>
             <Link href="/terms" className="hover:text-primary transition-colors">Terms of Service</Link>

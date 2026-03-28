@@ -1,65 +1,70 @@
-import { auth } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { users, products } from '@/lib/schema'
-import { eq, and } from 'drizzle-orm'
-import { clearProductCache } from '@/lib/redis'
+import { organizations, subscriptions } from '@/lib/schema'
+import { eq } from 'drizzle-orm'
+import Stripe from 'stripe'
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
-  const { userId } = await auth()
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const user = await db.query.users.findFirst({ where: eq(users.clerk_id, userId) })
-  if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
+export async function POST(req: NextRequest) {
+  const body = await req.text()
+  const sig = req.headers.get('stripe-signature') || ''
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || ''
+  const stripeKey = process.env.STRIPE_SECRET_KEY || ''
 
-  const product = await db.query.products.findFirst({
-    where: and(eq(products.id, params.id), eq(products.org_id, user.org_id)),
-  })
-  if (!product) return NextResponse.json({ error: 'Product not found' }, { status: 404 })
-  return NextResponse.json({ data: product })
-}
+  if (!stripeKey) return NextResponse.json({ error: 'Stripe not configured' }, { status: 500 })
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
-  const { userId } = await auth()
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const user = await db.query.users.findFirst({ where: eq(users.clerk_id, userId) })
-  if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
+  const stripe = new Stripe(stripeKey, { apiVersion: '2023-10-16' })
 
-  const product = await db.query.products.findFirst({
-    where: and(eq(products.id, params.id), eq(products.org_id, user.org_id)),
-  })
-  if (!product) return NextResponse.json({ error: 'Product not found' }, { status: 404 })
+  let event: Stripe.Event
+  try {
+    event = stripe.webhooks.constructEvent(body, sig, webhookSecret)
+  } catch {
+    return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
+  }
 
-  const body = await req.json() as Record<string, unknown>
-  const updateData: Record<string, unknown> = { updated_at: new Date().toISOString() }
-  if (body.name) updateData.name = body.name
-  if (body.description !== undefined) updateData.description = body.description
-  if (body.price) updateData.price = body.price
-  if (body.compare_at_price !== undefined) updateData.compare_at_price = body.compare_at_price
-  if (body.category) updateData.category = body.category
-  if (body.images) updateData.images = JSON.stringify(body.images)
-  if (body.variants) updateData.variants = JSON.stringify(body.variants)
-  if (body.inventory_count !== undefined) updateData.inventory_count = body.inventory_count
-  if (body.is_active !== undefined) updateData.is_active = body.is_active ? 1 : 0
+  switch (event.type) {
+    case 'checkout.session.completed': {
+      const session = event.data.object as Stripe.Checkout.Session
+      const orgId = session.metadata?.org_id
+      const plan = session.metadata?.plan || 'starter'
+      if (!orgId) break
 
-  const [updated] = await db.update(products)
-    .set(updateData as Partial<typeof products.$inferInsert>)
-    .where(and(eq(products.id, params.id), eq(products.org_id, user.org_id)))
-    .returning()
+      await db.update(organizations).set({ plan, updated_at: new Date().toISOString() }).where(eq(organizations.id, orgId))
 
-  await clearProductCache(user.org_id)
-  return NextResponse.json({ data: updated, message: 'Product updated' })
-}
+      const sub = await stripe.subscriptions.retrieve(session.subscription as string)
+      const periodEnd = new Date((sub.current_period_end) * 1000).toISOString()
+      const periodStart = new Date((sub.current_period_start) * 1000).toISOString()
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
-  const { userId } = await auth()
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const user = await db.query.users.findFirst({ where: eq(users.clerk_id, userId) })
-  if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
+      const existing = await db.query.subscriptions.findFirst({ where: eq(subscriptions.org_id, orgId) })
+      if (existing) {
+        await db.update(subscriptions).set({
+          status: 'active', plan,
+          stripe_subscription_id: sub.id,
+          current_period_start: periodStart,
+          current_period_end: periodEnd,
+          updated_at: new Date().toISOString(),
+        }).where(eq(subscriptions.org_id, orgId))
+      } else {
+        await db.insert(subscriptions).values({
+          org_id: orgId, plan, status: 'active', provider: 'stripe',
+          stripe_subscription_id: sub.id,
+          amount: (sub.items.data[0].price.unit_amount || 2900) / 100,
+          currency: sub.currency.toUpperCase(),
+          current_period_start: periodStart,
+          current_period_end: periodEnd,
+        })
+      }
+      break
+    }
 
-  await db.update(products)
-    .set({ is_active: 0 })
-    .where(and(eq(products.id, params.id), eq(products.org_id, user.org_id)))
+    case 'customer.subscription.deleted': {
+      const sub = event.data.object as Stripe.Subscription
+      const orgId = sub.metadata?.org_id
+      if (!orgId) break
+      await db.update(subscriptions).set({ status: 'cancelled' }).where(eq(subscriptions.org_id, orgId))
+      await db.update(organizations).set({ plan: 'free' }).where(eq(organizations.id, orgId))
+      break
+    }
+  }
 
-  await clearProductCache(user.org_id)
-  return NextResponse.json({ message: 'Product deleted' })
+  return NextResponse.json({ received: true })
 }

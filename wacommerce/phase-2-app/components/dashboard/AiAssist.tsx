@@ -57,11 +57,11 @@ export default function AiAssist() {
   }
 
   return (
-    <div className={`fixed bottom-6 right-6 w-96 bg-white border border-gray-200 rounded-2xl shadow-xl z-50 overflow-hidden flex flex-col transition-all duration-300 ease-in-out ${isMinimized ? 'h-14 translate-y-2' : 'h-[32rem]'}`}>
+    <div className={`fixed bottom-6 right-6 w-96 bg-card border border-border rounded-2xl shadow-xl z-50 overflow-hidden flex flex-col transition-all duration-300 ease-in-out ${isMinimized ? 'h-14 translate-y-2' : 'h-[32rem]'}`}>
       {/* Header */}
       <div className="bg-primary p-4 flex items-center justify-between text-primary-foreground">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-white/20 rounded-lg">
+          <div className="p-2 bg-card/20 rounded-lg">
             <MessageSquare size={18} />
           </div>
           <div>
@@ -73,10 +73,10 @@ export default function AiAssist() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => setIsMinimized(!isMinimized)} className="p-1 hover:bg-white/10 rounded-lg transition-colors">
+          <button onClick={() => setIsMinimized(!isMinimized)} className="p-1 hover:bg-card/10 rounded-lg transition-colors">
             {isMinimized ? <Maximize2 size={18} /> : <Minus size={18} />}
           </button>
-          <button onClick={() => setIsOpen(false)} className="p-1 hover:bg-white/10 rounded-lg transition-colors">
+          <button onClick={() => setIsOpen(false)} className="p-1 hover:bg-card/10 rounded-lg transition-colors">
             <X size={18} />
           </button>
         </div>
@@ -85,19 +85,19 @@ export default function AiAssist() {
       {!isMinimized && (
         <>
           {/* Chat area */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50/50">
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-secondary/50">
             {messages.map((m, i) => (
               <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[85%] p-3 rounded-xl text-sm ${m.role === 'user' ? 'bg-primary text-primary-foreground rounded-tr-none' : 'bg-white border border-gray-100 text-gray-700 rounded-tl-none shadow-sm'}`}>
+                <div className={`max-w-[85%] p-3 rounded-xl text-sm ${m.role === 'user' ? 'bg-primary text-primary-foreground rounded-tr-none' : 'bg-card border border-border text-muted-foreground rounded-tl-none shadow-sm'}`}>
                   {m.content}
                 </div>
               </div>
             ))}
             {loading && (
               <div className="flex justify-start">
-                <div className="bg-white border border-gray-100 p-3 rounded-2xl rounded-tl-none shadow-sm flex items-center gap-2">
-                  <Loader2 size={16} className="animate-spin text-gray-400" />
-                  <span className="text-xs text-gray-400 font-medium">Thinking...</span>
+                <div className="bg-card border border-border p-3 rounded-2xl rounded-tl-none shadow-sm flex items-center gap-2">
+                  <Loader2 size={16} className="animate-spin text-muted-foreground/70" />
+                  <span className="text-xs text-muted-foreground/70 font-medium">Thinking...</span>
                 </div>
               </div>
             )}
@@ -105,14 +105,14 @@ export default function AiAssist() {
           </div>
 
           {/* Input */}
-          <div className="p-4 bg-white border-t border-gray-50">
+          <div className="p-4 bg-card border-t border-border/50">
             <div className="relative">
               <input
                 value={input}
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleSend()}
                 placeholder="Ask me anything..."
-                className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none font-medium pr-12"
+                className="w-full bg-secondary border border-border rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none font-medium pr-12"
               />
               <button
                 onClick={handleSend}

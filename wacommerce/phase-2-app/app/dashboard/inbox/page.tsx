@@ -37,20 +37,20 @@ export default async function InboxPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-black text-gray-900">Inbox</h1>
-          <p className="text-gray-500 mt-1">{convList.length} conversations</p>
+          <h1 className="text-2xl font-black text-foreground">Inbox</h1>
+          <p className="text-muted-foreground mt-1">{convList.length} conversations</p>
         </div>
         <div className="flex items-center gap-2">
           <span className="w-2 h-2 bg-[#25D366] rounded-full animate-pulse"></span>
-          <span className="text-sm text-gray-500">Live</span>
+          <span className="text-sm text-muted-foreground">Live</span>
         </div>
       </div>
 
       {convList.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-gray-100 p-16 text-center">
+        <div className="bg-card rounded-2xl border border-border p-16 text-center">
           <MessageSquare size={48} className="mx-auto text-gray-200 mb-4" />
-          <h3 className="font-bold text-gray-700 text-lg mb-2">No conversations yet</h3>
-          <p className="text-gray-400">When customers message your WhatsApp store, conversations will appear here.</p>
+          <h3 className="font-bold text-muted-foreground text-lg mb-2">No conversations yet</h3>
+          <p className="text-muted-foreground/70">When customers message your WhatsApp store, conversations will appear here.</p>
         </div>
       ) : (
         <InboxClient conversations={convList} orgId={user.org_id} userId={user.id} />

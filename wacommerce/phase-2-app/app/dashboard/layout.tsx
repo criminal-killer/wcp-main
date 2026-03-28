@@ -28,7 +28,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const isOnTrial = org.plan === 'trial' && trialDaysLeft > 0
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
+    <div className="flex h-screen bg-secondary overflow-hidden">
       <DashboardSidebar org={org} />
       <div className="flex-1 flex flex-col min-w-0">
         {/* Trial Banner */}
@@ -44,7 +44,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
               href="/dashboard/settings/billing"
               className="text-sm bg-amber-500 text-white px-3 py-1 rounded-lg font-semibold hover:bg-amber-600 transition-colors"
             >
-              Subscribe — $29/mo
+              Subscribe â€” $29/mo
             </Link>
           </div>
         )}

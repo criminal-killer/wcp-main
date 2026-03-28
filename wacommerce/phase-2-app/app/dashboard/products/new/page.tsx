@@ -74,109 +74,109 @@ export default function NewProductPage() {
   return (
     <div className="max-w-2xl space-y-6">
       <div className="flex items-center gap-3">
-        <Link href="/dashboard/products" className="text-gray-400 hover:text-gray-700">
+        <Link href="/dashboard/products" className="text-muted-foreground/70 hover:text-muted-foreground">
           <ArrowLeft size={20} />
         </Link>
-        <h1 className="text-2xl font-black text-gray-900">Add New Product</h1>
+        <h1 className="text-2xl font-black text-foreground">Add New Product</h1>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-5">
-        <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4">
-          <h2 className="font-bold text-gray-900">Product Details</h2>
+        <div className="bg-card rounded-2xl border border-border p-6 space-y-4">
+          <h2 className="font-bold text-foreground">Product Details</h2>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1.5">Name *</label>
+            <label className="block text-sm font-semibold text-muted-foreground mb-1.5">Name *</label>
             <input
               type="text" value={form.name}
               onChange={e => setForm({ ...form, name: e.target.value })}
               placeholder="e.g. Blue Cotton T-Shirt"
-              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#25D366]"
+              className="w-full border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#25D366]"
               maxLength={200} required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1.5">Description</label>
+            <label className="block text-sm font-semibold text-muted-foreground mb-1.5">Description</label>
             <textarea
               value={form.description}
               onChange={e => setForm({ ...form, description: e.target.value })}
               placeholder="Describe the product..."
               rows={3}
-              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#25D366] resize-none"
+              className="w-full border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#25D366] resize-none"
               maxLength={1000}
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Price *</label>
+              <label className="block text-sm font-semibold text-muted-foreground mb-1.5">Price *</label>
               <input
                 type="number" step="0.01" min="0"
                 value={form.price}
                 onChange={e => setForm({ ...form, price: e.target.value })}
                 placeholder="1500.00"
-                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#25D366]"
+                className="w-full border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#25D366]"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Compare at Price</label>
+              <label className="block text-sm font-semibold text-muted-foreground mb-1.5">Compare at Price</label>
               <input
                 type="number" step="0.01" min="0"
                 value={form.compare_at_price}
                 onChange={e => setForm({ ...form, compare_at_price: e.target.value })}
                 placeholder="2000.00 (optional)"
-                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#25D366]"
+                className="w-full border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#25D366]"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Category *</label>
+              <label className="block text-sm font-semibold text-muted-foreground mb-1.5">Category *</label>
               <input
                 type="text"
                 value={form.category}
                 onChange={e => setForm({ ...form, category: e.target.value })}
                 placeholder="e.g. Clothing"
-                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#25D366]"
+                className="w-full border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#25D366]"
                 maxLength={100} required
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Inventory Count</label>
+              <label className="block text-sm font-semibold text-muted-foreground mb-1.5">Inventory Count</label>
               <input
                 type="number" min="0"
                 value={form.inventory_count}
                 onChange={e => setForm({ ...form, inventory_count: e.target.value })}
                 placeholder="0"
-                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#25D366]"
+                className="w-full border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#25D366]"
               />
             </div>
           </div>
         </div>
 
         {/* Images */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-3">
-          <h2 className="font-bold text-gray-900">Images <span className="text-gray-400 font-normal text-sm">(up to 5)</span></h2>
+        <div className="bg-card rounded-2xl border border-border p-6 space-y-3">
+          <h2 className="font-bold text-foreground">Images <span className="text-muted-foreground/70 font-normal text-sm">(up to 5)</span></h2>
           <div className="flex gap-2">
             <input
               type="url"
               value={imageInput}
               onChange={e => setImageInput(e.target.value)}
               placeholder="https://example.com/image.jpg"
-              className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#25D366]"
+              className="flex-1 border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#25D366]"
             />
             <button type="button" onClick={addImageUrl}
-              className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors">
+              className="bg-secondary/50 hover:bg-gray-200 text-muted-foreground px-4 py-2.5 rounded-xl text-sm font-medium transition-colors">
               <Plus size={16} />
             </button>
           </div>
           {images.map((url, i) => (
-            <div key={i} className="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2">
+            <div key={i} className="flex items-center gap-2 bg-secondary rounded-xl px-3 py-2">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={url} alt="Preview" className="w-8 h-8 object-cover rounded-lg" onError={e => (e.currentTarget.style.display = 'none')} />
-              <span className="flex-1 text-sm text-gray-600 truncate">{url}</span>
+              <span className="flex-1 text-sm text-muted-foreground truncate">{url}</span>
               <button type="button" onClick={() => setImages(images.filter((_, j) => j !== i))}>
                 <Trash2 size={14} className="text-red-400 hover:text-red-600" />
               </button>
@@ -185,9 +185,9 @@ export default function NewProductPage() {
         </div>
 
         {/* Variants */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-3">
+        <div className="bg-card rounded-2xl border border-border p-6 space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="font-bold text-gray-900">Variants <span className="text-gray-400 font-normal text-sm">(size, color, etc.)</span></h2>
+            <h2 className="font-bold text-foreground">Variants <span className="text-muted-foreground/70 font-normal text-sm">(size, color, etc.)</span></h2>
             <button type="button" onClick={addVariant}
               className="text-sm text-[#25D366] font-semibold hover:underline">
               + Add Variant
@@ -200,7 +200,7 @@ export default function NewProductPage() {
                 value={v.type}
                 onChange={e => setVariants(variants.map((vv, j) => j === i ? { ...vv, type: e.target.value } : vv))}
                 placeholder="Type (e.g. size)"
-                className="border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#25D366]"
+                className="border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#25D366]"
               />
               <div className="flex gap-2">
                 <input
@@ -208,7 +208,7 @@ export default function NewProductPage() {
                   value={v.options}
                   onChange={e => setVariants(variants.map((vv, j) => j === i ? { ...vv, options: e.target.value } : vv))}
                   placeholder="Options (comma separated)"
-                  className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#25D366]"
+                  className="flex-1 border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#25D366]"
                 />
                 <button type="button" onClick={() => setVariants(variants.filter((_, j) => j !== i))}>
                   <Trash2 size={14} className="text-red-400 hover:text-red-600 mt-3" />
@@ -224,7 +224,7 @@ export default function NewProductPage() {
 
         <div className="flex gap-3">
           <Link href="/dashboard/products"
-            className="flex-1 text-center bg-gray-100 text-gray-700 py-3 rounded-xl font-semibold hover:bg-gray-200 transition-colors">
+            className="flex-1 text-center bg-secondary/50 text-muted-foreground py-3 rounded-xl font-semibold hover:bg-gray-200 transition-colors">
             Cancel
           </Link>
           <button

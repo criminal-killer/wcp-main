@@ -37,7 +37,7 @@ export default function ThemePicker() {
             className={`group relative flex flex-col items-center gap-2 p-3 rounded-2xl border-2 transition-all ${
               theme === t.id 
                 ? 'border-primary bg-primary/5' 
-                : 'border-gray-100 hover:border-gray-200 bg-white'
+                : 'border-border hover:border-border bg-card'
             }`}
           >
             <div 
@@ -46,7 +46,7 @@ export default function ThemePicker() {
             >
               {theme === t.id && <Check size={20} className="drop-shadow-sm" />}
             </div>
-            <span className={`text-xs font-bold ${theme === t.id ? 'text-primary' : 'text-gray-500'}`}>
+            <span className={`text-xs font-bold ${theme === t.id ? 'text-primary' : 'text-muted-foreground'}`}>
               {t.name}
             </span>
             {t.isDark && (
@@ -58,7 +58,7 @@ export default function ThemePicker() {
         ))}
       </div>
       
-      <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest text-center mt-4">
+      <p className="text-[10px] text-muted-foreground/70 font-bold uppercase tracking-widest text-center mt-4">
         Theme settings are saved automatically
       </p>
     </div>

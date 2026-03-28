@@ -18,7 +18,7 @@ const outfit = Outfit({
 })
 
 export const metadata: Metadata = {
-  title: 'SELLA — WhatsApp Commerce Platform',
+  title: 'SELLA â€” WhatsApp Commerce Platform',
   description: 'Sell products directly inside WhatsApp. Set up your store in 5 minutes.',
   keywords: 'whatsapp commerce, whatsapp store, sell on whatsapp, whatsapp shopping',
 }

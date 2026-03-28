@@ -55,8 +55,8 @@ export default function SetupBookingPage() {
         <div className="w-20 h-20 bg-green-50 text-[#25D366] rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-xl shadow-green-100">
           <CheckCircle2 size={40} />
         </div>
-        <h1 className="text-4xl font-black text-gray-900 mb-4 tracking-tight">Booking Received!</h1>
-        <p className="text-xl text-gray-500 mb-10 font-medium">
+        <h1 className="text-4xl font-black text-foreground mb-4 tracking-tight">Booking Received!</h1>
+        <p className="text-xl text-muted-foreground mb-10 font-medium">
           Our team has been notified. We will reach out to you via WhatsApp and Email to finalize your store setup.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -69,7 +69,7 @@ export default function SetupBookingPage() {
           <a
             href="https://wa.me/254762667048"
             target="_blank"
-            className="bg-white border-2 border-gray-100 text-gray-700 px-8 py-4 rounded-2xl font-black hover:border-[#25D366] transition-all"
+            className="bg-card border-2 border-border text-muted-foreground px-8 py-4 rounded-2xl font-black hover:border-[#25D366] transition-all"
           >
             Chat with Support
           </a>
@@ -82,7 +82,7 @@ export default function SetupBookingPage() {
     <div className="max-w-4xl mx-auto space-y-8">
       <Link 
         href="/dashboard" 
-        className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-900 font-bold text-sm transition-colors group"
+        className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground font-bold text-sm transition-colors group"
       >
         <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
         Back to Dashboard
@@ -93,11 +93,11 @@ export default function SetupBookingPage() {
           <div className="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-100">
             <Users size={32} />
           </div>
-          <h1 className="text-4xl font-black text-gray-900 tracking-tight leading-[1.1]">
+          <h1 className="text-4xl font-black text-foreground tracking-tight leading-[1.1]">
             Professional<br />
             <span className="text-indigo-600">Store Setup</span>
           </h1>
-          <p className="text-gray-500 font-medium leading-relaxed">
+          <p className="text-muted-foreground font-medium leading-relaxed">
             Our experts will help you connect your Meta Business account, setup your first 50 products, and configure your payment gateways.
           </p>
           
@@ -107,13 +107,13 @@ export default function SetupBookingPage() {
               { icon: Clock, text: 'Fast turnaround', sub: 'Store live in < 24 hours' },
               { icon: Phone, text: 'Dedicated support', sub: 'Direct line to our engineers' },
             ].map((item, i) => (
-              <div key={i} className="flex gap-4 p-4 rounded-2xl bg-white border border-gray-50 shadow-sm hover:shadow-md transition-shadow">
-                <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center flex-shrink-0">
+              <div key={i} className="flex gap-4 p-4 rounded-2xl bg-card border border-border/50 shadow-sm hover:shadow-md transition-shadow">
+                <div className="w-10 h-10 bg-secondary rounded-xl flex items-center justify-center flex-shrink-0">
                   <item.icon size={20} className="text-indigo-500" />
                 </div>
                 <div>
-                  <p className="font-bold text-gray-900 text-sm">{item.text}</p>
-                  <p className="text-xs text-gray-400 font-medium uppercase tracking-tighter">{item.sub}</p>
+                  <p className="font-bold text-foreground text-sm">{item.text}</p>
+                  <p className="text-xs text-muted-foreground/70 font-medium uppercase tracking-tighter">{item.sub}</p>
                 </div>
               </div>
             ))}
@@ -121,33 +121,33 @@ export default function SetupBookingPage() {
         </div>
 
         <div className="lg:col-span-3">
-          <div className="bg-white rounded-3xl border border-gray-100 p-8 shadow-2xl shadow-gray-100/50">
+          <div className="bg-card rounded-3xl border border-border p-8 shadow-2xl shadow-gray-100/50">
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid sm:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-black text-gray-900 mb-2 uppercase tracking-tight">Business Email</label>
+                  <label className="block text-sm font-black text-foreground mb-2 uppercase tracking-tight">Business Email</label>
                   <div className="relative">
-                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground/70" size={18} />
                     <input
                       required
                       type="email"
                       value={formData.email}
                       onChange={e => setFormData({ ...formData, email: e.target.value })}
-                      className="w-full pl-12 pr-4 py-4 bg-gray-50 border-0 rounded-2xl text-sm focus:ring-2 focus:ring-indigo-500 font-medium"
+                      className="w-full pl-12 pr-4 py-4 bg-secondary border-0 rounded-2xl text-sm focus:ring-2 focus:ring-indigo-500 font-medium"
                       placeholder="alex@store.com"
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-black text-gray-900 mb-2 uppercase tracking-tight">WhatsApp Number</label>
+                  <label className="block text-sm font-black text-foreground mb-2 uppercase tracking-tight">WhatsApp Number</label>
                   <div className="relative">
-                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground/70" size={18} />
                     <input
                       required
                       type="tel"
                       value={formData.whatsapp}
                       onChange={e => setFormData({ ...formData, whatsapp: e.target.value })}
-                      className="w-full pl-12 pr-4 py-4 bg-gray-50 border-0 rounded-2xl text-sm focus:ring-2 focus:ring-indigo-500 font-medium"
+                      className="w-full pl-12 pr-4 py-4 bg-secondary border-0 rounded-2xl text-sm focus:ring-2 focus:ring-indigo-500 font-medium"
                       placeholder="+254..."
                     />
                   </div>
@@ -155,29 +155,29 @@ export default function SetupBookingPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-black text-gray-900 mb-2 uppercase tracking-tight">Business & Setup Details</label>
+                <label className="block text-sm font-black text-foreground mb-2 uppercase tracking-tight">Business & Setup Details</label>
                 <div className="relative">
-                  <Info className="absolute left-4 top-4 text-gray-400" size={18} />
+                  <Info className="absolute left-4 top-4 text-muted-foreground/70" size={18} />
                   <textarea
                     required
                     value={formData.businessInfo}
                     onChange={e => setFormData({ ...formData, businessInfo: e.target.value })}
                     rows={4}
-                    className="w-full pl-12 pr-4 py-4 bg-gray-50 border-0 rounded-2xl text-sm focus:ring-2 focus:ring-indigo-500 font-medium resize-none"
+                    className="w-full pl-12 pr-4 py-4 bg-secondary border-0 rounded-2xl text-sm focus:ring-2 focus:ring-indigo-500 font-medium resize-none"
                     placeholder="Tell us about your products and any specific requirements you have..."
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-black text-gray-900 mb-2 uppercase tracking-tight font-sans">Preferred Setup Time</label>
+                <label className="block text-sm font-black text-foreground mb-2 uppercase tracking-tight font-sans">Preferred Setup Time</label>
                 <div className="relative">
-                  <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                  <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground/70" size={18} />
                   <input
                     type="text"
                     value={formData.preferredTime}
                     onChange={e => setFormData({ ...formData, preferredTime: e.target.value })}
-                    className="w-full pl-12 pr-4 py-4 bg-gray-50 border-0 rounded-2xl text-sm focus:ring-2 focus:ring-indigo-500 font-medium"
+                    className="w-full pl-12 pr-4 py-4 bg-secondary border-0 rounded-2xl text-sm focus:ring-2 focus:ring-indigo-500 font-medium"
                     placeholder="e.g. Tomorrow Afternoon"
                   />
                 </div>
@@ -198,8 +198,8 @@ export default function SetupBookingPage() {
                     </>
                   )}
                 </button>
-                <p className="text-center text-xs text-gray-400 mt-4 font-bold uppercase tracking-widest">
-                  Secure Submission · No commitment required
+                <p className="text-center text-xs text-muted-foreground/70 mt-4 font-bold uppercase tracking-widest">
+                  Secure Submission Â· No commitment required
                 </p>
               </div>
             </form>
