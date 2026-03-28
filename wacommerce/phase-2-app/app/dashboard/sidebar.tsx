@@ -5,8 +5,9 @@ import { UserButton } from '@clerk/nextjs'
 import {
   LayoutDashboard, Package, ShoppingCart, MessageSquare,
   Users, Settings, Store, BarChart3, Globe, Shield,
-  CheckCircle2, Plus,
+  CheckCircle2, Plus, Menu, X, Bell
 } from 'lucide-react'
+import { useState } from 'react'
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -26,9 +27,49 @@ interface Org {
 
 export default function DashboardSidebar({ org }: { org: Org }) {
   const pathname = usePathname()
+  const [isOpen, setIsOpen] = useState(false)
 
   return (
-    <aside className="w-60 bg-card border-r border-border flex flex-col flex-shrink-0">
+    <>
+      {/* Mobile Top Header */}
+      <div className="md:hidden fixed top-0 left-0 w-full h-14 bg-card border-b border-border flex items-center justify-between px-4 z-40 shadow-sm">
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 bg-[#25D366] rounded-md flex items-center justify-center shadow-sm">
+            <span className="text-white font-black text-[10px]">{org.name[0]}</span>
+          </div>
+          <span className="font-bold text-sm tracking-tight truncate max-w-[150px]">{org.name}</span>
+        </div>
+        <div className="flex items-center gap-4">
+          <Link href="/dashboard/notifications" className="relative group">
+            <Bell size={20} className="text-muted-foreground group-hover:text-foreground transition-colors" />
+            <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+          </Link>
+          <button onClick={() => setIsOpen(true)}>
+            <Menu size={24} className="text-foreground" />
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile Overlay */}
+      {isOpen && (
+        <div 
+          className="md:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40" 
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside className={`
+        fixed inset-y-0 left-0 z-50 w-64 bg-card border-r border-border flex flex-col transform transition-transform duration-200 shadow-2xl
+        md:relative md:w-60 md:transform-none md:shadow-none md:flex-shrink-0
+        ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+      `}>
+        {/* Mobile Close Button */}
+        <div className="md:hidden absolute top-4 right-4">
+          <button onClick={() => setIsOpen(false)} className="p-1 rounded-md hover:bg-secondary">
+            <X size={20} className="text-muted-foreground hover:text-foreground" />
+          </button>
+        </div>
       {/* Store Switcher */}
       <div className="p-4 border-b border-border">
         <div className="relative group">
@@ -104,5 +145,6 @@ export default function DashboardSidebar({ org }: { org: Org }) {
         </div>
       </div>
     </aside>
+  </>
   )
 }

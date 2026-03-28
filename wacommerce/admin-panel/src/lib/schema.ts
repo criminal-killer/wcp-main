@@ -138,3 +138,59 @@ export const support_tickets = sqliteTable('support_tickets', {
   created_at: text('created_at').default(sql`(datetime('now'))`),
   updated_at: text('updated_at').default(sql`(datetime('now'))`),
 })
+
+// ============================================
+// AFFILIATES (Public Referral Program)
+// ============================================
+export const affiliates = sqliteTable('affiliates', {
+  id: text('id').primaryKey().default(sql`(lower(hex(randomblob(16))))`),
+  name: text('name').notNull(),
+  email: text('email').notNull().unique(),
+  phone: text('phone'),
+  referral_code: text('referral_code').notNull().unique(),
+  status: text('status').default('pending'), // pending, approved, rejected
+  total_referred: integer('total_referred').default(0),
+  total_earned: real('total_earned').default(0),
+  balance: real('balance').default(0),
+  payment_details: text('payment_details'), // JSON holding bank/paypal info
+  terms_accepted: integer('terms_accepted').default(1),
+  created_at: text('created_at').default(sql`(datetime('now'))`),
+  updated_at: text('updated_at').default(sql`(datetime('now'))`),
+})
+
+// ============================================
+// PAYOUTS (Affiliate Withdrawal Requests)
+// ============================================
+export const payouts = sqliteTable('payouts', {
+  id: text('id').primaryKey().default(sql`(lower(hex(randomblob(16))))`),
+  affiliate_id: text('affiliate_id').notNull().references(() => affiliates.id),
+  amount: real('amount').notNull(),
+  status: text('status').default('pending'), // pending, paid, rejected
+  notes: text('notes'),
+  processed_at: text('processed_at'),
+  created_at: text('created_at').default(sql`(datetime('now'))`),
+})
+
+// ============================================
+// NOTIFICATIONS (In-App Alerts)
+// ============================================
+export const notifications = sqliteTable('notifications', {
+  id: text('id').primaryKey().default(sql`(lower(hex(randomblob(16))))`),
+  org_id: text('org_id').notNull().references(() => organizations.id),
+  title: text('title').notNull(),
+  message: text('message').notNull(),
+  type: text('type').default('info'), // info, warning, success, error, system
+  is_read: integer('is_read').default(0),
+  action_url: text('action_url'),
+  created_at: text('created_at').default(sql`(datetime('now'))`),
+})
+
+// ============================================
+// RELATIONS
+// ============================================
+export const payoutRelations = relations(payouts, ({ one }) => ({
+  affiliate: one(affiliates, {
+    fields: [payouts.affiliate_id],
+    references: [affiliates.id]
+  })
+}))

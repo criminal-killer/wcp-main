@@ -33,3 +33,13 @@ npm-debug.log*
 
 # Compiled
 *.js.map
+
+# AI Artifacts & Context
+.gemini/
+brain/
+implementation_plan.md
+task.md
+walkthrough.md
+*.brain
+.agent/
+.agents/
