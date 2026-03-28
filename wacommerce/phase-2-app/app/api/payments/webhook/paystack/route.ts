@@ -8,8 +8,12 @@ export async function POST(req: NextRequest) {
   const body = await req.text()
   const signature = req.headers.get('x-paystack-signature') || ''
 
-  const secret = process.env.PAYSTACK_SECRET_KEY || ''
+  // Verify the Paystack Signature
+  // Paystack uses your Secret Key to sign the request.
+  const secret = process.env.PAYSTACK_WEBHOOK_SECRET || process.env.PAYSTACK_SECRET_KEY || ''
+  
   if (!verifyPaystackSignature(body, signature, secret)) {
+    console.error('Invalid Paystack signature received.')
     return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
   }
 
