@@ -1,0 +1,83 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 224 71% 4%;
+    --card: 0 0% 100%;
+    --card-foreground: 224 71% 4%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 224 71% 4%;
+    --primary: 150 100% 35%; /* WhatsApp Green - Professional */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 24% 95%; /* WhatsApp Light Gray background */
+    --secondary-foreground: 174 87% 19%;
+    --muted: 210 24% 95%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 150 100% 35%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 20% 98%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 150 100% 35%;
+    --radius: 0.75rem;
+  }
+
+  .theme-midnight {
+    --background: 210 24% 96%;
+    --foreground: 224 71% 4%;
+    --primary: 150 100% 35%;
+    --secondary: 0 0% 100%;
+    --border: 214 32% 85%;
+  }
+  
+  .theme-ocean { --primary: 199 89% 48%; }
+  .theme-lavender { --primary: 258 90% 66%; }
+  .theme-rose { --primary: 343 89% 60%; }
+  .theme-amber { --primary: 38 92% 50%; }
+  .theme-slate { --primary: 215 19% 35%; }
+  .theme-coffee { --primary: 24 89% 26%; }
+  .theme-forest { --primary: 153 85% 20%; }
+  .theme-crimson { --primary: 0 71% 35%; }
+}
+
+@layer base {
+  * { @apply border-border; }
+  body { @apply bg-background text-foreground font-outfit; }
+  h1, h2, h3, h4, h5, h6 { @apply font-serif; }
+}
+
+@layer utilities {
+  .glass {
+    @apply bg-white/10 backdrop-blur-md border border-white/20;
+  }
+  .glass-dark {
+    @apply bg-black/40 backdrop-blur-xl border border-white/10;
+  }
+  .text-glow {
+    text-shadow: 0 0 20px rgba(212, 175, 55, 0.3); /* Gold glow */
+  }
+  .bg-noise {
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    opacity: 0.05;
+  }
+}
+
+/* Custom Animations */
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-20px); }
+  100% { transform: translateY(0px); }
+}
+
+/* WhatsApp-branded scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #25D366; border-radius: 3px; }

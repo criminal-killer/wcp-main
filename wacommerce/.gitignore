@@ -1,0 +1,4 @@
+node_modules/
+phase-2-app/node_modules/
+admin-panel/node_modules/
+.env.local
