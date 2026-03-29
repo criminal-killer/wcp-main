@@ -230,7 +230,7 @@ export default function HomePage() {
               Log In
             </Link>
             <Link 
-              href="/sign-up" 
+              href="/sign-up/choose-plan" 
               className="bg-[#075E54] text-white px-8 py-3 rounded-full text-[11px] font-black uppercase tracking-[0.2em] hover:opacity-90 transition-all shadow-xl shadow-primary/10"
             >
               Get Started
@@ -267,7 +267,7 @@ export default function HomePage() {
               Sign In
             </Link>
             <Link
-              href="/sign-up"
+              href="/sign-up/choose-plan"
               className="bg-primary text-primary-foreground px-8 py-3 rounded-full font-bold text-sm hover:opacity-90 transition-all active:scale-95 tracking-tight shadow-lg shadow-primary/20"
             >
               Get Started
@@ -300,7 +300,7 @@ export default function HomePage() {
 
             <div className="flex flex-wrap gap-5">
               <Link
-                href="/sign-up"
+                href="/sign-up/choose-plan"
                 className="bg-primary text-primary-foreground px-12 py-6 rounded-full font-black text-lg hover:opacity-95 transition-all flex items-center gap-2 group shadow-xl shadow-primary/20 tracking-tight"
               >
                 Create Your Store <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -369,15 +369,15 @@ export default function HomePage() {
           <div className="grid md:grid-cols-3 gap-8">
             {[
               { 
-                name: 'Starter', price: '29', popular: false, trial: '7 Days Free', desc: 'Perfect for new merchants starting their journey.',
+                name: 'Starter', price: '0', popular: false, trial: 'Free Forever / 7-Day Pro Trial', desc: 'Perfect for new merchants starting their journey.',
                 features: ['1 Store', '50 Products', 'Basic Analytics', 'WhatsApp Catalog'] 
               },
               { 
-                name: 'Growth', price: '59', popular: true, trial: '7 Days Free', desc: 'Our most popular plan for established brands.',
+                name: 'Pro', price: '29', popular: true, trial: '7 Days Free', desc: 'Our most popular plan for established brands.',
                 features: ['3 Stores', '500 Products', 'Advanced Analytics', 'Priority Support', 'Custom Themes'] 
               },
               { 
-                name: 'Scale', price: '99', popular: false, trial: '7 Days Free', desc: 'Enterprise-grade features for high-volume stores.',
+                name: 'Elite', price: '99', popular: false, trial: '7 Days Free', desc: 'Enterprise-grade features for high-volume stores.',
                 features: ['Unlimited Products', 'API Access', 'Dedicated Manager', 'White-labeling', 'Advanced AI'] 
               },
             ].map((plan) => (
@@ -421,7 +421,7 @@ export default function HomePage() {
                 </div>
 
                 <Link
-                  href="/sign-up"
+                  href="/sign-up/choose-plan"
                   className={`block w-full text-center py-5 rounded-full font-serif font-black text-lg transition-all ${
                     plan.popular 
                       ? 'bg-card text-primary hover:bg-slate-50' 

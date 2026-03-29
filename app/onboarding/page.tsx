@@ -1,5 +1,6 @@
-'use client'
-
+import { useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { useUser } from '@clerk/nextjs'
 import { LoadingStore } from '@/components/LoadingStore'
 import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
@@ -26,12 +27,14 @@ const COUNTRIES = [
 export default function OnboardingPage() {
   const { user } = useUser()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [form, setForm] = useState({
     name: '',
     country: 'KE',
     business_type: '',
+    plan: searchParams.get('plan') || 'trial',
   })
 
   async function handleSubmit(e: React.FormEvent) {
