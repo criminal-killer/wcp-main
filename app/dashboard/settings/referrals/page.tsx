@@ -66,7 +66,7 @@ export default async function MerchantReferralPage() {
               <p className="text-sm font-bold text-emerald-100">Your Invite Link</p>
               <div className="flex items-center gap-2 bg-emerald-950/50 p-2 rounded-xl border border-emerald-800/50">
                 <code className="text-xs text-emerald-200 flex-1 truncate px-2 font-bold tracking-tight">
-                  sella.io/?ref={org.id.slice(0, 8)}
+                  {process.env.NEXT_PUBLIC_APP_URL}/?ref={org.id.slice(0, 8)}
                 </code>
                 <button className="bg-emerald-500 hover:bg-emerald-400 text-emerald-950 p-2 rounded-lg transition-colors font-bold shadow-sm">
                   <Copy size={16} />

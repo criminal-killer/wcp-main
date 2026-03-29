@@ -67,7 +67,7 @@ export async function POST(req: Request) {
         { role: 'system', content: SYSTEM_PROMPT + context },
         { role: 'user', content: message },
       ],
-      model: 'llama-3.1-70b-versatile',
+      model: 'llama-3.3-70b-versatile',
     })
 
     const reply = completion.choices[0]?.message?.content || "I'm not sure how to respond to that. Can you rephrase?"
@@ -76,7 +76,7 @@ export async function POST(req: Request) {
   } catch (error: any) {
     console.error('AI Chat Error:', error)
     return NextResponse.json({ 
-      reply: "I'm experiencing a high volume of requests. Please try again or contact support at support@sella.io" 
+      reply: "I'm experiencing a high volume of requests. Please try again or contact support at mazaoedu@gmail.com" 
     })
   }
 }

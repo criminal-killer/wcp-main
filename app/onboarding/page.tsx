@@ -1,9 +1,8 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { useUser } from '@clerk/nextjs'
 import { LoadingStore } from '@/components/LoadingStore'
+import { ArrowLeft } from 'lucide-react'
+import Link from 'next/link'
 
 const BUSINESS_TYPES = [
   'Fashion & Clothing', 'Food & Beverages', 'Electronics', 'Beauty & Cosmetics',
@@ -71,6 +70,17 @@ export default function OnboardingPage() {
       <div className="absolute bottom-[0%] right-[-5%] w-[40%] h-[40%] bg-primary/5 blur-[100px] rounded-full" />
 
       {loading && <LoadingStore />}
+      
+      {/* Back Button */}
+      <div className="absolute top-10 left-10 z-20">
+          <Link 
+            href="/" 
+            className="flex items-center gap-2 text-slate-500 hover:text-primary transition-colors font-bold group bg-white/50 backdrop-blur-md px-6 py-3 rounded-2xl border border-white/20 shadow-sm"
+          >
+              <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
+              <span>Back Home</span>
+          </Link>
+      </div>
 
       <div className="w-full max-w-2xl relative z-10">
         {/* Header */}

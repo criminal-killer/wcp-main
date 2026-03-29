@@ -130,7 +130,7 @@ cp .env.example .env.local
 | `STRIPE_SECRET_KEY` | Stripe Dashboard → API Keys |
 | `CRON_SECRET` | Any random string for cron auth |
 | `ADMIN_EMAILS` | Comma-separated admin email(s) |
-| `NEXT_PUBLIC_APP_URL` | Your deployment URL (e.g. `https://app.sella.io`) |
+| `NEXT_PUBLIC_APP_URL` | Your deployment URL (e.g. `https://sella-app.vercel.app`) |
 
 ### Step 3 — Database Setup
 
@@ -226,8 +226,8 @@ Add to `vercel.json` in the root of `phase-2-app/`:
 
 | Provider | Webhook URL |
 |----------|------------|
-| Paystack | `https://app.sella.io/api/payments/webhook/paystack` |
-| Stripe | `https://app.sella.io/api/payments/webhook/stripe` |
+| Paystack | `https://sella-app.vercel.app/api/payments/webhook/paystack` |
+| Stripe | `https://sella-app.vercel.app/api/payments/webhook/stripe` |
 
 ---
 
@@ -369,8 +369,8 @@ phase-2-app/
 
 ## 📞 Support
 
-- Email: hello@sella.io
-- Docs: [docs.sella.io](https://docs.sella.io)
+- Email: mazaoedu@gmail.com
+- Docs: [Click here](https://sella-app.vercel.app/docs)
 - WhatsApp: +254 700 000 000
 
 ---

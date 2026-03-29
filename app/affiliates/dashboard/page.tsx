@@ -51,7 +51,7 @@ export default function AffiliateDashboard() {
           </div>
           <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-sm">
             <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Your Link:</span>
-            <code className="text-sm font-bold text-primary">sella.io/?ref={mockAffiliate.referralCode}</code>
+            <code className="text-sm font-bold text-primary">sella-app.vercel.app/?ref={mockAffiliate.referralCode}</code>
             <button className="ml-2 p-1.5 hover:bg-slate-100 rounded-lg transition-colors text-slate-400 hover:text-slate-800">
               <Copy size={16} />
             </button>

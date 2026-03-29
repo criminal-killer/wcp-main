@@ -1,11 +1,12 @@
 "use client"
 
 import { useState, useEffect } from 'react'
-import { Settings, MessageSquare, CreditCard, Zap, Globe, Palette, Lock, ShieldCheck, AlertCircle } from 'lucide-react'
+import { Settings, MessageSquare, CreditCard, Zap, Globe, Palette, Lock, ShieldCheck, AlertCircle, CheckCircle2 } from 'lucide-react'
 import ThemePicker from '@/components/dashboard/ThemePicker'
 
 interface Org {
   name: string
+  slug: string
   description: string | null
   theme_color: string | null
   currency: string | null
@@ -13,6 +14,9 @@ interface Org {
   store_paypal_email: string | null
   store_cod_enabled: number | null
   whatsapp_verified: number | null
+  wa_webhook_verified: number | null
+  plan: string | null
+  trial_ends_at: string | null
 }
 
 interface AutoReply {
@@ -122,7 +126,7 @@ export default function SettingsClient({ org, autoReplies }: { org: Org, autoRep
 
   const [subscribeError, setSubscribeError] = useState('')
 
-  async function handleSubscribe(plan: string, provider: 'paystack' | 'stripe') {
+  async function handleSubscribe(plan: string, provider: 'paystack' | 'stripe' | 'paypal') {
     setSaving(true)
     setSubscribeError('')
     try {
@@ -220,7 +224,7 @@ export default function SettingsClient({ org, autoReplies }: { org: Org, autoRep
           </div>
           <div className="flex items-center gap-3 text-xs font-bold text-slate-400 bg-slate-50 rounded-xl px-4 py-4 border border-slate-100">
             <Globe size={14} className="text-primary" />
-            Live Preview: <span className="font-mono text-primary select-all">https://sella.io/store/{org.slug}</span>
+            Live Preview: <span className="font-mono text-primary select-all">{process.env.NEXT_PUBLIC_APP_URL}/store/{org.slug}</span>
           </div>
           <button onClick={async () => { setSaving(true); await fetch('/api/settings/store', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(storeForm) }); setSaving(false); setSaved(true); setTimeout(() => setSaved(false), 2000) }} disabled={saving}
             className="w-full bg-[#075E54] text-white py-4 rounded-xl font-bold hover:shadow-xl hover:shadow-[#075E54]/20 transition-all disabled:opacity-60">
