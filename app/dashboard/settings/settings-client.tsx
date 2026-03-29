@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, Suspense } from 'react'
-import { useSearchParams } from 'next/navigation'
-import { Settings, MessageSquare, CreditCard, Zap, Globe, Palette, Lock, ShieldCheck, AlertCircle, CheckCircle2 } from 'lucide-react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { Settings, MessageSquare, CreditCard, Zap, Globe, Palette, Lock, ShieldCheck, AlertCircle, CheckCircle2, SendHorizonal } from 'lucide-react'
 import ThemePicker from '@/components/dashboard/ThemePicker'
 
 interface Org {
@@ -116,11 +116,16 @@ export default function SettingsClient({ org, autoReplies }: { org: Org, autoRep
 }
 
 function SettingsContent({ org, autoReplies }: { org: Org, autoReplies: AutoReply[] }) {
+  const router = useRouter()
   const searchParams = useSearchParams()
   const [tab, setTab] = useState(searchParams.get('tab') || 'store')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [unlockedTabs, setUnlockedTabs] = useState<string[]>(['whatsapp', 'payments']) // AUTO-UNLOCK
+  
+  const [testPhone, setTestPhone] = useState('')
+  const [testingBot, setTestingBot] = useState(false)
+  const [testResult, setTestResult] = useState<{ success?: boolean; error?: string } | null>(null)
   
   const [storeForm, setStoreForm] = useState({
     name: org.name, description: org.description || '', theme_color: org.theme_color || '#25D366',
@@ -262,22 +267,99 @@ function SettingsContent({ org, autoReplies }: { org: Org, autoReplies: AutoRepl
               <div className={`w-2 h-2 rounded-full ${org.wa_webhook_verified ? 'bg-green-500 animate-pulse' : 'bg-amber-500'}`} />
               {org.wa_webhook_verified ? 'Webhook Status: Active' : 'Webhook Status: Pending Setup'}
             </div>
-            <div>
-              <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">WhatsApp Phone ID</label>
-              <input value={waForm.phone_number_id} onChange={e => setWaForm({ ...waForm, phone_number_id: e.target.value })}
-                placeholder="From Meta Developer Console"
-                className="w-full border border-border rounded-xl px-4 py-3 text-sm font-bold font-mono focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50" />
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">WhatsApp Phone ID</label>
+                <input value={waForm.phone_number_id} onChange={e => setWaForm({ ...waForm, phone_number_id: e.target.value })}
+                  placeholder="From Meta Developer Console"
+                  className="w-full border border-border rounded-xl px-4 py-3 text-sm font-bold font-mono focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50" />
+              </div>
+              <div>
+                <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">System Access Token</label>
+                <input type="password" value={waForm.access_token} onChange={e => setWaForm({ ...waForm, access_token: e.target.value })}
+                  placeholder="Paste your permanent access token"
+                  className="w-full border border-border rounded-xl px-4 py-3 text-sm font-bold font-mono focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50" />
+                <p className="text-[9px] text-muted-foreground/70 mt-2 font-bold uppercase tracking-tight">Token is AES-256 encrypted. Decryption only occurs at the edge during bot execution.</p>
+              </div>
             </div>
-            <div>
-              <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">System Access Token</label>
-              <input type="password" value={waForm.access_token} onChange={e => setWaForm({ ...waForm, access_token: e.target.value })}
-                placeholder="Paste your permanent access token"
-                className="w-full border border-border rounded-xl px-4 py-3 text-sm font-bold font-mono focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50" />
-              <p className="text-[9px] text-muted-foreground/70 mt-2 font-bold uppercase tracking-tight">Token is AES-256 encrypted. Decryption only occurs at the edge during bot execution.</p>
+
+            <div className="bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 p-6 space-y-4">
+              <h3 className="text-xs font-black uppercase tracking-widest text-slate-500">Meta Webhook Setup</h3>
+              <div className="space-y-3">
+                <div className="bg-white rounded-xl p-3 border border-slate-100">
+                  <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Callback URL</p>
+                  <code className="text-[11px] font-bold text-primary break-all">https://sella-app.vercel.app/api/webhook</code>
+                </div>
+                <div className="bg-white rounded-xl p-3 border border-slate-100">
+                  <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Verify Token</p>
+                  <code className="text-[11px] font-bold text-primary">sella-webhook-verification-2024</code>
+                </div>
+              </div>
+              <ul className="text-[10px] font-bold text-slate-500 space-y-2 list-disc pl-4">
+                <li>Go to Meta Developers Console &gt; WhatsApp &gt; Configuration</li>
+                <li>Paste the URL and Token above</li>
+                <li>Click <strong>"Manage"</strong> under Webhooks and subscribe to <strong>"messages"</strong></li>
+              </ul>
             </div>
+
+            <div className="bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-black uppercase tracking-widest text-slate-500">Test Connection</h3>
+                {org.wa_webhook_verified ? (
+                  <span className="text-[9px] font-black bg-green-100 text-green-700 px-2 py-0.5 rounded uppercase">Active</span>
+                ) : (
+                  <span className="text-[9px] font-black bg-amber-100 text-amber-700 px-2 py-0.5 rounded uppercase">Inactive</span>
+                )}
+              </div>
+              <p className="text-[10px] text-muted-foreground font-bold leading-relaxed italic">
+                Send a test message to your phone to verify your credentials are correct.
+              </p>
+              <div className="flex gap-2">
+                <input 
+                  value={testPhone} onChange={e => setTestPhone(e.target.value)}
+                  placeholder="e.g. 254712345678"
+                  className="flex-1 border border-border rounded-xl px-4 py-3 text-sm font-bold font-mono focus:outline-none focus:ring-2 focus:ring-primary bg-white shadow-sm" 
+                />
+                <button 
+                  onClick={async () => {
+                    setTestingBot(true);
+                    setTestResult(null);
+                    try {
+                      const r = await fetch('/api/settings/whatsapp/test-connection', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ test_phone: testPhone })
+                      });
+                      const data = await r.json();
+                      if (data.success) {
+                        setTestResult({ success: true });
+                        router.refresh();
+                      } else {
+                        setTestResult({ error: data.error });
+                      }
+                    } catch (e) {
+                      setTestResult({ error: 'Network error' });
+                    }
+                    setTestingBot(false);
+                  }}
+                  disabled={testingBot || !testPhone}
+                  className="bg-primary text-white p-3 rounded-xl hover:opacity-90 transition-all flex items-center justify-center aspect-square disabled:opacity-50"
+                >
+                  {testingBot ? (
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <SendHorizonal size={20} />
+                  )}
+                </button>
+              </div>
+              {testResult?.error && <p className="text-[10px] text-red-500 font-bold bg-red-50 p-3 rounded-lg border border-red-100 italic">{testResult.error}</p>}
+              {testResult?.success && <p className="text-[10px] text-green-600 font-bold bg-green-50 p-3 rounded-lg border border-green-100 italic font-serif">Success! Engine is now activated.</p>}
+            </div>
+
             <button onClick={async () => { setSaving(true); await fetch('/api/settings/whatsapp', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(waForm) }); setSaving(false); setSaved(true); setTimeout(() => setSaved(false), 2000) }} disabled={saving}
               className="w-full bg-[#075E54] text-white py-4 rounded-xl font-bold hover:shadow-xl hover:shadow-[#075E54]/20 transition-all disabled:opacity-60">
-              {saved ? 'âœ“ Connected' : saving ? 'Testing Link...' : 'Verify & Connect'}
+              {saved ? '✓ Credentials Saved' : saving ? 'Saving...' : 'Save WhatsApp Credentials'}
             </button>
           </div>
         </SecureSection>

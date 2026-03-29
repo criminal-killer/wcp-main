@@ -81,6 +81,11 @@ export async function POST(req: NextRequest) {
       })
       if (!org) continue
 
+      // Auto-activate webhook status on first successful message
+      if (!org.wa_webhook_verified) {
+        await db.update(organizations).set({ wa_webhook_verified: 1 }).where(eq(organizations.id, org.id))
+      }
+
       const accessToken = org.wa_access_token_encrypted
         ? decrypt(org.wa_access_token_encrypted)
         : null
