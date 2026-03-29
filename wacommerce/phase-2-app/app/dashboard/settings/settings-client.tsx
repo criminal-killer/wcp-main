@@ -1,3 +1,4 @@
+'use client'
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Settings, MessageSquare, CreditCard, Zap, Globe, Palette, Lock, ShieldCheck, AlertCircle, CheckCircle2 } from 'lucide-react'
@@ -21,9 +22,9 @@ interface Org {
 interface AutoReply {
   id: string
   type: string
-  keyword: string
+  keyword: string | null
   response: string
-  is_active: boolean
+  is_active: number | null | boolean
 }
 
 const TABS = [

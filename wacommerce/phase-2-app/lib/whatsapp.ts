@@ -24,20 +24,22 @@ interface ImageMessage {
 
 interface InteractiveButtonMessage {
   to: string
-  bodyText: string
+  body: string
   buttons: Array<{ id: string; title: string }>
-  headerText?: string
-  footerText?: string
+  header?: string
+  footer?: string
 }
 
 interface InteractiveListMessage {
   to: string
-  bodyText: string
+  body: string
   buttonText: string
   sections: Array<{
     title: string
     rows: Array<{ id: string; title: string; description?: string }>
   }>
+  header?: string
+  footer?: string
 }
 
 async function sendWhatsAppRequest(
@@ -93,14 +95,15 @@ export async function sendImageMessage(
 
 export async function sendInteractiveButtonMessage(
   credentials: WhatsAppCredentials,
-  { to, bodyText, buttons, headerText, footerText }: InteractiveButtonMessage
+  { to, body, buttons, header, footer }: InteractiveButtonMessage
 ) {
   const payload: Record<string, unknown> = {
     to,
+    messaging_product: 'whatsapp',
     type: 'interactive',
     interactive: {
       type: 'button',
-      body: { text: bodyText },
+      body: { text: body },
       action: {
         buttons: buttons.map((b) => ({
           type: 'reply',
@@ -109,28 +112,36 @@ export async function sendInteractiveButtonMessage(
       },
     },
   }
-  if (headerText) {
-    (payload.interactive as Record<string, unknown>).header = { type: 'text', text: headerText }
+  if (header) {
+    (payload.interactive as Record<string, unknown>).header = { type: 'text', text: header }
   }
-  if (footerText) {
-    (payload.interactive as Record<string, unknown>).footer = { text: footerText }
+  if (footer) {
+    (payload.interactive as Record<string, unknown>).footer = { text: footer }
   }
   return sendWhatsAppRequest(credentials, payload)
 }
 
 export async function sendInteractiveListMessage(
   credentials: WhatsAppCredentials,
-  { to, bodyText, buttonText, sections }: InteractiveListMessage
+  { to, body, buttonText, sections, header, footer }: InteractiveListMessage
 ) {
-  return sendWhatsAppRequest(credentials, {
+  const payload: Record<string, unknown> = {
     to,
+    messaging_product: 'whatsapp',
     type: 'interactive',
     interactive: {
       type: 'list',
-      body: { text: bodyText },
+      body: { text: body },
       action: { button: buttonText, sections },
     },
-  })
+  }
+  if (header) {
+    (payload.interactive as Record<string, unknown>).header = { type: 'text', text: header }
+  }
+  if (footer) {
+    (payload.interactive as Record<string, unknown>).footer = { text: footer }
+  }
+  return sendWhatsAppRequest(credentials, payload)
 }
 
 export async function markMessageRead(

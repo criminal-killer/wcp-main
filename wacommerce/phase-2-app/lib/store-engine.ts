@@ -153,7 +153,7 @@ async function showCategories(waConfig: { phoneNumberId: string; accessToken: st
     .from(products)
     .where(and(eq(products.org_id, orgId), eq(products.is_active, 1)))
 
-  const cats = [...new Set(productList.map(p => p.category).filter(Boolean))] as string[]
+  const cats = Array.from(new Set(productList.map(p => p.category).filter(Boolean))) as string[]
 
   if (cats.length === 0) {
     return await sendTextMessage(waConfig, { to: phone, body: '😔 No products available yet. Check back soon!' })
@@ -447,14 +447,13 @@ async function handlePaymentSelected(
     try {
       const { createStorePaymentLink } = await import('@/lib/payments')
       const secretKey = decrypt(org.store_paystack_key_encrypted)
-      const result = await createStorePaymentLink(secretKey, {
+      paymentLink = await createStorePaymentLink(secretKey, {
         email: contact.email || `${phone.replace(/\D/g, '')}@whatsapp.customer`,
         amount: total,
         currency: org.currency || 'KES',
         reference: orderNumber,
         metadata: { order_number: orderNumber, org_id: orgId, contact_phone: phone },
       })
-      paymentLink = result.authorization_url
     } catch (err) {
       console.error('Paystack payment link error:', err)
     }
