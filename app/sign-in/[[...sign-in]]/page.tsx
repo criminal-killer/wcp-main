@@ -122,7 +122,7 @@ export default function OnboardingPage() {
                             className="w-full bg-transparent border-b-2 border-slate-100 focus:border-primary px-0 py-4 text-lg font-bold outline-none transition-colors appearance-none text-[#111B21]"
                         >
                             {COUNTRIES.map((c) => (
-                                <option key={c.code} value={c.code}>{c.name} â€” {c.currency}</option>
+                                <option key={c.code} value={c.code}>{c.name} — {c.currency}</option>
                             ))}
                         </select>
                     </div>
@@ -160,7 +160,7 @@ export default function OnboardingPage() {
                     disabled={loading}
                     className="w-full bg-primary text-white py-6 rounded-full font-serif font-black text-2xl hover:opacity-90 active:scale-95 transition-all shadow-xl shadow-primary/20 disabled:opacity-50"
                 >
-                    {loading ? 'Creating Store...' : 'Launch Store â†’'}
+                    {loading ? 'Creating Store...' : 'Launch Store →'}
                 </button>
                  <p className="text-center text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mt-8 opacity-50">
                     Trusted by 500+ global brands
@@ -179,7 +179,7 @@ export default function OnboardingPage() {
                 ))}
             </div>
             <p className="text-xs font-bold text-muted-foreground">
-                "Simple, professional, and efficient." â€” Sella Team
+                "Simple, professional, and efficient." — Sella Team
             </p>
         </div>
       </div>

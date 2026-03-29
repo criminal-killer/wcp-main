@@ -73,7 +73,7 @@ const LiveActivity = () => {
             {activity.name} from {activity.location}
           </p>
           <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-tight">
-            {activity.action} Â· 2m ago
+            {activity.action} · 2m ago
           </p>
         </div>
         <button onClick={() => setVisible(false)} className="text-slate-300 hover:text-slate-500">
@@ -94,7 +94,7 @@ const WhatsAppWalkthrough = () => {
       subtitle: 'Customer browses catalog',
       content: (
         <div className="space-y-3">
-          <div className="bg-card p-3 rounded-xl rounded-tl-none shadow-sm text-[10px] w-3/4">Welcome to our store! ðŸ‘‹ Check our latest drop.</div>
+          <div className="bg-card p-3 rounded-xl rounded-tl-none shadow-sm text-[10px] w-3/4">Welcome to our store! 👋 Check our latest drop.</div>
           <div className="bg-card p-2 rounded-2xl shadow-lg border border-slate-50">
             <div className="aspect-square bg-slate-100 rounded-lg mb-2" />
             <div className="h-2 w-3/4 bg-slate-200 rounded-full mb-1" />
@@ -109,7 +109,7 @@ const WhatsAppWalkthrough = () => {
       content: (
         <div className="space-y-3">
           <div className="bg-[#DCF8C6] p-3 rounded-xl rounded-tr-none shadow-sm text-[10px] w-3/4 ml-auto">I want to order the Silk Shirt in Blue.</div>
-          <div className="bg-card p-3 rounded-xl rounded-tl-none shadow-sm text-[10px] w-3/4">Great choice! Added to your cart. ðŸ›’</div>
+          <div className="bg-card p-3 rounded-xl rounded-tl-none shadow-sm text-[10px] w-3/4">Great choice! Added to your cart. 🛒</div>
           <div className="bg-card p-4 rounded-xl border border-primary/20 shadow-md flex items-center gap-3">
              <div className="w-8 h-8 bg-primary/10 rounded flex items-center justify-center text-primary italic font-serif text-[10px]">S</div>
              <div className="flex-1">
@@ -128,7 +128,7 @@ const WhatsAppWalkthrough = () => {
         <div className="space-y-3">
           <div className="bg-card p-3 rounded-xl rounded-tl-none shadow-sm text-[10px] w-3/4">Please provide your delivery address below.</div>
           <div className="bg-[#DCF8C6] p-3 rounded-xl rounded-tr-none shadow-sm text-[10px] w-3/4 ml-auto">House 42, Victoria Island, Lagos.</div>
-          <div className="bg-card p-3 rounded-xl rounded-tl-none shadow-sm text-[10px] w-3/4 italic">Calculating delivery fee... ðŸšš</div>
+          <div className="bg-card p-3 rounded-xl rounded-tl-none shadow-sm text-[10px] w-3/4 italic">Calculating delivery fee... 🚚</div>
         </div>
       )
     },
@@ -138,7 +138,7 @@ const WhatsAppWalkthrough = () => {
       content: (
         <div className="space-y-3">
           <div className="bg-card p-3 rounded-xl rounded-tl-none shadow-sm text-[10px] w-full border-l-4 border-primary">
-            âœ… Order #7721 Confirmed! <br />
+            ✅ Order #7721 Confirmed! <br />
             Total: $45.00 <br />
             <button className="mt-2 w-full bg-primary text-white py-2 rounded-lg font-bold text-[10px]">Pay via Paystack</button>
           </div>
@@ -281,7 +281,7 @@ export default function HomePage() {
           <div className="text-left">
             <div className="inline-flex items-center gap-2 bg-primary/5 border border-primary/20 rounded-full px-5 py-2 mb-10 group cursor-default">
               <span className="w-2 h-2 bg-primary rounded-full animate-ping"></span>
-              <span className="text-primary text-xs font-black tracking-[0.2em] uppercase">Phase 2 Premium Â· Invitation Only</span>
+              <span className="text-primary text-xs font-black tracking-[0.2em] uppercase">Phase 2 Premium · Invitation Only</span>
             </div>
 
             <h1 className="text-6xl md:text-8xl font-serif font-black mb-6 leading-[0.9] tracking-tight text-[#075E54]">
@@ -494,7 +494,7 @@ export default function HomePage() {
           </div>
         </div>
         <div className="max-w-7xl mx-auto mt-20 pt-12 border-t border-slate-100 flex flex-col md:flex-row justify-between text-muted-foreground text-xs font-bold tracking-tight gap-4">
-          <p>Â© 2026 SELLA TECHNOLOGIES INC.</p>
+          <p>© 2026 SELLA TECHNOLOGIES INC.</p>
           <div className="flex gap-10">
             <Link href="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link>
             <Link href="/terms" className="hover:text-primary transition-colors">Terms of Service</Link>

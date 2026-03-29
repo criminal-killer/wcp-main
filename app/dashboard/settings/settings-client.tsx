@@ -306,7 +306,7 @@ export default function SettingsClient({ org, autoReplies }: { org: Org, autoRep
               <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 mb-2">Current Commitment</p>
               <h3 className="text-3xl font-serif font-black text-[#075E54] italic capitalize">{org.plan || 'No Active'} Plan</h3>
               <p className="text-sm font-semibold text-slate-500 mt-1">
-                {org.plan === 'trial' ? `Free Trial Â· ${org.trial_ends_at ? Math.max(0, Math.ceil((new Date(org.trial_ends_at).getTime() - Date.now()) / 86400000)) : 0} days remaining` : 'Full Access'}
+                {org.plan === 'trial' ? `Free Trial · ${org.trial_ends_at ? Math.max(0, Math.ceil((new Date(org.trial_ends_at).getTime() - Date.now()) / 86400000)) : 0} days remaining` : 'Full Access'}
               </p>
             </div>
             <div className="w-20 h-20 bg-primary/5 rounded-full flex items-center justify-center border-4 border-white shadow-xl">

@@ -24,7 +24,7 @@ export default async function ProductsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-black text-foreground">Products</h1>
-          <p className="text-muted-foreground mt-1">{productList.length} products Â· Up to 200</p>
+          <p className="text-muted-foreground mt-1">{productList.length} products · Up to 200</p>
         </div>
         <Link
           href="/dashboard/products/new"
@@ -41,7 +41,7 @@ export default async function ProductsPage() {
           <h3 className="font-bold text-muted-foreground text-lg mb-2">No products yet</h3>
           <p className="text-muted-foreground/70 mb-6">Add your first product and it will appear in your WhatsApp store automatically.</p>
           <Link href="/dashboard/products/new" className="bg-[#25D366] text-white px-6 py-3 rounded-xl font-semibold hover:bg-green-600 transition-colors">
-            Add Your First Product â†’
+            Add Your First Product →
           </Link>
         </div>
       ) : (
