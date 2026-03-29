@@ -41,7 +41,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
               </p>
             </div>
             <Link
-              href="/dashboard/settings/billing"
+              href="/dashboard/settings?tab=billing"
               className="text-sm bg-amber-500 text-white px-3 py-1 rounded-lg font-semibold hover:bg-amber-600 transition-colors"
             >
               Subscribe — $29/mo

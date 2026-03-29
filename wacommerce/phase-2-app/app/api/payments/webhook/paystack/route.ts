@@ -47,11 +47,11 @@ export async function POST(req: NextRequest) {
         .where(eq(organizations.id, orgId))
 
       // Upsert subscription
-      const existing = await db.query.subscriptions.findFirst({
+      const existingSub = await db.query.subscriptions.findFirst({
         where: eq(subscriptions.org_id, orgId),
       })
 
-      if (existing) {
+      if (existingSub) {
         await db.update(subscriptions).set({
           status: 'active',
           plan,
@@ -73,6 +73,35 @@ export async function POST(req: NextRequest) {
           current_period_start: new Date().toISOString(),
           current_period_end: periodEnd,
         })
+      }
+
+      // Handle Referral Commission (50%)
+      const orgRecord = await db.query.organizations.findFirst({
+        where: eq(organizations.id, orgId),
+      })
+
+      if (orgRecord?.referred_by) {
+        const amount = data.amount / 100
+        const commission = amount * 0.50
+
+        // Find the referrer
+        const referrer = await db.query.organizations.findFirst({
+          where: eq(organizations.referral_code, orgRecord.referred_by),
+        })
+
+        if (referrer) {
+          // Record the referral reward
+          await db.insert(referrals).values({
+            referrer_org_id: referrer.id,
+            referred_org_id: orgId,
+            referral_code: orgRecord.referred_by,
+            status: 'paid',
+            reward_type: 'commission',
+            reward_amount: commission,
+          })
+          
+          console.log(`Credited referral commission of ${commission} ${data.currency} to ${referrer.id}`)
+        }
       }
       break
     }

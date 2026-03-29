@@ -31,8 +31,8 @@ export async function POST(req: NextRequest) {
     const existing = await db.query.users.findFirst({ where: eq(users.clerk_id, userId) })
     if (existing) return NextResponse.json({ data: { org_id: existing.org_id }, message: 'Already onboarded' })
 
-    const body = await req.json() as { name: string; country: string; business_type: string }
-    const { name, country = 'KE', business_type } = body
+    const body = await req.json() as { name: string; country: string; business_type: string; plan?: string }
+    const { name, country = 'KE', business_type, plan = 'trial' } = body
 
     if (!name || !name.trim()) {
       return NextResponse.json({ error: 'Store name is required' }, { status: 400 })
