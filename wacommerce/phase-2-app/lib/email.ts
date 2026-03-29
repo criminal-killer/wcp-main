@@ -1,9 +1,9 @@
 import { Resend } from 'resend'
 
 const resend = new Resend(process.env.RESEND_API_KEY!)
-const FROM = process.env.RESEND_FROM_EMAIL || 'noreply@sella.io'
+const FROM = process.env.RESEND_FROM_EMAIL || 'Sella <onboarding@resend.dev>'
 const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME || 'SELLA'
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://app.sella.io'
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://sella-app.vercel.app'
 
 export async function sendWelcomeEmail(email: string, name: string, orgName: string) {
   await resend.emails.send({

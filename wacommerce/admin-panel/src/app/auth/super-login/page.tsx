@@ -61,7 +61,7 @@ export default function SuperLoginPage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="alfred@sella.io"
+                  placeholder="alfred.dev8@gmail.com"
                   className="w-full bg-slate-950/40 border border-slate-800 rounded-2xl py-4 pl-12 pr-4 text-white placeholder-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500/40 transition-all font-bold tracking-tight"
                 />
               </div>

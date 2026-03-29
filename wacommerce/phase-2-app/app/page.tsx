@@ -218,7 +218,7 @@ export default function HomePage() {
               <Link href="#features" className="hover:text-primary transition-colors">Features</Link>
               <Link href="#pricing" className="hover:text-primary transition-colors">Pricing</Link>
               <Link href="#themes" className="hover:text-primary transition-colors">Themes</Link>
-              <a href="https://docs.sella.io" className="hover:text-primary transition-colors">Docs</a>
+              <Link href="/docs" className="hover:text-primary transition-colors">Docs</Link>
             </nav>
           </div>
 
@@ -487,7 +487,7 @@ export default function HomePage() {
           <div>
             <h4 className="font-bold mb-6 text-[#075E54] text-sm uppercase tracking-widest">Connect</h4>
             <ul className="space-y-4 text-muted-foreground font-medium text-sm">
-              <li><a href="mailto:hello@sella.io" className="hover:text-primary transition-colors">hello@sella.io</a></li>
+              <li><a href="mailto:mazaoedu@gmail.com" className="hover:text-primary transition-colors">mazaoedu@gmail.com</a></li>
               <li><a href="#" className="hover:text-primary transition-colors">Instagram</a></li>
               <li><a href="#" className="hover:text-primary transition-colors">LinkedIn</a></li>
             </ul>

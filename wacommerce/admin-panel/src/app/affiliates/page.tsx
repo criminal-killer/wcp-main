@@ -85,7 +85,7 @@ export default function AdminAffiliatesPage() {
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-2">
                     <p className={`text-lg font-black ${a.balance >= 100 ? 'text-primary' : 'text-slate-800'}`}>${a.balance}</p>
-                    {a.balance >= 100 && <AlertTriangle size={16} className="text-amber-500" title="Ready for payout" />}
+                    {a.balance >= 100 && <AlertTriangle size={16} className="text-amber-500" />}
                   </div>
                 </td>
                 <td className="px-6 py-4 text-right space-x-2">

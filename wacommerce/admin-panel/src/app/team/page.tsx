@@ -5,9 +5,9 @@ import { ShieldAlert, UserPlus, Search, MoreVertical, Shield, Zap, Target } from
 // Mock Data for Team - In production this would be fetched from the 'users' table or a dedicated 'admins' table
 const mockTeam = [
   { id: '1', name: 'Alfred', email: 'alfred.dev8@gmail.com', role: 'Super Admin', status: 'Active', joined: '2024-01-01' },
-  { id: '2', name: 'Sarah Jones', email: 'sarah@sella.io', role: 'Admin', status: 'Active', joined: '2024-03-15' },
+  { id: '2', name: 'Sarah Jones', email: 'mazaoedu@gmail.com', role: 'Admin', status: 'Active', joined: '2024-03-15' },
   { id: '3', name: 'Kevin Marketer', email: 'kevin@growth.io', role: 'Marketer', status: 'Active', joined: '2024-03-20' },
-  { id: '4', name: 'Support Bot', email: 'bot@sella.io', role: 'Support', status: 'Inactive', joined: '2024-02-10' },
+  { id: '4', name: 'Support Bot', email: 'mazaoedu@gmail.com', role: 'Support', status: 'Inactive', joined: '2024-02-10' },
 ]
 
 export default function TeamManagementPage() {
