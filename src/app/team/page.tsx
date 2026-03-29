@@ -3,8 +3,17 @@ import { users } from "@/lib/schema"
 import { eq, desc, not } from "drizzle-orm"
 import { ShieldAlert, UserPlus, Search, MoreVertical, Shield, Zap, Target, Clock, CheckCircle2, XCircle } from 'lucide-react'
 import { approveUser, updateUserRole, restrictUser } from "@/lib/actions/admin"
+import { auth } from "@clerk/nextjs/server"
+import { redirect } from "next/navigation"
 
 export default async function TeamManagementPage() {
+  const { userId } = auth()
+  const SUPER_ADMIN_ID = process.env.ADMIN_USER_ID
+
+  if (!userId || userId !== SUPER_ADMIN_ID) {
+    return redirect("/not-authorized")
+  }
+
   const team = await db.select().from(users).orderBy(desc(users.created_at))
   
   const pending = team.filter(m => m.is_active === 0)
