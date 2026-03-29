@@ -369,11 +369,11 @@ export default function HomePage() {
           <div className="grid md:grid-cols-3 gap-8">
             {[
               { 
-                name: 'Starter', price: '0', popular: false, trial: 'Free Forever / 7-Day Pro Trial', desc: 'Perfect for new merchants starting their journey.',
+                name: 'Starter', price: '29', popular: false, trial: '7-Day Free Trial', desc: 'Perfect for new merchants starting their journey.',
                 features: ['1 Store', '50 Products', 'Basic Analytics', 'WhatsApp Catalog'] 
               },
               { 
-                name: 'Pro', price: '29', popular: true, trial: '7 Days Free', desc: 'Our most popular plan for established brands.',
+                name: 'Pro', price: '59', popular: true, trial: '7 Days Free', desc: 'Our most popular plan for established brands.',
                 features: ['3 Stores', '500 Products', 'Advanced Analytics', 'Priority Support', 'Custom Themes'] 
               },
               { 

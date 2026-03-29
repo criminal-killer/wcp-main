@@ -49,6 +49,14 @@ export const organizations = sqliteTable('organizations', {
   referral_code: text('referral_code').unique(),
   referred_by: text('referred_by'),
 
+  // AI Configuration
+  ai_provider: text('ai_provider').default('sella'), // sella (groq), openai, anthropic, google, custom
+  ai_api_key_encrypted: text('ai_api_key_encrypted'),
+  ai_model: text('ai_model'),
+  ai_persona: text('ai_persona').default('educator'), // educator, sales, support
+  ai_endpoint_url: text('ai_endpoint_url'), // for custom openai-compatible endpoints
+  ai_system_prompt: text('ai_system_prompt'), // custom refinement
+
   // Meta
   created_at: text('created_at').default(sql`(datetime('now'))`),
   updated_at: text('updated_at').default(sql`(datetime('now'))`),

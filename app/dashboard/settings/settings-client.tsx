@@ -33,6 +33,7 @@ const TABS = [
   { id: 'payments', label: 'Payments', icon: CreditCard, secure: true },
   { id: 'auto-replies', label: 'Auto-Replies', icon: Zap },
   { id: 'billing', label: 'Billing', icon: Globe },
+  { id: 'ai', label: 'AI Agent', icon: Zap, secure: true },
   { id: 'appearance', label: 'Appearance', icon: Palette },
 ]
 
@@ -131,6 +132,14 @@ function SettingsContent({ org, autoReplies }: { org: Org, autoReplies: AutoRepl
   const [payForm, setPayForm] = useState({
     paystack_key: '', paypal_email: org.store_paypal_email || '',
     cod_enabled: String(org.store_cod_enabled ?? 1) === '1',
+  })
+  const [aiForm, setAiForm] = useState({
+    provider: (org as any).ai_provider || 'sella',
+    model: (org as any).ai_model || '',
+    persona: (org as any).ai_persona || 'educator',
+    api_key: '',
+    endpoint_url: (org as any).ai_endpoint_url || '',
+    system_prompt: (org as any).ai_system_prompt || '',
   })
 
   const [subscribeError, setSubscribeError] = useState('')
@@ -428,6 +437,133 @@ function SettingsContent({ org, autoReplies }: { org: Org, autoReplies: AutoRepl
           </div>
           <ThemePicker />
         </div>
+      )}
+
+      {/* AI Agent Tab */}
+      {tab === 'ai' && (
+        <SecureSection email="owner@email.com" onUnlock={() => setUnlockedTabs([...unlockedTabs, 'ai'])}>
+          <div className="bg-card rounded-2xl border border-border p-8 space-y-8 max-w-2xl shadow-sm">
+            <div className="flex items-center gap-4">
+               <div className="w-14 h-14 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-100">
+                 <Zap size={28} />
+               </div>
+               <div>
+                 <h2 className="font-bold text-foreground italic font-serif text-xl text-amber-600">AI Intelligence Core</h2>
+                 <p className="text-[10px] text-muted-foreground/70 font-black uppercase tracking-[0.2em] mt-1">Configure your store's brain</p>
+               </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">AI Provider</label>
+                <select 
+                  value={aiForm.provider} 
+                  onChange={e => setAiForm({ ...aiForm, provider: e.target.value })}
+                  className="w-full border border-border rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50"
+                >
+                  <option value="sella">Sella Default (Groq/Llama)</option>
+                  <option value="google">Google Gemini (Fast & Efficient)</option>
+                  <option value="anthropic">Anthropic Claude</option>
+                  <option value="openai">OpenAI (GPT-4o)</option>
+                  <option value="custom">Custom (OpenAI Compatible)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Interaction Persona</label>
+                <select 
+                  value={aiForm.persona} 
+                  onChange={e => setAiForm({ ...aiForm, persona: e.target.value })}
+                  className="w-full border border-border rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50"
+                >
+                  <option value="educator">🧑‍🏫 Educator/Teacher</option>
+                  <option value="sales">💰 Elite Sales Agent</option>
+                  <option value="support">🛠️ Customer Support</option>
+                </select>
+              </div>
+            </div>
+
+            {aiForm.provider !== 'sella' && (
+              <div className="space-y-6 animate-in fade-in slide-in-from-top-4 duration-500">
+                <div>
+                  <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Custom API Key</label>
+                  <input 
+                    type="password" 
+                    value={aiForm.api_key} 
+                    onChange={e => setAiForm({ ...aiForm, api_key: e.target.value })}
+                    placeholder="Enter your secret key"
+                    className="w-full border border-border rounded-xl px-4 py-3 text-sm font-bold font-mono focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50" 
+                  />
+                  <p className="text-[9px] text-muted-foreground/70 mt-2 font-bold uppercase tracking-tight">Key is AES-256 encrypted. Decryption only occurs during chat execution.</p>
+                </div>
+
+                {aiForm.provider === 'custom' && (
+                  <div>
+                    <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Base Endpoint URL</label>
+                    <input 
+                      value={aiForm.endpoint_url} 
+                      onChange={e => setAiForm({ ...aiForm, endpoint_url: e.target.value })}
+                      placeholder="https://api.yourprovider.com/v1"
+                      className="w-full border border-border rounded-xl px-4 py-3 text-sm font-bold font-mono focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50" 
+                    />
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Model Name (Optional)</label>
+                  <input 
+                    value={aiForm.model} 
+                    onChange={e => setAiForm({ ...aiForm, model: e.target.value })}
+                    placeholder="e.g. gpt-4o, gemini-1.5-flash"
+                    className="w-full border border-border rounded-xl px-4 py-3 text-sm font-bold font-mono focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50" 
+                  />
+                </div>
+              </div>
+            )}
+
+            <div>
+              <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">System Prompt Refinement (Optional)</label>
+              <textarea 
+                value={aiForm.system_prompt} 
+                onChange={e => setAiForm({ ...aiForm, system_prompt: e.target.value })}
+                rows={3} 
+                placeholder="Add special instructions for your AI agent..."
+                className="w-full border border-border rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50 resize-none" 
+              />
+            </div>
+
+            <button 
+              onClick={async () => { 
+                setSaving(true); 
+                try {
+                  const res = await fetch('/api/settings/ai', { 
+                    method: 'PUT', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({
+                      ai_provider: aiForm.provider,
+                      ai_model: aiForm.model,
+                      ai_persona: aiForm.persona,
+                      ai_api_key: aiForm.api_key,
+                      ai_endpoint_url: aiForm.endpoint_url,
+                      ai_system_prompt: aiForm.system_prompt,
+                    }) 
+                  });
+                  if (!res.ok) throw new Error('Failed to save');
+                  setSaved(true);
+                  setTimeout(() => setSaved(false), 2000);
+                } catch (e) {
+                  alert('Verification failed. Please check your credentials.');
+                } finally {
+                  setSaving(false);
+                }
+              }} 
+              disabled={saving}
+              className="w-full bg-[#075E54] text-white py-4 rounded-xl font-bold hover:shadow-xl hover:shadow-[#075E54]/20 transition-all disabled:opacity-60"
+            >
+              {saved ? '✓ Brain Synchronized' : saving ? 'Optimizing Neural Paths...' : 'Update Intelligence'}
+            </button>
+          </div>
+        </SecureSection>
       )}
     </div>
   )
