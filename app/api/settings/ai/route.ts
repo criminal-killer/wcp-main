@@ -13,7 +13,20 @@ export async function PUT(req: NextRequest) {
     const user = await db.query.users.findFirst({ where: eq(users.clerk_id, userId) })
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
+    const org = await db.query.organizations.findFirst({ where: eq(organizations.id, user.org_id) })
+    if (!org) return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
+
     const body = await req.json()
+    const isPremium = ['pro', 'elite', 'custom'].includes(org.plan || '')
+    const isStandardSella = body.ai_provider === 'sella'
+
+    if (!isPremium && !isStandardSella) {
+      return NextResponse.json({ 
+        error: 'Custom AI Providers are only available on Pro and Elite plans. Please upgrade to use your own keys.',
+        code: 'PLAN_GATING'
+      }, { status: 403 })
+    }
+
     const update: any = {
       ai_provider: body.ai_provider,
       ai_model: body.ai_model,

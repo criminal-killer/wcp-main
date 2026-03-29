@@ -85,7 +85,7 @@ export default function DashboardSidebar({ org }: { org: Org }) {
       </aside>
 
       {/* Desktop Sidebar (Permanent) */}
-      <aside className="hidden lg:flex lg:w-64 lg:flex-col lg:flex-shrink-0 bg-card border-r border-border h-screen sticky top-0 overflow-y-auto">
+      <aside className="hidden lg:flex lg:w-64 lg:flex-col lg:flex-shrink-0 bg-card border-r border-border h-screen sticky top-0">
         <div className="p-6 border-b border-border">
           <div className="flex items-center gap-3 p-2 rounded-xl bg-secondary/50 border border-border/50">
             <div className="w-10 h-10 bg-whatsapp rounded-xl flex items-center justify-center shadow-lg shadow-whatsapp/20">
@@ -100,7 +100,7 @@ export default function DashboardSidebar({ org }: { org: Org }) {
             </div>
           </div>
         </div>
-        <div className="flex-1 px-4 py-4">
+        <div className="flex-1 px-4 py-4 overflow-y-auto">
           <NavContent pathname={pathname} org={org} />
         </div>
         <div className="p-4 border-t border-border mt-auto space-y-2">

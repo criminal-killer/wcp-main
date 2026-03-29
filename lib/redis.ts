@@ -1,15 +1,16 @@
 import { Redis } from '@upstash/redis'
 
 const isConfigured = 
-  process.env.UPSTASH_REDIS_REST_URL && 
-  process.env.UPSTASH_REDIS_REST_URL !== 'https://...' &&
-  process.env.UPSTASH_REDIS_REST_TOKEN &&
-  process.env.UPSTASH_REDIS_REST_TOKEN !== 'AX...'
+  (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_URL !== 'https://...') ||
+  (process.env.KV_REST_API_URL && process.env.KV_REST_API_URL !== '');
 
-export const redis = isConfigured 
+const url = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
+const token = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
+
+export const redis = isConfigured && url && token
   ? new Redis({
-      url: process.env.UPSTASH_REDIS_REST_URL!,
-      token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+      url: url,
+      token: token,
     })
   : null
 

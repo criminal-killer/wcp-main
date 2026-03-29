@@ -144,6 +144,7 @@ function SettingsContent({ org, autoReplies }: { org: Org, autoReplies: AutoRepl
 
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null)
   const [subscribeError, setSubscribeError] = useState('')
+  const [showAllPlans, setShowAllPlans] = useState(false)
 
   async function handleSubscribe(plan: string, provider: 'paystack' | 'stripe' | 'paypal') {
     setLoadingPlan(`${plan}-${provider}`)
@@ -171,15 +172,15 @@ function SettingsContent({ org, autoReplies }: { org: Org, autoReplies: AutoRepl
   const PLANS = [
     { 
       id: 'starter', name: 'Starter', price: 29, trial: 7, 
-      features: ['1 Store', '50 Products', 'Basic Shop Bot', 'Standard Admin', '7-Day Free Trial']
+      features: ['100 Products', 'Sella AI Default', 'Standard Admin', 'WhatsApp Storefront', '7-Day Free Trial']
     },
     { 
       id: 'pro', name: 'Pro', price: 59, trial: 7, 
-      features: ['3 Stores', '500 Products', 'AI Auto-Replies', 'All Themes', 'Abandoned Carts']
+      features: ['500 Products', 'Custom AI Agent (Gemini/GPT)', 'Advanced Analytics', 'Bulk Product Upload', 'Abandoned Cart Recovery']
     },
     { 
       id: 'elite', name: 'Elite', price: 99, trial: 7, 
-      features: ['Unlimited Products', 'Custom AI Agent', 'White-labeling', 'API Access', 'Dedicated Support']
+      features: ['5,000 Products', 'White-label Storefront', 'Dedicated Account Manager', 'Custom API Integrations', 'Priority AI Processing']
     }
   ]
 
@@ -323,70 +324,97 @@ function SettingsContent({ org, autoReplies }: { org: Org, autoReplies: AutoRepl
 
       {/* Billing Tab */}
       {tab === 'billing' && (
-        <div className="max-w-4xl space-y-8">
-          <div className="bg-card rounded-3xl border border-border p-8 flex items-center justify-between shadow-sm">
-            <div>
+        <div className="max-w-4xl space-y-8 animate-in fade-in duration-500">
+          <div className="bg-card rounded-3xl border border-border p-8 flex flex-col md:flex-row items-center justify-between shadow-sm gap-6">
+            <div className="flex-1">
               <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 mb-2">Current Commitment</p>
-              <h3 className="text-3xl font-serif font-black text-[#075E54] italic capitalize">{org.plan || 'No Active'} Plan</h3>
+              <h3 className="text-3xl font-serif font-black text-[#075E54] italic capitalize">
+                {(org.plan === 'trial' || !org.plan) ? 'Standard Trial' : `${org.plan} Plan`}
+              </h3>
               <p className="text-sm font-semibold text-slate-500 mt-1">
-                {org.plan === 'trial' ? `Free Trial · ${org.trial_ends_at ? Math.max(0, Math.ceil((new Date(org.trial_ends_at).getTime() - Date.now()) / 86400000)) : 0} days remaining` : 'Full Access'}
+                {org.plan === 'trial' ? `Free Trial · ${org.trial_ends_at ? Math.max(0, Math.ceil((new Date(org.trial_ends_at).getTime() - Date.now()) / 86400000)) : 0} days remaining` : 'Subscription Active'}
               </p>
             </div>
-            <div className="w-20 h-20 bg-primary/5 rounded-full flex items-center justify-center border-4 border-white shadow-xl">
-               <CreditCard size={32} className="text-primary" />
+            <div className="flex items-center gap-4">
+              {org.plan && org.plan !== 'trial' && !showAllPlans && (
+                <button 
+                  onClick={() => setShowAllPlans(true)}
+                  className="px-6 py-3 bg-secondary text-foreground rounded-2xl font-bold text-sm hover:bg-secondary/80 transition-all border border-border"
+                >
+                  Manage / Change Plan
+                </button>
+              )}
+              <div className="w-20 h-20 bg-primary/5 rounded-full flex items-center justify-center border-4 border-white shadow-xl">
+                 <CreditCard size={32} className="text-primary" />
+              </div>
             </div>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6">
-            {PLANS.map(plan => (
-              <div key={plan.id} className={`bg-card rounded-3xl p-8 border-2 transition-all ${org.plan === plan.id ? 'border-primary shadow-xl shadow-primary/10' : 'border-border opacity-90'}`}>
-                <div className="flex justify-between items-start mb-6">
-                  <div>
-                    <h4 className="text-xl font-black text-[#075E54] font-serif italic">{plan.name}</h4>
-                    <div className="flex items-baseline gap-1 mt-1">
-                      <span className="text-2xl font-black">${plan.price}</span>
-                      <span className="text-xs font-bold text-slate-400">/mo</span>
+          {((org.plan === 'trial' || !org.plan) || showAllPlans) && (
+            <div className="grid md:grid-cols-3 gap-6 animate-in zoom-in-95 duration-300">
+              {PLANS.map(plan => (
+                <div key={plan.id} className={`bg-card rounded-3xl p-8 border-2 transition-all flex flex-col ${org.plan === plan.id ? 'border-primary shadow-xl shadow-primary/10' : 'border-border opacity-90'}`}>
+                  <div className="flex justify-between items-start mb-6">
+                    <div>
+                      <h4 className="text-xl font-black text-[#075E54] font-serif italic">{plan.name}</h4>
+                      <div className="flex items-baseline gap-1 mt-1">
+                        <span className="text-2xl font-black">${plan.price}</span>
+                        <span className="text-xs font-bold text-slate-400">/mo</span>
+                      </div>
                     </div>
+                    {org.plan === plan.id && (
+                      <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center text-white">
+                        <CheckCircle2 size={14} />
+                      </div>
+                    )}
                   </div>
-                  {org.plan === plan.id && (
-                    <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center text-white">
-                      <CheckCircle2 size={14} />
+
+                  <ul className="space-y-3 mb-8 flex-1">
+                    {plan.features.map(f => (
+                      <li key={f} className="flex items-center gap-3 text-xs font-bold text-slate-500">
+                        <div className="w-4 h-4 rounded bg-primary/10 flex items-center justify-center text-primary">
+                          <CheckCircle2 size={10} />
+                        </div>
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+
+                  {(org.plan !== plan.id || showAllPlans) && (
+                    <div className="space-y-2 mt-auto">
+                      <button 
+                        onClick={() => handleSubscribe(plan.id, 'paystack')}
+                        disabled={!!loadingPlan}
+                        className={`w-full ${org.plan === plan.id ? 'bg-secondary text-foreground border border-border' : 'bg-[#075E54] text-white'} py-3 rounded-xl font-black text-xs uppercase tracking-widest hover:opacity-95 transition-all disabled:opacity-50`}
+                      >
+                        {loadingPlan === `${plan.id}-paystack` ? 'Processing...' : (org.plan === plan.id ? 'Current Plan' : 'Pay via Paystack (Local)')}
+                      </button>
+                      {org.plan !== plan.id && (
+                        <button 
+                          onClick={() => handleSubscribe(plan.id, 'paypal')}
+                          disabled={!!loadingPlan}
+                          className="w-full bg-blue-600 text-white py-3 rounded-xl font-black text-xs uppercase tracking-widest hover:opacity-95 transition-all disabled:opacity-50"
+                        >
+                          {loadingPlan === `${plan.id}-paypal` ? 'Processing...' : 'Pay via PayPal (Global)'}
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
+              ))}
+            </div>
+          )}
 
-                <ul className="space-y-3 mb-8">
-                  {plan.features.map(f => (
-                    <li key={f} className="flex items-center gap-3 text-xs font-bold text-slate-500">
-                      <div className="w-4 h-4 rounded bg-primary/10 flex items-center justify-center text-primary">
-                        <CheckCircle2 size={10} />
-                      </div>
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-
-                {org.plan !== plan.id && (
-                  <div className="space-y-2">
-                    <button 
-                      onClick={() => handleSubscribe(plan.id, 'paystack')}
-                      disabled={!!loadingPlan}
-                      className="w-full bg-[#075E54] text-white py-3 rounded-xl font-black text-xs uppercase tracking-widest hover:opacity-95 transition-all disabled:opacity-50"
-                    >
-                      {loadingPlan === `${plan.id}-paystack` ? 'Processing...' : 'Pay via Paystack (Local)'}
-                    </button>
-                    <button 
-                      onClick={() => handleSubscribe(plan.id, 'paypal')}
-                      disabled={!!loadingPlan}
-                      className="w-full bg-blue-600 text-white py-3 rounded-xl font-black text-xs uppercase tracking-widest hover:opacity-95 transition-all disabled:opacity-50"
-                    >
-                      {loadingPlan === `${plan.id}-paypal` ? 'Processing...' : 'Pay via PayPal (Global)'}
-                    </button>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
+          {showAllPlans && (
+            <div className="text-center">
+              <button 
+                onClick={() => setShowAllPlans(false)}
+                className="text-xs font-black uppercase tracking-widest text-slate-400 hover:text-primary transition-colors"
+              >
+                ← Back to Active Plan
+              </button>
+            </div>
+          )}
 
           {subscribeError && (
              <div className="bg-red-50 border border-red-100 rounded-2xl p-6 flex items-center gap-4 text-red-700">

@@ -6,8 +6,22 @@ import { eq, and } from 'drizzle-orm'
 import { z } from 'zod'
 import { clearProductCache } from '@/lib/redis'
 
-const PLAN_LIMITS = { trial: 10, free: 10, starter: 200, growth: 500, premium: 1000 }
-const CATEGORY_LIMITS = { trial: 10, free: 10, starter: 10, growth: 20, premium: 50 }
+const PLAN_LIMITS = { 
+  trial: 100, 
+  free: 10, 
+  starter: 100, 
+  pro: 500, 
+  elite: 5000,
+  custom: 10000 
+}
+const CATEGORY_LIMITS = { 
+  trial: 20, 
+  free: 5, 
+  starter: 20, 
+  pro: 50, 
+  elite: 100,
+  custom: 200 
+}
 
 const productSchema = z.object({
   name: z.string().min(1).max(200),

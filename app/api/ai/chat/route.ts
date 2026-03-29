@@ -82,8 +82,10 @@ export async function POST(req: Request) {
     const persona = (org.ai_persona as keyof typeof PERSONA_PROMPTS) || 'educator'
     const systemPrompt = (PERSONA_PROMPTS[persona] || PERSONA_PROMPTS.educator) + context + (org.ai_system_prompt || '')
 
-    // AI Provider Logic
-    const provider = org.ai_provider || 'sella'
+    // AI Provider Gating
+    const isPremium = ['pro', 'elite', 'custom'].includes(org.plan || '')
+    const provider = (isPremium || org.ai_provider === 'sella') ? (org.ai_provider || 'sella') : 'sella'
+    
     let reply = ""
 
     if (provider === 'sella') {
