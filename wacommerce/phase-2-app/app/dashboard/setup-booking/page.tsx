@@ -199,7 +199,7 @@ export default function SetupBookingPage() {
                   )}
                 </button>
                 <p className="text-center text-xs text-muted-foreground/70 mt-4 font-bold uppercase tracking-widest">
-                  Secure Submission Â· No commitment required
+                  Secure Submission · No commitment required
                 </p>
               </div>
             </form>

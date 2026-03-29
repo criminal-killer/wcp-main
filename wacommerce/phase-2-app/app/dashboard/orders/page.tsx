@@ -50,7 +50,7 @@ export default async function OrdersPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-black text-foreground">Orders</h1>
-          <p className="text-muted-foreground mt-1">{orderList.length} orders Â· 300/month limit</p>
+          <p className="text-muted-foreground mt-1">{orderList.length} orders · 300/month limit</p>
         </div>
       </div>
 
@@ -60,7 +60,7 @@ export default async function OrdersPage() {
           <h3 className="font-bold text-muted-foreground text-lg mb-2">No orders yet</h3>
           <p className="text-muted-foreground/70 mb-6">Orders will appear here when customers buy through your WhatsApp store.</p>
           <Link href="/dashboard/settings?tab=whatsapp" className="bg-[#25D366] text-white px-6 py-3 rounded-xl font-semibold hover:bg-green-600 transition-colors">
-            Connect WhatsApp â†’
+            Connect WhatsApp →
           </Link>
         </div>
       ) : (

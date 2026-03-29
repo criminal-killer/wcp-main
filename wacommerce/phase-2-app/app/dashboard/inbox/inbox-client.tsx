@@ -165,7 +165,7 @@ export default function InboxClient({
                   <p>{msg.content}</p>
                   <p className={`text-xs mt-1 ${msg.direction === 'outbound' ? 'text-green-100' : 'text-muted-foreground/70'}`}>
                     {msg.created_at ? new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
-                    {msg.sent_by && ' Â· You'}
+                    {msg.sent_by && ' · You'}
                   </p>
                 </div>
               </div>

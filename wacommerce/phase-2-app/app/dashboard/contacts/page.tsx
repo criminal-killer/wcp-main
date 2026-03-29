@@ -25,7 +25,7 @@ export default async function ContactsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-black text-foreground">Contacts</h1>
-          <p className="text-muted-foreground mt-1">{contactList.length} contacts Â· 1,000 limit</p>
+          <p className="text-muted-foreground mt-1">{contactList.length} contacts · 1,000 limit</p>
         </div>
         <a
           href="/api/contacts/export"
