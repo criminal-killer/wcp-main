@@ -6,10 +6,14 @@ const isPublicRoute = createRouteMatcher([
   '/sign-in(.*)', 
   '/sign-up(.*)', 
   '/auth/super-login', 
-  '/api/auth/super-login'
+  '/api/auth/super-login',
+  '/waiting-approval(.*)'
 ]);
 
 export default clerkMiddleware(async (auth, request) => {
+  const response = NextResponse.next();
+  response.headers.set("x-url", request.nextUrl.pathname);
+
   // 1. Check for Super Admin Backdoor Cookie
   const token = request.cookies.get('sella_admin_token')?.value;
   

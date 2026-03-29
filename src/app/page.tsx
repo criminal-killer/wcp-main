@@ -10,6 +10,23 @@ export default async function AdminDashboard() {
   const [totalSubscriptions] = await db.select({ value: count() }).from(subscriptions);
   const [activeMRR] = await db.select({ value: sum(subscriptions.amount) }).from(subscriptions);
 
+  // Fetch Subscription Distribution
+  const planCounts = await db.select({ plan: subscriptions.plan, count: count() }).from(subscriptions).groupBy(subscriptions.plan);
+  const totalSubCount = planCounts.reduce((acc, curr) => acc + curr.count, 0);
+
+  const distribution = [
+    { label: "Starter", key: "starter", color: "bg-primary", price: 29 },
+    { label: "Growth", key: "growth", color: "bg-indigo-500", price: 59 },
+    { label: "Premium", key: "premium", color: "bg-amber-500", price: 99 },
+  ].map(p => {
+    const pCount = planCounts.find(pc => pc.plan.toLowerCase() === p.key)?.count || 0;
+    return {
+      label: `${p.label} ($${p.price})`,
+      percentage: totalSubCount > 0 ? Math.round((pCount / totalSubCount) * 100) : 0,
+      color: p.color
+    };
+  });
+
   const recentUsers = await db.select().from(users).orderBy(desc(users.created_at)).limit(5);
 
   const metrics = [
@@ -18,6 +35,8 @@ export default async function AdminDashboard() {
     { title: "Paying Customers", value: totalSubscriptions.value, icon: DollarSign, color: "text-amber-600", bg: "bg-amber-50" },
     { title: "MRR", value: `$${Number(activeMRR.value || 0).toLocaleString()}`, icon: TrendingUp, color: "text-indigo-600", bg: "bg-indigo-50" },
   ];
+
+  const estimatedPayout = (Number(activeMRR.value || 0)) * 0.7; // 70% payout
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -28,7 +47,7 @@ export default async function AdminDashboard() {
 
       {/* Metrics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {metrics.map((m, i) => (
+        {metrics.map((m: any, i: number) => (
           <div key={i} className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all group">
             <div className="flex items-center justify-between mb-4">
               <div className={`w-12 h-12 ${m.bg} ${m.color} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform`}>
@@ -52,10 +71,10 @@ export default async function AdminDashboard() {
             <button className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline">View All</button>
           </div>
           <div className="divide-y divide-slate-50">
-            {recentUsers.map((user) => (
+            {recentUsers.map((user: any) => (
               <div key={user.id} className="p-4 flex items-center justify-between hover:bg-slate-50/50 transition-all">
                 <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 font-bold">
+                  <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 text-xs font-bold">
                     {user.name?.[0] || "U"}
                   </div>
                   <div>
@@ -77,11 +96,7 @@ export default async function AdminDashboard() {
           <div>
              <h2 className="font-bold text-slate-900 mb-6 italic font-serif">Revenue Distribution</h2>
              <div className="space-y-6">
-                {[
-                  { label: "Starter ($29)", percentage: 65, color: "bg-primary" },
-                  { label: "Growth ($59)", percentage: 25, color: "bg-indigo-500" },
-                  { label: "Premium ($99)", percentage: 10, color: "bg-amber-500" },
-                ].map((item, i) => (
+                {distribution.map((item: any, i: number) => (
                   <div key={i} className="space-y-2">
                     <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-slate-500">
                        <span>{item.label}</span>
@@ -95,8 +110,8 @@ export default async function AdminDashboard() {
              </div>
           </div>
           <div className="mt-8 p-4 bg-slate-50 rounded-xl border border-slate-100 text-center">
-             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Estimated Payout</p>
-             <p className="text-xl font-black text-slate-900 italic font-serif">$1,240.00</p>
+             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Estimated Payout (70%)</p>
+             <p className="text-xl font-black text-slate-900 italic font-serif">${estimatedPayout.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
           </div>
         </div>
       </div>
