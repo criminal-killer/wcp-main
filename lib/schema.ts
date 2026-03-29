@@ -49,6 +49,13 @@ export const organizations = sqliteTable('organizations', {
   referral_code: text('referral_code').unique(),
   referred_by: text('referred_by'),
 
+  // Managed Payments (MoR)
+  payment_mode: text('payment_mode').default('direct'), // direct, managed
+  managed_balance: real('managed_balance').default(0),
+  managed_currency: text('managed_currency').default('KES'),
+  managed_payout_details: text('managed_payout_details'),
+  managed_payout_interval: text('managed_payout_interval').default('weekly'),
+
   // AI Configuration
   ai_provider: text('ai_provider').default('sella'), // sella (groq), openai, anthropic, google, custom
   ai_api_key_encrypted: text('ai_api_key_encrypted'),
@@ -61,6 +68,17 @@ export const organizations = sqliteTable('organizations', {
   created_at: text('created_at').default(sql`(datetime('now'))`),
   updated_at: text('updated_at').default(sql`(datetime('now'))`),
   is_active: integer('is_active').default(1),
+})
+
+export const payouts = sqliteTable('payouts', {
+  id: text('id').primaryKey().default(sql`(lower(hex(randomblob(16))))`),
+  org_id: text('org_id').notNull().references(() => organizations.id),
+  amount: real('amount').notNull(),
+  currency: text('currency').default('KES'),
+  status: text('status').default('pending'), // pending, scheduled, completed, failed
+  method: text('method'), // mpesa, bank
+  reference: text('reference'), // paystack transfer code
+  created_at: text('created_at').default(sql`(datetime('now'))`),
 })
 
 // ============================================

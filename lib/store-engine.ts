@@ -135,11 +135,18 @@ async function showMainMenu(waConfig: { phoneNumberId: string; accessToken: stri
   const productCount = await db.select().from(products).where(and(eq(products.org_id, orgId), eq(products.is_active, 1)))
   await setFlowState(orgId, phone, { step: 'main_menu' })
 
+  // --- Human-Like Professional Concierge Greeting ---
+  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+  const dayName = days[new Date().getDay()]
+  
+  // Suggestive / High-End tone (Standard for all, custom for Growth soon)
+  const greeting = `Hey there! 😊 Hope your *${dayName}* is going wonderfully well!\n\nI'm your personal shopping assistant here at *${org.name}*. We have *${productCount.length}* specially selected items waiting for you today.\n\nHow can I help you find exactly what you're looking for?`
+
   return await sendInteractiveButtonMessage(waConfig, {
     to: phone,
     header: org.name,
-    body: `👋 Welcome to *${org.name}*!\n\nWe have *${productCount.length} products* available.\n\nWhat would you like to do?`,
-    footer: 'Browse & buy in seconds',
+    body: greeting,
+    footer: 'Powered by Sella',
     buttons: [
       { id: 'browse', title: '🛍️ Browse Products' },
       { id: 'view_cart', title: '🛒 View Cart' },
@@ -403,7 +410,12 @@ async function handleDeliveryInfo(
   await setFlowState(orgId, phone, { ...flow, step: 'payment_select', delivery: address })
 
   const paymentOptions = []
-  if (org.store_paystack_key_encrypted) paymentOptions.push({ id: 'pay_paystack', title: '💳 Paystack/M-Pesa' })
+  
+  // DEFAULT: Managed Payment (MoR) or Direct Paystack
+  if (org.payment_mode === 'managed' || org.store_paystack_key_encrypted || !org.store_paystack_key_encrypted) {
+    paymentOptions.push({ id: 'pay_paystack', title: '💳 M-Pesa / Card' })
+  }
+  
   if (org.store_paypal_email) paymentOptions.push({ id: 'pay_paypal', title: '💵 PayPal' })
   if (org.store_cod_enabled) paymentOptions.push({ id: 'pay_cod', title: '💰 Cash on Delivery' })
 
@@ -441,12 +453,14 @@ async function handlePaymentSelected(
   let paymentStatus: 'pending' | 'paid' = 'pending'
   let paymentLink: string | undefined
 
-  if (input === 'pay_paystack' && org.store_paystack_key_encrypted) {
+  if (input === 'pay_paystack') {
     paymentMethod = 'paystack'
     // Generate Paystack payment link
     try {
       const { createStorePaymentLink } = await import('@/lib/payments')
-      const secretKey = decrypt(org.store_paystack_key_encrypted)
+      // Decrypt merchant key if available, otherwise use null (triggers Sella-Managed MoR)
+      const secretKey = org.store_paystack_key_encrypted ? decrypt(org.store_paystack_key_encrypted) : null
+      
       paymentLink = await createStorePaymentLink(secretKey, {
         email: contact.email || `${phone.replace(/\D/g, '')}@whatsapp.customer`,
         amount: total,

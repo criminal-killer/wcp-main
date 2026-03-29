@@ -118,7 +118,25 @@ export default function SettingsClient({ org, autoReplies }: { org: Org, autoRep
 function SettingsContent({ org, autoReplies }: { org: Org, autoReplies: AutoReply[] }) {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const [tab, setTab] = useState(searchParams.get('tab') || 'store')
+  const [mounted, setMounted] = useState(false)
+  const [tab, setTab] = useState('store')
+  
+  // Safe initialization of tab from URL
+  useEffect(() => {
+    setMounted(true)
+    const initialTab = searchParams.get('tab')
+    if (initialTab && TABS.some(t => t.id === initialTab)) {
+      setTab(initialTab)
+    }
+  }, [searchParams])
+
+  // Update URL when tab changes
+  const handleTabChange = (newTab: string) => {
+    setTab(newTab)
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('tab', newTab)
+    router.replace(`/dashboard/settings?${params.toString()}`, { scroll: false })
+  }
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [unlockedTabs, setUnlockedTabs] = useState<string[]>(['whatsapp', 'payments']) // AUTO-UNLOCK
@@ -203,7 +221,7 @@ function SettingsContent({ org, autoReplies }: { org: Org, autoReplies: AutoRepl
         {TABS.map(t => (
           <button
             key={t.id}
-            onClick={() => setTab(t.id)}
+            onClick={() => handleTabChange(t.id)}
             className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
               tab === t.id ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-muted-foreground'
             }`}
