@@ -103,13 +103,22 @@ export default function DashboardSidebar({ org }: { org: Org }) {
         <div className="flex-1 px-4 py-4">
           <NavContent pathname={pathname} org={org} />
         </div>
-        <div className="p-4 border-t border-border mt-auto">
-          <div className="flex items-center gap-3 p-2 hover:bg-secondary rounded-2xl transition-all group">
+        <div className="p-4 border-t border-border mt-auto space-y-2">
+          <div className="flex items-center gap-3 p-2 hover:bg-secondary rounded-2xl transition-all group cursor-pointer">
             <UserButton afterSignOutUrl="/" />
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-black text-muted-foreground uppercase tracking-widest group-hover:text-foreground transition-colors">Settings</p>
+              <p className="text-xs font-black text-muted-foreground uppercase tracking-widest group-hover:text-foreground transition-colors">My Profile</p>
             </div>
           </div>
+          <button 
+            onClick={() => window.location.href = '/sign-in'} 
+            className="w-full flex items-center gap-3 p-2 hover:bg-red-50 text-red-600 rounded-2xl transition-all group"
+          >
+            <div className="w-8 h-8 flex items-center justify-center">
+              <X size={18} />
+            </div>
+            <span className="text-xs font-black uppercase tracking-widest">Logout</span>
+          </button>
         </div>
       </aside>
     </>

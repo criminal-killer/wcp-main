@@ -142,10 +142,11 @@ function SettingsContent({ org, autoReplies }: { org: Org, autoReplies: AutoRepl
     system_prompt: (org as any).ai_system_prompt || '',
   })
 
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null)
   const [subscribeError, setSubscribeError] = useState('')
 
   async function handleSubscribe(plan: string, provider: 'paystack' | 'stripe' | 'paypal') {
-    setSaving(true)
+    setLoadingPlan(`${plan}-${provider}`)
     setSubscribeError('')
     try {
       const r = await fetch('/api/payments/subscribe', { 
@@ -162,19 +163,19 @@ function SettingsContent({ org, autoReplies }: { org: Org, autoReplies: AutoRepl
     } catch (e) {
       setSubscribeError('Network error. Please try again.')
     }
-    setSaving(false)
+    setLoadingPlan(null)
   }
 
   const isTabUnlocked = (id: string) => !TABS.find(t => t.id === id)?.secure || unlockedTabs.includes(id)
 
   const PLANS = [
     { 
-      id: 'starter', name: 'Starter', price: 0, trial: 7, 
-      features: ['1 Store', '50 products', 'Basic Shop Bot', 'Standard Admin', '7-Day Pro Trial']
+      id: 'starter', name: 'Starter', price: 29, trial: 7, 
+      features: ['1 Store', '50 Products', 'Basic Shop Bot', 'Standard Admin', '7-Day Free Trial']
     },
     { 
-      id: 'pro', name: 'Pro', price: 29, trial: 7, 
-      features: ['3 Stores', '500 products', 'AI Auto-Replies', 'All Themes', 'Abandoned Carts']
+      id: 'pro', name: 'Pro', price: 59, trial: 7, 
+      features: ['3 Stores', '500 Products', 'AI Auto-Replies', 'All Themes', 'Abandoned Carts']
     },
     { 
       id: 'elite', name: 'Elite', price: 99, trial: 7, 
@@ -369,17 +370,17 @@ function SettingsContent({ org, autoReplies }: { org: Org, autoReplies: AutoRepl
                   <div className="space-y-2">
                     <button 
                       onClick={() => handleSubscribe(plan.id, 'paystack')}
-                      disabled={saving}
-                      className="w-full bg-[#075E54] text-white py-3 rounded-xl font-black text-xs uppercase tracking-widest hover:opacity-95 transition-all"
+                      disabled={!!loadingPlan}
+                      className="w-full bg-[#075E54] text-white py-3 rounded-xl font-black text-xs uppercase tracking-widest hover:opacity-95 transition-all disabled:opacity-50"
                     >
-                      {saving ? 'Processing...' : 'Pay via Paystack (Local)'}
+                      {loadingPlan === `${plan.id}-paystack` ? 'Processing...' : 'Pay via Paystack (Local)'}
                     </button>
                     <button 
                       onClick={() => handleSubscribe(plan.id, 'paypal')}
-                      disabled={saving}
-                      className="w-full bg-blue-600 text-white py-3 rounded-xl font-black text-xs uppercase tracking-widest hover:opacity-95 transition-all"
+                      disabled={!!loadingPlan}
+                      className="w-full bg-blue-600 text-white py-3 rounded-xl font-black text-xs uppercase tracking-widest hover:opacity-95 transition-all disabled:opacity-50"
                     >
-                      {saving ? 'Processing...' : 'Pay via PayPal (Global)'}
+                      {loadingPlan === `${plan.id}-paypal` ? 'Processing...' : 'Pay via PayPal (Global)'}
                     </button>
                   </div>
                 )}
