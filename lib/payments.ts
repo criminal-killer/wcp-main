@@ -69,17 +69,13 @@ export async function createStorePaymentLink(
     amount,
     currency,
     reference,
-    orgId,
-    orderId,
-    customerPhone,
+    metadata,
   }: {
     email: string
     amount: number
     currency: string
     reference: string
-    orgId: string
-    orderId: string
-    customerPhone: string
+    metadata: Record<string, unknown>
   }
 ) {
   const response = await fetch('https://api.paystack.co/transaction/initialize', {
@@ -94,11 +90,7 @@ export async function createStorePaymentLink(
       currency,
       reference,
       callback_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/payments/store-webhook`,
-      metadata: {
-        org_id: orgId,
-        order_id: orderId,
-        customer_phone: customerPhone,
-      },
+      metadata,
     }),
   })
   const data = await response.json() as Record<string, unknown>
