@@ -67,7 +67,10 @@ export async function processIncomingMessage(ctx: EngineContext) {
   const flow = await getFlowState(orgId, phone) as FlowState | null
 
   // === GLOBAL COMMANDS ===
-  if (['hi', 'hello', 'hey', 'start', 'menu', '0', '00'].includes(input) || !flow) {
+  const menuButtons = ['search', 'browse', 'view_cart', '🔍 search / ai', '🛍️ browse shop', '🛒 view cart'];
+  const isDirectMenuAction = menuButtons.includes(input);
+
+  if (['hi', 'hello', 'hey', 'start', 'menu', '0', '00'].includes(input) || (!flow && !isDirectMenuAction)) {
     await clearCart(orgId, phone)
     await deleteFlowState(orgId, phone)
     return await showMainMenu(waConfigObj, org, phone, orgId)
@@ -235,34 +238,43 @@ async function showMainMenu(waConfig: { phoneNumberId: string; accessToken: stri
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
   const dayName = days[new Date().getDay()]
 
-  let greeting = '';
-  const style = org.bot_menu_style || 'professional';
-
-  if (style === 'street') {
-    greeting = `Yo! ${e('👟')} Checkin' out *${org.name}* on this fine *${dayName}*?\n\nWe got *${productCount.length}* fresh drops waitin'. What you lookin' for? ${e('🔥')}`;
-  } else if (style === 'minimal') {
-    greeting = `Welcome to *${org.name}*.\n\n*${productCount.length}* items available.\nHow can we help?`;
-  } else if (style === 'corporate') {
-    greeting = `Welcome to the official *${org.name}* WhatsApp channel. Today is *${dayName}*.\n\nOur current inventory features *${productCount.length}* active listings.\n\nPlease select an option below to proceed.`;
-  } else if (style === 'friendly') {
-    greeting = `Hi there! ${e('👋')} Happy *${dayName}* from all of us at *${org.name}*!\n\nWe're so excited to have you here! ${e('✨')} We've got *${productCount.length}* amazing things for you to see today.\n\nTell me, what can I help you find? ${e('😊')}`;
-  } else {
-    // Default: professional
-    greeting = `Good day! ${e('😊')} I hope your *${dayName}* is going wonderfully well.\n\nI'm your personal shopping assistant at *${org.name}*. We have *${productCount.length}* specially selected items waiting for you.\n\nHow can I help you find exactly what you're looking for?`;
+  // Premium 3-Bubble Flow - Send preceding messages first
+  if (style !== 'minimal') {
+    // Message 1: Greeting
+    const greetingPart1 = style === 'street' ? `Yo! ${e('👟')}` :
+                         style === 'corporate' ? `Welcome to the official *${org.name}* WhatsApp channel.` :
+                         style === 'friendly' ? `Hi there! ${e('👋')} Happy *${dayName}* from all of us at *${org.name}*!` :
+                         `Good day! ${e('😊')} I hope your *${dayName}* is going wonderfully well.`;
+    
+    await sendTextMessage(waConfig, { to: phone, body: greetingPart1 });
+    
+    // Message 2: Identity
+    const greetingPart2 = style === 'street' ? `Checkin' out *${org.name}* on this fine *${dayName}*?` :
+                         style === 'corporate' ? `Today is *${dayName}*. Our current inventory features *${productCount.length}* active listings.` :
+                         style === 'friendly' ? `We're so excited to have you here! ${e('✨')}` :
+                         `I'm your personal shopping assistant at *${org.name}*.`;
+    
+    await sendTextMessage(waConfig, { to: phone, body: greetingPart2 });
   }
+
+  // Message 3 (Final bubble with buttons): Call to Action
+  const finalCta = style === 'street' ? `We got *${productCount.length}* fresh drops waitin'. What you lookin' for? ${e('🔥')}` :
+                   style === 'minimal' ? `Welcome to *${org.name}*.\n\n*${productCount.length}* items available.\nHow can we help?` :
+                   style === 'corporate' ? `Please select an option below to proceed.` :
+                   style === 'friendly' ? `We've got *${productCount.length}* amazing things for you to see today.\n\nTell me, what can I help you find? ${e('😊')}` :
+                   `We have *${productCount.length}* specially selected items waiting for you.\n\nHow can I help you find exactly what you're looking for?`;
+
 
   const buttons = [];
   if (org.bot_show_search) buttons.push({ id: 'search', title: `${e('🔍 ')}Search / AI` });
   if (org.bot_show_categories) buttons.push({ id: 'browse', title: `${e('🛍️ ')}Browse Shop` });
   if (org.bot_show_cart) buttons.push({ id: 'view_cart', title: `${e('🛒 ')}View Cart` });
   
-  // If we have more than 3, we'll need to use a list message or prioritize. 
-  // WhatsApp only allows 3 buttons in a button message.
   if (buttons.length > 3) {
     return await sendInteractiveListMessage(waConfig, {
       to: phone,
       header: org.name,
-      body: greeting,
+      body: finalCta,
       footer: org.bot_custom_footer || 'Powered by Sella',
       buttonText: 'Main Menu',
       sections: [{ 
@@ -275,7 +287,7 @@ async function showMainMenu(waConfig: { phoneNumberId: string; accessToken: stri
   return await sendInteractiveButtonMessage(waConfig, {
     to: phone,
     header: org.name,
-    body: greeting,
+    body: finalCta,
     footer: org.bot_custom_footer || 'Powered by Sella',
     buttons: buttons.length ? buttons : [{ id: 'browse', title: 'Browse Products' }],
   })

@@ -171,6 +171,7 @@ export const conversations = sqliteTable('conversations', {
   last_message_at: text('last_message_at'),
   last_message_preview: text('last_message_preview'),
   unread_count: integer('unread_count').default(0),
+  temp_flow_state: text('temp_flow_state'), // Fallback for Redis
   created_at: text('created_at').default(sql`(datetime('now'))`),
 })
 

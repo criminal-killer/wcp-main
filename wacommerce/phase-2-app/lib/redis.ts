@@ -1,4 +1,7 @@
 import { Redis } from '@upstash/redis'
+import { db } from './db'
+import { conversations } from './schema'
+import { and, eq } from 'drizzle-orm'
 
 const isConfigured = 
   (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_URL !== 'https://...') ||
@@ -53,24 +56,72 @@ export async function setCart(orgId: string, phone: string, cart: unknown) {
 
 // Flow state helpers (WhatsApp store engine)
 export async function getFlowState(orgId: string, phone: string) {
-  return await exec(async (r) => {
+  // 1. Try Redis first
+  const redisState = await exec(async (r) => {
     const key = `sella:flow:${orgId}:${phone}`
     return await r.get<Record<string, unknown>>(key)
   }, null)
+
+  if (redisState) return redisState
+
+  // 2. Fallback to Database
+  try {
+    const conv = await db.query.conversations.findFirst({
+      where: and(
+        eq(conversations.org_id, orgId),
+        eq(conversations.contact_id, phone)
+      )
+    })
+    if (conv?.temp_flow_state) {
+      return JSON.parse(conv.temp_flow_state)
+    }
+  } catch (err) {
+    console.error('DB Flow fallback error:', err)
+  }
+  return null
 }
 
 export async function setFlowState(orgId: string, phone: string, state: Record<string, unknown>) {
   const key = `sella:flow:${orgId}:${phone}`
+  const stateStr = JSON.stringify(state)
+
+  // 1. Set in Redis
   await exec(async (r) => {
-    await r.setex(key, 1800, JSON.stringify(state)) // 30 min TTL
+    await r.setex(key, 1800, stateStr) // 30 min TTL
   }, null)
+
+  // 2. Persistent fallback in DB
+  try {
+    await db.update(conversations)
+      .set({ temp_flow_state: stateStr })
+      .where(and(
+        eq(conversations.org_id, orgId),
+        eq(conversations.contact_id, phone)
+      ))
+  } catch (err) {
+    console.error('DB Flow save error:', err)
+  }
 }
 
 export async function clearFlowState(orgId: string, phone: string) {
   const key = `sella:flow:${orgId}:${phone}`
+  
+  // 1. Clear Redis
   await exec(async (r) => {
     await r.del(key)
   }, null)
+
+  // 2. Clear DB fallback
+  try {
+    await db.update(conversations)
+      .set({ temp_flow_state: null })
+      .where(and(
+        eq(conversations.org_id, orgId),
+        eq(conversations.contact_id, phone)
+      ))
+  } catch (err) {
+    console.error('DB Flow clear error:', err)
+  }
 }
 
 export const deleteFlowState = clearFlowState
