@@ -1,33 +1,14 @@
-<<<<<<< HEAD
-import type { Config } from "tailwindcss";
-
-const config: Config = {
-  content: [
-    "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
-    "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
-    "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
-  ],
-  theme: {
-    extend: {
-      colors: {
-        primary: "#075E54",
-        secondary: "#128C7E",
-        accent: "#25D366",
-      },
-    },
-  },
-  plugins: [require("tailwindcss-animate")],
-};
-export default config;
-=======
 import type { Config } from 'tailwindcss'
 
 const config: Config = {
   darkMode: ['class'],
   content: [
     './pages/**/*.{ts,tsx}',
+    './src/pages/**/*.{js,ts,jsx,tsx}',
     './components/**/*.{ts,tsx}',
+    './src/components/**/*.{js,ts,jsx,tsx}',
     './app/**/*.{ts,tsx}',
+    './src/app/**/*.{js,ts,jsx,tsx}',
     './lib/**/*.{ts,tsx}',
   ],
   theme: {
@@ -94,5 +75,4 @@ const config: Config = {
   },
   plugins: [require('tailwindcss-animate')],
 }
-export default config
->>>>>>> 3118ae2795833d69dfaf48b94b5967ecc78dd093
+export default config;
