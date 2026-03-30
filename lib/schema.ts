@@ -375,7 +375,7 @@ export const affiliates = sqliteTable('affiliates', {
 // ============================================
 // PAYOUTS (Affiliate Withdrawal Requests)
 // ============================================
-export const payouts = sqliteTable('payouts', {
+export const affiliate_payouts = sqliteTable('affiliate_payouts', {
   id: text('id').primaryKey().default(sql`(lower(hex(randomblob(16))))`),
   affiliate_id: text('affiliate_id').notNull().references(() => affiliates.id),
   amount: real('amount').notNull(),
@@ -414,9 +414,9 @@ export const supportTicketsRelations = relations(support_tickets, ({ one }) => (
   }),
 }))
 
-export const payoutRelations = relations(payouts, ({ one }) => ({
+export const affiliatePayoutRelations = relations(affiliate_payouts, ({ one }) => ({
   affiliate: one(affiliates, {
-    fields: [payouts.affiliate_id],
+    fields: [affiliate_payouts.affiliate_id],
     references: [affiliates.id]
   })
 }))
