@@ -61,8 +61,8 @@ export default async function AdminPage() {
               ) : tickets.map((t) => (
                 <tr key={t.id} className="hover:bg-secondary/50 transition-colors">
                   <td className="px-6 py-4">
-                    <p className="font-bold text-foreground text-sm">{t.user?.email}</p>
-                    <p className="text-xs text-muted-foreground">{t.org?.name}</p>
+                    <p className="font-bold text-foreground text-sm">{(t as any).user?.email}</p>
+                    <p className="text-xs text-muted-foreground">{(t as any).org?.name}</p>
                   </td>
                   <td className="px-6 py-4">
                     <span className="text-[10px] bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full font-black uppercase">
