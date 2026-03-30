@@ -63,7 +63,7 @@ export async function createPayPalSubscriptionCheckout(
 // ============================================
 
 export async function createStorePaymentLink(
-  storePaystackKey: string,
+  storePaystackKey: string | null | undefined,
   {
     email,
     amount,
@@ -78,10 +78,13 @@ export async function createStorePaymentLink(
     metadata: Record<string, unknown>
   }
 ) {
+  // Use Sella's key if store doesn't have one (MoR / Managed mode)
+  const apiKey = storePaystackKey || process.env.PAYSTACK_SECRET_KEY
+
   const response = await fetch('https://api.paystack.co/transaction/initialize', {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${storePaystackKey}`,
+      Authorization: `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
@@ -120,4 +123,48 @@ export function verifyStripeWebhook(
   webhookSecret: string
 ) {
   return stripe.webhooks.constructEvent(body, signature, webhookSecret)
+}
+
+// ============================================
+// Paystack Transfers (Sella → Store Owner)
+// ============================================
+
+export async function createTransferRecipient(recipientData: {
+  type: 'nuban' | 'mobile_money'
+  name: string
+  account_number: string
+  bank_code: string
+  currency: string
+}) {
+  const response = await fetch('https://api.paystack.co/transferrecipient', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(recipientData),
+  })
+  const data = await response.json()
+  return data.data?.recipient_code as string | undefined
+}
+
+export async function initiatePaystackTransfer(transferData: {
+  amount: number // in smallest unit
+  recipient: string // recipient_code
+  reason?: string
+  reference?: string
+}) {
+  const response = await fetch('https://api.paystack.co/transfer', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      source: 'balance',
+      ...transferData,
+    }),
+  })
+  const data = await response.json()
+  return data.data as { reference: string; status: string; transfer_code: string } | undefined
 }

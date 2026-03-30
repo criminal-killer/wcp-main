@@ -7,6 +7,7 @@ import { eq } from 'drizzle-orm'
 import DashboardSidebar from './sidebar'
 import { Clock } from 'lucide-react'
 import AiAssist from '@/components/dashboard/AiAssist'
+import WaitlistOverlay from '@/components/dashboard/WaitlistOverlay'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { userId } = await auth()
@@ -26,6 +27,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
     ? Math.max(0, Math.ceil((new Date(org.trial_ends_at).getTime() - Date.now()) / 86400000))
     : 0
   const isOnTrial = org.plan === 'trial' && trialDaysLeft > 0
+  const isWaitlisted = org.is_waitlisted === 1
+
+  if (isWaitlisted) {
+    return <WaitlistOverlay country={org.country || 'Global'} />
+  }
 
   return (
     <div className="flex h-screen bg-secondary overflow-hidden">

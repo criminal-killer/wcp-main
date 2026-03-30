@@ -7,7 +7,7 @@ const PLANS = [
   {
     id: 'starter',
     name: 'Starter',
-    price: '0',
+    price: '29',
     description: 'Perfect for small businesses starting on WhatsApp.',
     features: [
       'Automated Shop Bot',
@@ -18,13 +18,13 @@ const PLANS = [
     ],
     icon: Star,
     color: 'slate',
-    buttonText: 'Start Free Trial',
-    requiresCard: false
+    buttonText: 'Start 7-Day Trial',
+    requiresCard: true
   },
   {
     id: 'pro',
     name: 'Pro',
-    price: '29',
+    price: '59',
     description: 'Grow your business with advanced automation.',
     features: [
       'Everything in Starter',
@@ -79,7 +79,7 @@ export default function ChoosePlanPage() {
             Choose your <span className="text-primary italic">Success</span> Plan
           </h1>
           <p className="text-slate-500 font-bold max-w-2xl mx-auto uppercase tracking-widest text-sm">
-            Zero commitment for Starter • 7-Day Free Trial on all plans
+            All plans include a 7-Day Free Trial
           </p>
         </div>
 

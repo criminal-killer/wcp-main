@@ -2,10 +2,15 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { ClerkProvider, SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
-import { LayoutDashboard, Users, CreditCard, Settings, LifeBuoy, Zap, Bell, ShieldCheck, ShieldAlert } from "lucide-react";
+import { LayoutDashboard, Users, CreditCard, Settings, LifeBuoy, Zap, Bell, ShieldCheck, ShieldAlert, Activity } from "lucide-react";
 import Link from "next/link";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { jwtVerify } from "jose";
+import { db } from "@/lib/db";
+import { users } from "@/lib/schema";
+import { eq } from "drizzle-orm";
+import { redirect } from "next/navigation";
+import { currentUser } from "@clerk/nextjs/server";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -29,6 +34,42 @@ export default async function RootLayout({
       await jwtVerify(token, secret);
       isSuperAdmin = true;
     } catch (e) {}
+  }
+
+  // Handle Clerk Auth & Approval
+  const user = await currentUser();
+  const path = headers().get("x-url") || ""; // Need a way to get path
+  // Since we can't easily get path in RSC without help, we'll check status
+  
+  if (user && !isSuperAdmin) {
+    const adminId = process.env.ADMIN_USER_ID;
+    
+    // 1. If it's the official SuperAdmin ID, bypass
+    if (user.id === adminId) {
+      isSuperAdmin = true;
+    } else {
+      // 2. Check Database Status
+      let dbUser = await db.query.users.findFirst({
+        where: eq(users.clerk_id, user.id)
+      });
+
+      // 3. Auto-register if missing
+      if (!dbUser) {
+        [dbUser] = await db.insert(users).values({
+          clerk_id: user.id,
+          email: user.emailAddresses[0]?.emailAddress || "",
+          name: `${user.firstName || ""} ${user.lastName || ""}`.trim() || null,
+          org_id: "system", // Admin users use 'system' org or similar
+          role: "pending",
+          is_active: 0,
+        }).returning();
+      }
+
+      // 4. Redirect if not active (and not already on waiting page)
+      if (dbUser.is_active === 0 && !path.includes("/waiting-approval")) {
+        return redirect("/waiting-approval");
+      }
+    }
   }
 
   const DashboardShell = ({ isSuper }: { isSuper: boolean }) => (
@@ -72,6 +113,11 @@ export default async function RootLayout({
           <Link href="/team" className={`flex items-center gap-3 px-4 py-3 text-sm font-bold ${isSuper ? 'text-slate-400 hover:text-white hover:bg-white/5' : 'text-slate-600 hover:bg-slate-50'} rounded-xl transition-all`}>
             <ShieldAlert size={18} /> Team
           </Link>
+          {isSuper && (
+            <Link href="/system/logs" className={`flex items-center gap-3 px-4 py-3 text-sm font-bold ${isSuper ? 'text-slate-400 hover:text-white hover:bg-white/5' : 'text-slate-600 hover:bg-slate-50'} rounded-xl transition-all`}>
+              <Activity size={18} /> Audit Logs
+            </Link>
+          )}
         </nav>
 
         <div className={`p-4 border-t ${isSuper ? 'border-white/5' : 'border-slate-100'} flex items-center justify-between`}>

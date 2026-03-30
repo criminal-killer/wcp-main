@@ -29,7 +29,11 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: 'Sella Team' }],
   creator: 'Sella',
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://sella-app.vercel.app'),
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_APP_URL?.startsWith('http') 
+      ? process.env.NEXT_PUBLIC_APP_URL 
+      : `https://${process.env.NEXT_PUBLIC_APP_URL || 'sella-app.vercel.app'}`
+  ),
   openGraph: {
     type: 'website',
     locale: 'en_US',

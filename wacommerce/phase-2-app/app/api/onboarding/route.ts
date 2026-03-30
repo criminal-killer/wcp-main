@@ -39,6 +39,7 @@ export async function POST(req: NextRequest) {
     }
 
     const countryData = COUNTRIES_MAP[country] || COUNTRIES_MAP.OTHER
+    const isWaitlisted = country !== 'KE'
 
     // Create org (Drizzle will auto-generate the uuid via default)
     const slug = slugify(name)
@@ -52,6 +53,7 @@ export async function POST(req: NextRequest) {
       timezone: countryData.timezone,
       plan: 'trial',
       trial_ends_at: trialEndsAt,
+      is_waitlisted: isWaitlisted ? 1 : 0,
     }).returning()
 
     // Create user

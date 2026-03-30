@@ -49,10 +49,53 @@ export const organizations = sqliteTable('organizations', {
   referral_code: text('referral_code').unique(),
   referred_by: text('referred_by'),
 
+  // Managed Payments (MoR)
+  payment_mode: text('payment_mode').default('direct'), // direct, managed
+  managed_balance: real('managed_balance').default(0),
+  managed_currency: text('managed_currency').default('KES'),
+  managed_payout_details: text('managed_payout_details'),
+  managed_payout_interval: text('managed_payout_interval').default('weekly'),
+
+  // AI Configuration
+  ai_provider: text('ai_provider').default('sella'), // sella (groq), openai, anthropic, google, custom
+  ai_api_key_encrypted: text('ai_api_key_encrypted'),
+  ai_model: text('ai_model'),
+  ai_persona: text('ai_persona').default('educator'), // educator, sales, support
+  ai_endpoint_url: text('ai_endpoint_url'), // for custom openai-compatible endpoints
+  ai_system_prompt: text('ai_system_prompt'), // custom refinement
+
+  // Bot Customization (Growth/Elite Features)
+  bot_menu_style: text('bot_menu_style').default('professional'), // professional, street, minimal, corporate, friendly
+  bot_emojis_enabled: integer('bot_emojis_enabled').default(1),
+  bot_custom_footer: text('bot_custom_footer').default('Powered by Sella'),
+  bot_show_search: integer('bot_show_search').default(1),
+  bot_show_categories: integer('bot_show_categories').default(1),
+  bot_show_cart: integer('bot_show_cart').default(1),
+  bot_show_orders: integer('bot_show_orders').default(1),
+
+  // AI Usage Tracking (Starter limits: 20/day, 350/month)
+  usage_ai_daily_count: integer('usage_ai_daily_count').default(0),
+  usage_ai_monthly_count: integer('usage_ai_monthly_count').default(0),
+  usage_last_reset_daily: text('usage_last_reset_daily').default(sql`(datetime('now'))`),
+  usage_last_reset_monthly: text('usage_last_reset_monthly').default(sql`(datetime('now'))`),
+
   // Meta
   created_at: text('created_at').default(sql`(datetime('now'))`),
   updated_at: text('updated_at').default(sql`(datetime('now'))`),
   is_active: integer('is_active').default(1),
+  is_waitlisted: integer('is_waitlisted').default(0),
+  enabled_features: text('enabled_features').default('{"ai_shopping":true,"manual_payments":true,"delivery_zones":true}'),
+})
+
+export const payouts = sqliteTable('payouts', {
+  id: text('id').primaryKey().default(sql`(lower(hex(randomblob(16))))`),
+  org_id: text('org_id').notNull().references(() => organizations.id),
+  amount: real('amount').notNull(),
+  currency: text('currency').default('KES'),
+  status: text('status').default('pending'), // pending, scheduled, completed, failed
+  method: text('method'), // mpesa, bank
+  reference: text('reference'), // paystack transfer code
+  created_at: text('created_at').default(sql`(datetime('now'))`),
 })
 
 // ============================================
@@ -67,6 +110,7 @@ export const users = sqliteTable('users', {
   role: text('role').default('owner'),
   created_at: text('created_at').default(sql`(datetime('now'))`),
   is_active: integer('is_active').default(1),
+  is_super_admin: integer('is_super_admin').default(0),
 })
 
 // ============================================
@@ -84,7 +128,11 @@ export const products = sqliteTable('products', {
   images: text('images').default('[]'),
   variants: text('variants').default('[]'),
   inventory_count: integer('inventory_count').default(0),
+  color: text('color'), // for filtering
+  metadata: text('metadata').default('{}'), // extra searchable attributes (JSON)
   is_active: integer('is_active').default(1),
+  type: text('type').default('physical'), // physical, digital, service
+  digital_content: text('digital_content'), // links/keys/files
   sort_order: integer('sort_order').default(0),
   created_at: text('created_at').default(sql`(datetime('now'))`),
   updated_at: text('updated_at').default(sql`(datetime('now'))`),
@@ -163,6 +211,8 @@ export const orders = sqliteTable('orders', {
   payment_reference: text('payment_reference'),
   payment_provider: text('payment_provider'),
   delivery_address: text('delivery_address'),
+  delivery_zone: text('delivery_zone'),
+  payment_proof: text('payment_proof'),
   tracking_number: text('tracking_number'),
   order_status: text('order_status').default('new'),
   notes: text('notes'),
@@ -349,7 +399,7 @@ export const affiliates = sqliteTable('affiliates', {
 // ============================================
 // PAYOUTS (Affiliate Withdrawal Requests)
 // ============================================
-export const payouts = sqliteTable('payouts', {
+export const affiliate_payouts = sqliteTable('affiliate_payouts', {
   id: text('id').primaryKey().default(sql`(lower(hex(randomblob(16))))`),
   affiliate_id: text('affiliate_id').notNull().references(() => affiliates.id),
   amount: real('amount').notNull(),
@@ -388,9 +438,9 @@ export const supportTicketsRelations = relations(support_tickets, ({ one }) => (
   }),
 }))
 
-export const payoutRelations = relations(payouts, ({ one }) => ({
+export const payoutRelations = relations(affiliate_payouts, ({ one }) => ({
   affiliate: one(affiliates, {
-    fields: [payouts.affiliate_id],
+    fields: [affiliate_payouts.affiliate_id],
     references: [affiliates.id]
   })
 }))

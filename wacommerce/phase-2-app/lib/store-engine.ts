@@ -1,6 +1,6 @@
 import { db } from '@/lib/db'
 import { organizations, contacts, conversations, products, orders, messages } from '@/lib/schema'
-import { eq, and } from 'drizzle-orm'
+import { eq, and, sql } from 'drizzle-orm'
 import { sendTextMessage, sendInteractiveButtonMessage, sendInteractiveListMessage, sendImageMessage } from '@/lib/whatsapp'
 import { getFlowState, setFlowState, deleteFlowState, getCart, setCart, clearCart } from '@/lib/redis'
 import { decrypt } from '@/lib/encryption'
@@ -105,11 +105,20 @@ export async function processIncomingMessage(ctx: EngineContext) {
     case 'cart_review':
       return await handleCartAction(waConfigObj, org, phone, orgId, input, flow)
 
+    case 'delivery_zone_select':
+      return await handleZoneSelected(waConfigObj, org, phone, orgId, input, flow)
+
     case 'delivery_info':
       return await handleDeliveryInfo(waConfigObj, org, phone, orgId, convId, input, flow, contact)
 
     case 'payment_select':
       return await handlePaymentSelected(waConfigObj, org, phone, orgId, convId, input, flow, contact)
+
+    case 'manual_payment_verify':
+      return await handleManualPaymentVerification(waConfigObj, org, phone, orgId, input, flow)
+
+    case 'searching':
+      return await handleProductSearch(waConfigObj, org, phone, orgId, input)
 
     default:
       // Try AI Fallback if not a recognized command
@@ -118,6 +127,37 @@ export async function processIncomingMessage(ctx: EngineContext) {
 }
 
 async function handleAiFallback(waConfig: { phoneNumberId: string; accessToken: string }, org: RunnerOrg, phone: string, input: string) {
+  // 1. Check & Enforce Limits (Growth/Elite have unlimited, Starter has 20/day, 350/month)
+  const isStarter = org.plan === 'starter' || !org.plan;
+  
+  if (isStarter) {
+    const now = new Date();
+    const lastDaily = org.usage_last_reset_daily ? new Date(org.usage_last_reset_daily) : new Date(0);
+    const lastMonthly = org.usage_last_reset_monthly ? new Date(org.usage_last_reset_monthly) : new Date(0);
+    
+    // Auto-reset daily
+    const isNewDay = now.toDateString() !== lastDaily.toDateString();
+    const isNewMonth = now.getMonth() !== lastMonthly.getMonth() || now.getFullYear() !== lastMonthly.getFullYear();
+
+    let dailyCount = isNewDay ? 0 : (org.usage_ai_daily_count || 0);
+    let monthlyCount = isNewMonth ? 0 : (org.usage_ai_monthly_count || 0);
+    
+    if (dailyCount >= 20 || monthlyCount >= 350) {
+      return await sendTextMessage(waConfig, { 
+        to: phone, 
+        body: `⚠️ *AI limit reached for today.*\n\nThe store owner is currently on a *Starter Plan*. To enable unlimited AI searches, please ask them to upgrade to *Growth* or *Elite*! 🚀` 
+      });
+    }
+
+    // Increment usage
+    await db.update(organizations).set({
+      usage_ai_daily_count: dailyCount + 1,
+      usage_ai_monthly_count: monthlyCount + 1,
+      usage_last_reset_daily: now.toISOString(),
+      ...(isNewMonth ? { usage_last_reset_monthly: now.toISOString() } : {})
+    }).where(eq(organizations.id, org.id));
+  }
+
   try {
     const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/ai/chat`, {
       method: 'POST',
@@ -125,26 +165,119 @@ async function handleAiFallback(waConfig: { phoneNumberId: string; accessToken: 
       body: JSON.stringify({ message: input, org_id: org.id })
     })
     const data = await response.json()
+    
+    // If AI identifies a search intent, it should redirect to handleProductSearch
+    if (data.action === 'search') {
+      return await handleProductSearch(waConfig, org, phone, org.id, data.query || input);
+    }
+
     return await sendTextMessage(waConfig, { to: phone, body: data.reply || 'Sorry, I didn\'t catch that. Type *Hi* for the menu.' })
   } catch (err) {
     return await showMainMenu(waConfig, org, phone, org.id)
   }
 }
 
+async function handleProductSearch(waConfig: { phoneNumberId: string; accessToken: string }, org: RunnerOrg, phone: string, orgId: string, input: string) {
+  const e = (emoji: string) => org.bot_emojis_enabled ? emoji : '';
+  
+  if (input === 'search' || input === '🔍 search / ai') {
+    await setFlowState(orgId, phone, { step: 'searching' });
+    return await sendTextMessage(waConfig, { 
+      to: phone, 
+      body: `${e('🔍')} *AI Personal Shopper*\n\nTell me what you're looking for!\n\nYou can search by name, or be specific like:\n- _"Red shoes under ${org.currency} 5000"_\n- _"Blue shirts in size M"_\n- _"What do you have for ${org.currency} 2000?"_`
+    });
+  }
+
+  // Basic keyword search logic (Enhanced by products.color and metadata if needed)
+  // In a real app, this would be a refined Drizzle query.
+  const allProducts = await db.select().from(products).where(and(eq(products.org_id, orgId), eq(products.is_active, 1)));
+  
+  // Very basic scoring for now - match keywords
+  const keywords = input.toLowerCase().split(' ').filter(k => k.length > 2);
+  const results = allProducts.filter(p => {
+    const name = p.name.toLowerCase();
+    const desc = (p.description || '').toLowerCase();
+    const color = (p.color || '').toLowerCase();
+    return keywords.some(k => name.includes(k) || desc.includes(k) || color.includes(k));
+  }).slice(0, 10);
+
+  if (results.length === 0) {
+    return await sendTextMessage(waConfig, { 
+      to: phone, 
+      body: `😔 I couldn't find any products matching "${input}".\n\nTry a different keyword or type *menu* to browse categories.` 
+    });
+  }
+
+  await setFlowState(orgId, phone, { step: 'browsing_products', search_query: input });
+
+  const rows = results.map(p => ({
+    id: `prod_${p.id}`,
+    title: p.name.slice(0, 24),
+    description: `${org.currency} ${p.price.toLocaleString()}`,
+  }));
+
+  return await sendInteractiveListMessage(waConfig, {
+    to: phone,
+    header: `${e('✅')} Search Results`,
+    body: `Found *${results.length}* item(s) matching your request:`,
+    footer: `Searching for: "${input}"`,
+    buttonText: 'View Items',
+    sections: [{ title: 'Results', rows }],
+  });
+}
+
 async function showMainMenu(waConfig: { phoneNumberId: string; accessToken: string }, org: RunnerOrg, phone: string, orgId: string) {
   const productCount = await db.select().from(products).where(and(eq(products.org_id, orgId), eq(products.is_active, 1)))
   await setFlowState(orgId, phone, { step: 'main_menu' })
 
+  // Emojis helper
+  const e = (emoji: string) => org.bot_emojis_enabled ? emoji : '';
+  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+  const dayName = days[new Date().getDay()]
+
+  let greeting = '';
+  const style = org.bot_menu_style || 'professional';
+
+  if (style === 'street') {
+    greeting = `Yo! ${e('👟')} Checkin' out *${org.name}* on this fine *${dayName}*?\n\nWe got *${productCount.length}* fresh drops waitin'. What you lookin' for? ${e('🔥')}`;
+  } else if (style === 'minimal') {
+    greeting = `Welcome to *${org.name}*.\n\n*${productCount.length}* items available.\nHow can we help?`;
+  } else if (style === 'corporate') {
+    greeting = `Welcome to the official *${org.name}* WhatsApp channel. Today is *${dayName}*.\n\nOur current inventory features *${productCount.length}* active listings.\n\nPlease select an option below to proceed.`;
+  } else if (style === 'friendly') {
+    greeting = `Hi there! ${e('👋')} Happy *${dayName}* from all of us at *${org.name}*!\n\nWe're so excited to have you here! ${e('✨')} We've got *${productCount.length}* amazing things for you to see today.\n\nTell me, what can I help you find? ${e('😊')}`;
+  } else {
+    // Default: professional
+    greeting = `Good day! ${e('😊')} I hope your *${dayName}* is going wonderfully well.\n\nI'm your personal shopping assistant at *${org.name}*. We have *${productCount.length}* specially selected items waiting for you.\n\nHow can I help you find exactly what you're looking for?`;
+  }
+
+  const buttons = [];
+  if (org.bot_show_search) buttons.push({ id: 'search', title: `${e('🔍 ')}Search / AI` });
+  if (org.bot_show_categories) buttons.push({ id: 'browse', title: `${e('🛍️ ')}Browse Shop` });
+  if (org.bot_show_cart) buttons.push({ id: 'view_cart', title: `${e('🛒 ')}View Cart` });
+  
+  // If we have more than 3, we'll need to use a list message or prioritize. 
+  // WhatsApp only allows 3 buttons in a button message.
+  if (buttons.length > 3) {
+    return await sendInteractiveListMessage(waConfig, {
+      to: phone,
+      header: org.name,
+      body: greeting,
+      footer: org.bot_custom_footer || 'Powered by Sella',
+      buttonText: 'Main Menu',
+      sections: [{ 
+        title: 'Options', 
+        rows: buttons.map(b => ({ id: b.id, title: b.title.slice(0, 24) })) 
+      }]
+    });
+  }
+
   return await sendInteractiveButtonMessage(waConfig, {
     to: phone,
     header: org.name,
-    body: `👋 Welcome to *${org.name}*!\n\nWe have *${productCount.length} products* available.\n\nWhat would you like to do?`,
-    footer: 'Browse & buy in seconds',
-    buttons: [
-      { id: 'browse', title: '🛍️ Browse Products' },
-      { id: 'view_cart', title: '🛒 View Cart' },
-      { id: 'orders', title: '📦 My Orders' },
-    ],
+    body: greeting,
+    footer: org.bot_custom_footer || 'Powered by Sella',
+    buttons: buttons.length ? buttons : [{ id: 'browse', title: 'Browse Products' }],
   })
 }
 
@@ -386,6 +519,25 @@ async function handleCartAction(
     return await showCategories(waConfig, org, phone, orgId)
   }
   if (input === 'checkout') {
+    const zones = JSON.parse(org.delivery_zones || '[]') as Array<{ name: string; fee: number }>
+    
+    if (zones.length > 0) {
+      await setFlowState(orgId, phone, { step: 'delivery_zone_select' })
+      const rows = zones.map((z, idx) => ({
+        id: `zone_${idx}`,
+        title: z.name,
+        description: `${org.currency} ${z.fee.toLocaleString()} delivery fee`,
+      }))
+      return await sendInteractiveListMessage(waConfig, {
+        to: phone,
+        header: '📍 Select Delivery Zone',
+        body: 'Where should we deliver your order?',
+        footer: 'Select a zone to calculate delivery fees',
+        buttonText: 'Choose Zone',
+        sections: [{ title: 'Available Zones', rows }],
+      })
+    }
+
     await setFlowState(orgId, phone, { step: 'delivery_info' })
     return await sendTextMessage(waConfig, {
       to: phone,
@@ -393,6 +545,26 @@ async function handleCartAction(
     })
   }
   return await showCart(waConfig, org, phone, orgId)
+}
+
+async function handleZoneSelected(
+  waConfig: { phoneNumberId: string; accessToken: string }, org: RunnerOrg, phone: string,
+  orgId: string, input: string, flow: FlowState
+) {
+  if (!input.startsWith('zone_')) return await showCart(waConfig, org, phone, orgId)
+  
+  const zoneIdx = parseInt(input.replace('zone_', ''))
+  const zones = JSON.parse(org.delivery_zones || '[]') as Array<{ name: string; fee: number }>
+  const zone = zones[zoneIdx]
+  
+  if (!zone) return await showCart(waConfig, org, phone, orgId)
+
+  await setFlowState(orgId, phone, { ...flow, step: 'delivery_info', delivery_zone: zone.name, delivery_fee: zone.fee })
+  
+  return await sendTextMessage(waConfig, {
+    to: phone,
+    body: `📍 *Zone: ${zone.name}* (${org.currency} ${zone.fee.toLocaleString()} fee)\n\nNow, please send your specific delivery address or landmark:\n\n_(e.g. "House 4, Green Court")_`,
+  })
 }
 
 async function handleDeliveryInfo(
@@ -403,9 +575,20 @@ async function handleDeliveryInfo(
   await setFlowState(orgId, phone, { ...flow, step: 'payment_select', delivery: address })
 
   const paymentOptions = []
-  if (org.store_paystack_key_encrypted) paymentOptions.push({ id: 'pay_paystack', title: '💳 Paystack/M-Pesa' })
+  
+  // DEFAULT: Managed Payment (MoR) or Direct Paystack
+  if (org.payment_mode === 'managed' || org.store_paystack_key_encrypted || !org.store_paystack_key_encrypted) {
+    paymentOptions.push({ id: 'pay_paystack', title: '💳 M-Pesa / Card' })
+  }
+  
   if (org.store_paypal_email) paymentOptions.push({ id: 'pay_paypal', title: '💵 PayPal' })
   if (org.store_cod_enabled) paymentOptions.push({ id: 'pay_cod', title: '💰 Cash on Delivery' })
+  
+  // Manual Payment (New)
+  const features = JSON.parse(org.enabled_features || '{}')
+  if (features.manual_payments && (org.store_mpesa_till || org.store_bank_details)) {
+    paymentOptions.push({ id: 'pay_manual', title: '📲 Manual Transfer' })
+  }
 
   if (paymentOptions.length === 0) {
     return await sendTextMessage(waConfig, {
@@ -441,12 +624,14 @@ async function handlePaymentSelected(
   let paymentStatus: 'pending' | 'paid' = 'pending'
   let paymentLink: string | undefined
 
-  if (input === 'pay_paystack' && org.store_paystack_key_encrypted) {
+  if (input === 'pay_paystack') {
     paymentMethod = 'paystack'
     // Generate Paystack payment link
     try {
       const { createStorePaymentLink } = await import('@/lib/payments')
-      const secretKey = decrypt(org.store_paystack_key_encrypted)
+      // Decrypt merchant key if available, otherwise use null (triggers Sella-Managed MoR)
+      const secretKey = org.store_paystack_key_encrypted ? decrypt(org.store_paystack_key_encrypted) : null
+      
       paymentLink = await createStorePaymentLink(secretKey, {
         email: contact.email || `${phone.replace(/\D/g, '')}@whatsapp.customer`,
         amount: total,
@@ -460,6 +645,9 @@ async function handlePaymentSelected(
   } else if (input === 'pay_paypal' && org.store_paypal_email) {
     paymentMethod = 'paypal'
     paymentLink = `https://www.paypal.me/${org.store_paypal_email.split('@')[0]}/${total}`
+  } else if (input === 'pay_manual') {
+    paymentMethod = 'manual'
+    paymentStatus = 'pending'
   } else if (input === 'pay_cod') {
     paymentMethod = 'cod'
     paymentStatus = 'pending'
@@ -479,6 +667,7 @@ async function handlePaymentSelected(
     payment_status: paymentStatus,
     order_status: 'new',
     delivery_address: flow.delivery,
+    delivery_zone: flow.delivery_zone_name,
   }).returning()
 
   // Update contact stats
@@ -502,9 +691,46 @@ async function handlePaymentSelected(
     })
   }
 
+  if (paymentMethod === 'manual') {
+    let manualDetails = ''
+    if (org.store_mpesa_till) manualDetails += `📲 *M-Pesa Till:* ${org.store_mpesa_till}\n`
+    if (org.store_bank_details) manualDetails += `🏦 *Bank:* ${org.store_bank_details}\n`
+
+    await setFlowState(orgId, phone, { step: 'manual_payment_verify', order_id: order.id, order_number: orderNumber })
+
+    return await sendTextMessage(waConfig, {
+      to: phone,
+      body: `✅ *Order ${orderNumber} Reserved!*\n\nTotal to Pay: *${org.currency} ${total.toLocaleString()}*\n\n*Payment Details:*\n${manualDetails}\n⚠️ *Action Required:* Please make the payment and then *paste the confirmation message* or send a *Screenshot* here for verification.`,
+    })
+  }
+
   return await sendTextMessage(waConfig, {
     to: phone,
     body: `✅ *Order Confirmed!*\n\nOrder: *${orderNumber}*\nTotal: *${org.currency} ${total.toLocaleString()}*\nPayment: Cash on Delivery\n\nWe'll contact you to arrange delivery. Thank you for shopping with *${org.name}*! 🎉`,
+  })
+}
+
+async function handleManualPaymentVerification(
+  waConfig: { phoneNumberId: string; accessToken: string }, org: RunnerOrg, phone: string,
+  orgId: string, input: string, flow: FlowState
+) {
+  const orderId = flow.order_id as string
+  const orderNumber = flow.order_number as string
+
+  // Simple "Approval" flow - In real world, AI would parse the M-Pesa text here
+  await db.update(orders).set({
+    payment_status: 'pending', // Merchant still needs to manually confirm in dashboard
+    payment_reference: input.slice(0, 500),
+    payment_proof: input, // Dedicated field for the the full text or image URL
+    notes: `Manual verification requested.`,
+    updated_at: sql`(datetime('now'))`,
+  }).where(eq(orders.id, orderId))
+
+  await deleteFlowState(orgId, phone)
+
+  return await sendTextMessage(waConfig, {
+    to: phone,
+    body: `🕒 *Payment Received & Pending Approval*\n\nThank you! We've received your payment proof for Order *${orderNumber}*.\n\nOur team will verify this within a few minutes. You'll receive a confirmation once approved! ${org.bot_emojis_enabled ? '✨' : ''}`,
   })
 }
 

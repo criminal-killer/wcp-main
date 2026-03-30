@@ -5,7 +5,7 @@ import { UserButton } from '@clerk/nextjs'
 import {
   LayoutDashboard, Package, ShoppingCart, MessageSquare,
   Users, Settings, Store, BarChart3, Globe, Shield,
-  CheckCircle2, Plus, Menu, X, Bell
+  CheckCircle2, Plus, Menu, X, Bell, BookOpen
 } from 'lucide-react'
 import { useState } from 'react'
 
@@ -15,6 +15,7 @@ const NAV_ITEMS = [
   { href: '/dashboard/orders', label: 'Orders', icon: ShoppingCart },
   { href: '/dashboard/inbox', label: 'Inbox', icon: MessageSquare },
   { href: '/dashboard/contacts', label: 'Contacts', icon: Users },
+  { href: '/dashboard/docs', label: 'Help & Docs', icon: BookOpen },
   { href: '/dashboard/settings', label: 'Settings', icon: Settings },
 ]
 
@@ -84,7 +85,7 @@ export default function DashboardSidebar({ org }: { org: Org }) {
       </aside>
 
       {/* Desktop Sidebar (Permanent) */}
-      <aside className="hidden lg:flex lg:w-64 lg:flex-col lg:flex-shrink-0 bg-card border-r border-border h-screen sticky top-0 overflow-y-auto">
+      <aside className="hidden lg:flex lg:w-64 lg:flex-col lg:flex-shrink-0 bg-card border-r border-border h-screen sticky top-0">
         <div className="p-6 border-b border-border">
           <div className="flex items-center gap-3 p-2 rounded-xl bg-secondary/50 border border-border/50">
             <div className="w-10 h-10 bg-whatsapp rounded-xl flex items-center justify-center shadow-lg shadow-whatsapp/20">
@@ -99,16 +100,25 @@ export default function DashboardSidebar({ org }: { org: Org }) {
             </div>
           </div>
         </div>
-        <div className="flex-1 px-4 py-4">
+        <div className="flex-1 px-4 py-4 overflow-y-auto">
           <NavContent pathname={pathname} org={org} />
         </div>
-        <div className="p-4 border-t border-border mt-auto">
-          <div className="flex items-center gap-3 p-2 hover:bg-secondary rounded-2xl transition-all group">
+        <div className="p-4 border-t border-border mt-auto space-y-2">
+          <div className="flex items-center gap-3 p-2 hover:bg-secondary rounded-2xl transition-all group cursor-pointer">
             <UserButton afterSignOutUrl="/" />
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-black text-muted-foreground uppercase tracking-widest group-hover:text-foreground transition-colors">Settings</p>
+              <p className="text-xs font-black text-muted-foreground uppercase tracking-widest group-hover:text-foreground transition-colors">My Profile</p>
             </div>
           </div>
+          <button 
+            onClick={() => window.location.href = '/sign-in'} 
+            className="w-full flex items-center gap-3 p-2 hover:bg-red-50 text-red-600 rounded-2xl transition-all group"
+          >
+            <div className="w-8 h-8 flex items-center justify-center">
+              <X size={18} />
+            </div>
+            <span className="text-xs font-black uppercase tracking-widest">Logout</span>
+          </button>
         </div>
       </aside>
     </>
