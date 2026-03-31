@@ -66,18 +66,11 @@ export async function processIncomingMessage(ctx: EngineContext) {
 
   const flow = await getFlowState(orgId, phone) as FlowState | null
 
-  // === GLOBAL COMMANDS ===
-  const menuButtons = ['search', 'browse', 'view_cart', '🔍 search / ai', '🛍️ browse shop', '🛒 view cart'];
-  const isDirectMenuAction = menuButtons.includes(input);
-
-  if (['hi', 'hello', 'hey', 'start', 'menu', '0', '00'].includes(input) || (!flow && !isDirectMenuAction)) {
+  // === GLOBAL RESET COMMANDS (always reset to main menu) ===
+  if (['hi', 'hello', 'hey', 'start', 'menu', '0', '00', 'home'].includes(input)) {
     await clearCart(orgId, phone)
     await deleteFlowState(orgId, phone)
     return await showMainMenu(waConfigObj, org, phone, orgId)
-  }
-
-  if (['cart', 'view cart', '#cart'].includes(input)) {
-    return await showCart(waConfigObj, org, phone, orgId)
   }
 
   if (['cancel', 'stop', 'exit'].includes(input)) {
@@ -89,10 +82,38 @@ export async function processIncomingMessage(ctx: EngineContext) {
     })
   }
 
+  // === DIRECT BUTTON ACTIONS (from main menu — always route correctly) ===
+  // These must be handled BEFORE the flow switch to avoid looping back to greeting
+  if (input === 'browse' || input === '🛍️ browse shop' || input === 'browse shop') {
+    return await showCategories(waConfigObj, org, phone, orgId)
+  }
+
+  if (input === 'search' || input === '🔍 search / ai' || input === 'search / ai') {
+    await setFlowState(orgId, phone, { step: 'searching' })
+    const e = (emoji: string) => org.bot_emojis_enabled ? emoji : ''
+    return await sendTextMessage(waConfigObj, {
+      to: phone,
+      body: `${e('🔍')} *AI Personal Shopper*\n\nTell me what you're looking for!\n\nYou can search by name, or be specific like:\n- _"Red shoes under ${org.currency} 5000"_\n- _"Blue shirts in size M"_\n- _"What do you have for ${org.currency} 2000?"_`,
+    })
+  }
+
+  if (input === 'view_cart' || input === '🛒 view cart' || input === 'view cart' || input === 'cart' || input === '#cart') {
+    return await showCart(waConfigObj, org, phone, orgId)
+  }
+
+  // === NO FLOW STATE: user is lost, send them home ===
+  if (!flow) {
+    return await showMainMenu(waConfigObj, org, phone, orgId)
+  }
+
   // === FLOW-BASED NAVIGATION ===
   const step = flow?.step || 'main_menu'
 
   switch (step) {
+    case 'main_menu':
+      // If we get here with main_menu step and no recognized button, show categories
+      return await showCategories(waConfigObj, org, phone, orgId)
+
     case 'browsing_categories':
       return await handleCategorySelected(waConfigObj, org, phone, orgId, input)
 
@@ -124,7 +145,7 @@ export async function processIncomingMessage(ctx: EngineContext) {
       return await handleProductSearch(waConfigObj, org, phone, orgId, input)
 
     default:
-      // Try AI Fallback if not a recognized command
+      // Unknown step — send to AI fallback
       return await handleAiFallback(waConfigObj, org, phone, input)
   }
 }
@@ -182,32 +203,28 @@ async function handleAiFallback(waConfig: { phoneNumberId: string; accessToken: 
 
 async function handleProductSearch(waConfig: { phoneNumberId: string; accessToken: string }, org: RunnerOrg, phone: string, orgId: string, input: string) {
   const e = (emoji: string) => org.bot_emojis_enabled ? emoji : '';
-  
-  if (input === 'search' || input === '🔍 search / ai') {
-    await setFlowState(orgId, phone, { step: 'searching' });
-    return await sendTextMessage(waConfig, { 
-      to: phone, 
-      body: `${e('🔍')} *AI Personal Shopper*\n\nTell me what you're looking for!\n\nYou can search by name, or be specific like:\n- _"Red shoes under ${org.currency} 5000"_\n- _"Blue shirts in size M"_\n- _"What do you have for ${org.currency} 2000?"_`
-    });
+
+  // If no actual search query yet, prompt for it
+  if (!input || input.length < 2) {
+    return await showCategories(waConfig, org, phone, orgId)
   }
 
-  // Basic keyword search logic (Enhanced by products.color and metadata if needed)
-  // In a real app, this would be a refined Drizzle query.
+  // Basic keyword search logic
   const allProducts = await db.select().from(products).where(and(eq(products.org_id, orgId), eq(products.is_active, 1)));
   
-  // Very basic scoring for now - match keywords
-  const keywords = input.toLowerCase().split(' ').filter(k => k.length > 2);
+  // Match keywords against name, description, category
+  const keywords = input.toLowerCase().split(' ').filter(k => k.length > 1);
   const results = allProducts.filter(p => {
     const name = p.name.toLowerCase();
     const desc = (p.description || '').toLowerCase();
-    const color = (p.color || '').toLowerCase();
-    return keywords.some(k => name.includes(k) || desc.includes(k) || color.includes(k));
+    const cat = (p.category || '').toLowerCase();
+    return keywords.some(k => name.includes(k) || desc.includes(k) || cat.includes(k));
   }).slice(0, 10);
 
   if (results.length === 0) {
     return await sendTextMessage(waConfig, { 
       to: phone, 
-      body: `😔 I couldn't find any products matching "${input}".\n\nTry a different keyword or type *menu* to browse categories.` 
+      body: `${e('😔')} I couldn't find products matching *"${input}"*.\n\nTry a different keyword, or type *menu* to browse categories.` 
     });
   }
 
@@ -216,7 +233,7 @@ async function handleProductSearch(waConfig: { phoneNumberId: string; accessToke
   const rows = results.map(p => ({
     id: `prod_${p.id}`,
     title: p.name.slice(0, 24),
-    description: `${org.currency} ${p.price.toLocaleString()}`,
+    description: `${org.currency} ${p.price.toLocaleString()}${p.inventory_count === 0 ? ' (Out of Stock)' : ''}`,
   }));
 
   return await sendInteractiveListMessage(waConfig, {
