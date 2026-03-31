@@ -237,6 +237,9 @@ async function showMainMenu(waConfig: { phoneNumberId: string; accessToken: stri
   const e = (emoji: string) => org.bot_emojis_enabled ? emoji : '';
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
   const dayName = days[new Date().getDay()]
+  
+  // Derive style from org settings, default to 'default'
+  const style: string = (org as any).bot_greeting_style || 'default';
 
   // Premium 3-Bubble Flow - Send preceding messages first
   if (style !== 'minimal') {
@@ -264,12 +267,16 @@ async function showMainMenu(waConfig: { phoneNumberId: string; accessToken: stri
                    style === 'friendly' ? `We've got *${productCount.length}* amazing things for you to see today.\n\nTell me, what can I help you find? ${e('😊')}` :
                    `We have *${productCount.length}* specially selected items waiting for you.\n\nHow can I help you find exactly what you're looking for?`;
 
-
   const buttons = [];
   if (org.bot_show_search) buttons.push({ id: 'search', title: `${e('🔍 ')}Search / AI` });
   if (org.bot_show_categories) buttons.push({ id: 'browse', title: `${e('🛍️ ')}Browse Shop` });
   if (org.bot_show_cart) buttons.push({ id: 'view_cart', title: `${e('🛒 ')}View Cart` });
   
+  // Ensure at least one button always exists
+  if (buttons.length === 0) {
+    buttons.push({ id: 'browse', title: `${e('🛍️ ')}Browse Shop` });
+  }
+
   if (buttons.length > 3) {
     return await sendInteractiveListMessage(waConfig, {
       to: phone,
@@ -289,7 +296,7 @@ async function showMainMenu(waConfig: { phoneNumberId: string; accessToken: stri
     header: org.name,
     body: finalCta,
     footer: org.bot_custom_footer || 'Powered by Sella',
-    buttons: buttons.length ? buttons : [{ id: 'browse', title: 'Browse Products' }],
+    buttons: buttons,
   })
 }
 
