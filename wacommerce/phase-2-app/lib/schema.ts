@@ -85,7 +85,12 @@ export const organizations = sqliteTable('organizations', {
   is_active: integer('is_active').default(1),
   is_waitlisted: integer('is_waitlisted').default(0),
   enabled_features: text('enabled_features').default('{"ai_shopping":true,"manual_payments":true,"delivery_zones":true}'),
-})
+}, (table) => ({
+  // Index for webhook org lookup — hit on EVERY incoming WhatsApp message
+  waPhoneIdx: index('org_wa_phone_idx').on(table.wa_phone_number_id),
+  // Index for slug-based store page lookups
+  slugIdx: uniqueIndex('org_slug_idx').on(table.slug),
+}))
 
 export const payouts = sqliteTable('payouts', {
   id: text('id').primaryKey().default(sql`(lower(hex(randomblob(16))))`),
@@ -136,10 +141,12 @@ export const products = sqliteTable('products', {
   sort_order: integer('sort_order').default(0),
   created_at: text('created_at').default(sql`(datetime('now'))`),
   updated_at: text('updated_at').default(sql`(datetime('now'))`),
-})
-
-// ============================================
-// CONTACTS (End customers)
+}, (table) => ({
+  // Index for product listing — hit on every Browse Shop action
+  orgActiveIdx: index('products_org_active_idx').on(table.org_id, table.is_active),
+  // Index for product category browsing
+  orgCategoryIdx: index('products_org_category_idx').on(table.org_id, table.category),
+}))
 // ============================================
 export const contacts = sqliteTable('contacts', {
   id: text('id').primaryKey().default(sql`(lower(hex(randomblob(16))))`),
@@ -156,10 +163,12 @@ export const contacts = sqliteTable('contacts', {
   loyalty_points: integer('loyalty_points').default(0),
   created_at: text('created_at').default(sql`(datetime('now'))`),
   updated_at: text('updated_at').default(sql`(datetime('now'))`),
-})
-
-// ============================================
-// CONVERSATIONS
+}, (table) => ({
+  // CRITICAL: hit on every single incoming WhatsApp message (contact upsert)
+  orgPhoneIdx: uniqueIndex('contacts_org_phone_idx').on(table.org_id, table.phone),
+  // Index for contacts list page sorted by recency
+  orgCreatedIdx: index('contacts_org_created_idx').on(table.org_id, table.created_at),
+}))
 // ============================================
 export const conversations = sqliteTable('conversations', {
   id: text('id').primaryKey().default(sql`(lower(hex(randomblob(16))))`),
@@ -173,7 +182,12 @@ export const conversations = sqliteTable('conversations', {
   unread_count: integer('unread_count').default(0),
   temp_flow_state: text('temp_flow_state'), // Fallback for Redis
   created_at: text('created_at').default(sql`(datetime('now'))`),
-})
+}, (table) => ({
+  // CRITICAL: hit on every message to find/create the conversation
+  orgContactIdx: uniqueIndex('conv_org_contact_idx').on(table.org_id, table.contact_id),
+  // Index for inbox list ordered by last message
+  orgLastMsgIdx: index('conv_org_lastmsg_idx').on(table.org_id, table.last_message_at),
+}))
 
 // ============================================
 // MESSAGES
@@ -191,10 +205,12 @@ export const messages = sqliteTable('messages', {
   sent_by: text('sent_by').references(() => users.id),
   metadata: text('metadata'),
   created_at: text('created_at').default(sql`(datetime('now'))`),
-})
-
-// ============================================
-// ORDERS
+}, (table) => ({
+  // CRITICAL: inbox loads messages by conversation — most frequently read table
+  convIdIdx: index('messages_conv_idx').on(table.conversation_id, table.created_at),
+  // Index for org-level queries
+  orgIdIdx: index('messages_org_idx').on(table.org_id, table.created_at),
+}))
 // ============================================
 export const orders = sqliteTable('orders', {
   id: text('id').primaryKey().default(sql`(lower(hex(randomblob(16))))`),
@@ -219,7 +235,16 @@ export const orders = sqliteTable('orders', {
   notes: text('notes'),
   created_at: text('created_at').default(sql`(datetime('now'))`),
   updated_at: text('updated_at').default(sql`(datetime('now'))`),
-})
+}, (table) => ({
+  // CRITICAL: dashboard runs 7 queries against orders — all filter by org_id
+  orgIdIdx: index('orders_org_idx').on(table.org_id),
+  // Index for date-based metrics (today/week/month revenue)
+  orgDateIdx: index('orders_org_date_idx').on(table.org_id, table.created_at),
+  // Index for payment status filter (paid revenue calculation)
+  orgPaymentIdx: index('orders_org_payment_idx').on(table.org_id, table.payment_status),
+  // Unique index for order numbers
+  orderNumIdx: uniqueIndex('orders_number_idx').on(table.order_number),
+}))
 
 // ============================================
 // CARTS (Temporary, per conversation)

@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { organizations, contacts, conversations, messages, auto_replies, products, orders } from '@/lib/schema'
+import { organizations, contacts, conversations, messages } from '@/lib/schema'
 import { eq, and } from 'drizzle-orm'
 import { verifyWebhookSignature } from '@/lib/whatsapp'
-import { redis, getFlowState, setFlowState, deleteFlowState, getCart, setCart, clearCart } from '@/lib/redis'
+import { getCachedOrg, setCachedOrg, getFlowState, setFlowState, deleteFlowState, getCart, setCart, clearCart } from '@/lib/redis'
 import { decrypt } from '@/lib/encryption'
 import { processIncomingMessage } from '@/lib/store-engine'
+
+export const dynamic = 'force-dynamic'
+export const maxDuration = 60 // Allow up to 60 seconds for processing
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
@@ -75,10 +78,16 @@ export async function POST(req: NextRequest) {
       const phoneNumberId = value.metadata?.phone_number_id
       if (!phoneNumberId) continue
 
-      // Find org by phone number ID
-      const org = await db.query.organizations.findFirst({
-        where: eq(organizations.wa_phone_number_id, phoneNumberId),
-      })
+      // Find org by phone number ID — check Redis cache first (avoids full table scan on every message)
+      let org = await getCachedOrg(phoneNumberId) as typeof organizations.$inferSelect | null
+      if (!org) {
+        org = await db.query.organizations.findFirst({
+          where: eq(organizations.wa_phone_number_id, phoneNumberId),
+        }) || null
+        if (org) {
+          await setCachedOrg(phoneNumberId, org) // Cache for 5 minutes
+        }
+      }
       if (!org) continue
 
       // Auto-activate webhook status on first successful message

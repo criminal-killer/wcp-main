@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { Send, Bot, User } from 'lucide-react'
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { Send, Bot, User, MessageSquare, RefreshCw } from 'lucide-react'
 
 interface Conversation {
   id: string
@@ -38,16 +38,36 @@ export default function InboxClient({
   const [replyText, setReplyText] = useState('')
   const [sending, setSending] = useState(false)
   const [loading, setLoading] = useState(false)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const selectedRef = useRef<Conversation | null>(null)
+
+  // Keep ref in sync with state for use inside intervals
+  useEffect(() => { selectedRef.current = selected }, [selected])
+
+  const fetchMessages = useCallback(async (convId: string, silent = false) => {
+    if (!silent) setLoading(true)
+    try {
+      const res = await fetch(`/api/messages?conversation_id=${convId}`)
+      const data = await res.json() as { data: Message[] }
+      setMessages(data.data || [])
+      // Auto scroll to bottom
+      setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
+    } catch { if (!silent) setMessages([]) }
+    finally { if (!silent) setLoading(false) }
+  }, [])
+
+  // 5-second polling for new messages
+  useEffect(() => {
+    if (!selected) return
+    const interval = setInterval(() => {
+      if (selectedRef.current) fetchMessages(selectedRef.current.id, true)
+    }, 5000)
+    return () => clearInterval(interval)
+  }, [selected?.id, fetchMessages])
 
   async function selectConv(conv: Conversation) {
     setSelected(conv)
-    setLoading(true)
-    try {
-      const res = await fetch(`/api/messages?conversation_id=${conv.id}`)
-      const data = await res.json() as { data: Message[] }
-      setMessages(data.data || [])
-    } catch { setMessages([]) }
-    finally { setLoading(false) }
+    await fetchMessages(conv.id)
   }
 
   async function sendReply() {
@@ -73,6 +93,7 @@ export default function InboxClient({
         sent_by: userId,
       }])
       setReplyText('')
+      setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
     } catch { /* ignore */ }
     finally { setSending(false) }
   }
@@ -155,21 +176,26 @@ export default function InboxClient({
               <div className="text-center text-muted-foreground/70 py-10">Loading messages...</div>
             ) : messages.length === 0 ? (
               <div className="text-center text-muted-foreground/70 py-10">No messages yet</div>
-            ) : messages.map(msg => (
-              <div key={msg.id} className={`flex ${msg.direction === 'outbound' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-2xl text-sm ${
-                  msg.direction === 'outbound'
-                    ? 'bg-[#25D366] text-white rounded-tr-sm'
-                    : 'bg-secondary/50 text-foreground rounded-tl-sm'
-                }`}>
-                  <p>{msg.content}</p>
-                  <p className={`text-xs mt-1 ${msg.direction === 'outbound' ? 'text-green-100' : 'text-muted-foreground/70'}`}>
-                    {msg.created_at ? new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
-                    {msg.sent_by && ' · You'}
-                  </p>
-                </div>
-              </div>
-            ))}
+            ) : (
+              <>
+                {messages.map(msg => (
+                  <div key={msg.id} className={`flex ${msg.direction === 'outbound' ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-2xl text-sm ${
+                      msg.direction === 'outbound'
+                        ? 'bg-[#25D366] text-white rounded-tr-sm'
+                        : 'bg-secondary/50 text-foreground rounded-tl-sm'
+                    }`}>
+                      <p>{msg.content}</p>
+                      <p className={`text-xs mt-1 ${msg.direction === 'outbound' ? 'text-green-100' : 'text-muted-foreground/70'}`}>
+                        {msg.created_at ? new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                        {msg.sent_by && ' · You'}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+                <div ref={messagesEndRef} />
+              </>
+            )}
           </div>
 
           {/* Reply */}

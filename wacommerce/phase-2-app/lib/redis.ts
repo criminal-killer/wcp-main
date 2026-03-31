@@ -39,6 +39,29 @@ export async function rateLimit(key: string, limit: number, window: number): Pro
   }, true)
 }
 
+// Org cache helpers (for webhook — most frequent DB query)
+export async function getCachedOrg(phoneNumberId: string) {
+  return await exec(async (r) => {
+    const key = `sella:org:phone:${phoneNumberId}`
+    return await r.get<Record<string, unknown>>(key)
+  }, null)
+}
+
+export async function setCachedOrg(phoneNumberId: string, org: unknown) {
+  const key = `sella:org:phone:${phoneNumberId}`
+  await exec(async (r) => {
+    await r.setex(key, 300, JSON.stringify(org)) // 5 min TTL
+  }, null)
+}
+
+export async function clearCachedOrg(phoneNumberId: string) {
+  const key = `sella:org:phone:${phoneNumberId}`
+  await exec(async (r) => {
+    await r.del(key)
+  }, null)
+}
+
+
 // Cart helpers
 export async function getCart(orgId: string, phone: string) {
   return await exec(async (r) => {
