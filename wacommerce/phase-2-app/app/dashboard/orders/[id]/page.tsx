@@ -1,7 +1,7 @@
 import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import { db } from '@/lib/db'
-import { orders, contacts, organizations } from '@/lib/schema'
+import { users, orders, contacts, organizations } from '@/lib/schema'
 import { eq, and } from 'drizzle-orm'
 import { ChevronLeft, Package, User, CreditCard, MapPin, Calendar, Clock, CheckCircle2, Truck, XCircle, AlertCircle } from 'lucide-react'
 import Link from 'next/link'
@@ -11,7 +11,8 @@ export const dynamic = 'force-dynamic'
 
 interface OrderItem {
   product_id: string
-  name: string
+  product_name: string  // stored as 'product_name' in cart
+  name?: string         // legacy fallback
   price: number
   qty: number
   image?: string
@@ -88,7 +89,7 @@ export default async function OrderDetailPage({ params }: { params: { id: string
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-bold text-sm text-foreground truncate">{item.name}</h4>
+                    <h4 className="font-bold text-sm text-foreground truncate">{item.product_name || item.name}</h4>
                     <p className="text-xs text-muted-foreground font-medium">
                       {item.variant ? `Variant: ${item.variant} · ` : ''}
                       Qty: {item.qty}

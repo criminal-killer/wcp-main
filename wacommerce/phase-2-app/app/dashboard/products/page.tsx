@@ -106,7 +106,7 @@ export default async function ProductsPage() {
                     </td>
                     <td className="px-5 py-3">
                       <span className={`text-sm font-medium ${(product.inventory_count || 0) === 0 ? 'text-red-600' : 'text-muted-foreground'}`}>
-                        {product.inventory_count === 0 ? 'âš ï¸ Out of Stock' : `${product.inventory_count} in stock`}
+                        {product.inventory_count === 0 ? 'Out of Stock' : `${product.inventory_count} in stock`}
                       </span>
                     </td>
                     <td className="px-5 py-3">

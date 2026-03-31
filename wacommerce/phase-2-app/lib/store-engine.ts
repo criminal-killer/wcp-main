@@ -66,13 +66,19 @@ export async function processIncomingMessage(ctx: EngineContext) {
 
   const flow = await getFlowState(orgId, phone) as FlowState | null
 
-  // === GLOBAL RESET COMMANDS (always reset to main menu) ===
-  if (['hi', 'hello', 'hey', 'start', 'menu', '0', '00', 'home'].includes(input)) {
+  // === GLOBAL RESET COMMANDS (new session — always reset cart and flow) ===
+  if (['hi', 'hello', 'hey', 'start'].includes(input)) {
     await clearCart(orgId, phone)
     await deleteFlowState(orgId, phone)
     return await showMainMenu(waConfigObj, org, phone, orgId)
   }
 
+  // === NAVIGATION COMMANDS (show menu WITHOUT clearing cart) ===
+  if (['menu', '0', '00', 'home', 'back', 'main'].includes(input)) {
+    return await showMainMenu(waConfigObj, org, phone, orgId)
+  }
+
+  // === CANCEL COMMANDS (end session) ===
   if (['cancel', 'stop', 'exit'].includes(input)) {
     await clearCart(orgId, phone)
     await deleteFlowState(orgId, phone)
@@ -255,8 +261,8 @@ async function showMainMenu(waConfig: { phoneNumberId: string; accessToken: stri
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
   const dayName = days[new Date().getDay()]
   
-  // Derive style from org settings, default to 'default'
-  const style: string = (org as any).bot_greeting_style || 'default';
+  // Derive style from org settings - field is bot_menu_style in schema
+  const style: string = org.bot_menu_style || 'professional';
 
   // Premium 3-Bubble Flow - Send preceding messages first
   if (style !== 'minimal') {
