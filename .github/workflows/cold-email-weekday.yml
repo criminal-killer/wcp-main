@@ -25,6 +25,8 @@ jobs:
         run: node scripts/scrape-businesses.js
         env:
           CITY_NAME: Nairobi
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
 
       - name: Send cold emails
         working-directory: wacommerce/phase-1-waitlist/automation
@@ -37,6 +39,8 @@ jobs:
           FROM_EMAIL: ${{ secrets.FROM_EMAIL }}
           FROM_NAME: "Alfred from Sella"
           WAITLIST_URL: ${{ secrets.WAITLIST_URL }}
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
 
       - name: Commit changes
         uses: stefanzweifel/git-auto-commit-action@v5
