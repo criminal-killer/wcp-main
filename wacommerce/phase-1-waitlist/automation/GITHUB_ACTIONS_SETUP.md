@@ -19,22 +19,35 @@ In order for the automated marketing scripts (Cold Emails, FaceBook Posts, and D
 - **`TURSO_DATABASE_URL`**: Your Turso database connection URL (e.g. `libsql://your-db-name.turso.io`)
 - **`TURSO_AUTH_TOKEN`**: The authentication token for your Turso DB.
 
-### Cold Email SMTP (Brevo Recommended)
+### Cold Email SMTP (Brevo or Gmail)
 *Used by the weekday Cron job to email local businesses across Kenya's 47 counties safely from your domain.*
 
-For the highest deliverability and a generous free tier, **Brevo (formerly Sendinblue)** is highly recommended. It offers 300 free emails per day, which perfectly covers our script's maximum limit of 80 emails per run. If you have a custom domain and want the emails to look extremely professional right off the bat, Brevo is the absolute best free tier for marketing. You get an SMTP key immediately upon signing up and verifying it.
+Since the script limits sending to 80 emails per day, you have two great free options. 
 
-**Step-by-step Setup for Brevo:**
+#### Option 1: Your Own Gmail Account (Easiest)
+You can use a regular `@gmail.com` address. Google gives you 500 free SMTP sends a day.
+1. Turn on **2-Step Verification** for your Google Account.
+2. Search for **App Passwords** in your Google Account security settings.
+3. Generate a new App Password (it'll be a 16-character string).
+4. Add these credentials to your GitHub secrets:
+   - **`SMTP_HOST`**: `smtp.gmail.com`
+   - **`SMTP_PORT`**: `587`
+   - **`SMTP_USER`**: Your full Gmail address.
+   - **`SMTP_PASS`**: The 16-character App Password you generated (no spaces).
+   - **`FROM_EMAIL`**: Your Gmail address.
+
+#### Option 2: Brevo (Most Professional)
+For the highest deliverability and a generous free tier (300 emails/day), **Brevo (formerly Sendinblue)** is highly recommended if you own a custom domain (like `@sella.io`). You get an SMTP key immediately upon signing up and verifying it.
 1. Go to [https://brevo.com](https://brevo.com) and create a free account.
 2. In the top right dropdown menu under your profile name, click **SMTP & API**.
 3. Click the **SMTP** tab.
 4. Click **Generate a new SMTP key**, name it "GitHub Actions", and copy the generated credentials.
-5. Add those credentials to your GitHub secrets using these strict values:
+5. Add these strict credentials to your GitHub secrets:
    - **`SMTP_HOST`**: `smtp-relay.brevo.com`
    - **`SMTP_PORT`**: `587`
    - **`SMTP_USER`**: The login email value shown on the Brevo SMTP page.
    - **`SMTP_PASS`**: The long API key/password you just generated.
-   - **`FROM_EMAIL`**: The email address attached to your verified Brevo domain (e.g., `hello@sella.io`).
+   - **`FROM_EMAIL`**: The email address attached to your verified Brevo domain.
 
 *(Optional default variable via code: `WAITLIST_URL` exists but if you don't add it to secrets, it defaults correctly to your frontend vercel app string `https://sella-app.vercel.app`)*
 
