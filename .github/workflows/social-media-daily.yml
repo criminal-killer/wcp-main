@@ -18,7 +18,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: wacommerce/phase-1-waitlist/automation
-        run: npm init -y && npm install axios
+        run: npm init -y && npm install axios @libsql/client
 
       - name: Post to social media
         working-directory: wacommerce/phase-1-waitlist/automation
