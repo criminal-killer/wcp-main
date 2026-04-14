@@ -19,13 +19,22 @@ In order for the automated marketing scripts (Cold Emails, FaceBook Posts, and D
 - **`TURSO_DATABASE_URL`**: Your Turso database connection URL (e.g. `libsql://your-db-name.turso.io`)
 - **`TURSO_AUTH_TOKEN`**: The authentication token for your Turso DB.
 
-### Cold Email SMTP (Brevo / Gmail)
+### Cold Email SMTP (Brevo Recommended)
 *Used by the weekday Cron job to email local businesses across Kenya's 47 counties safely from your domain.*
-- **`SMTP_HOST`**: The host for your mail sender (e.g., `smtp-relay.brevo.com` or `smtp.gmail.com`)
-- **`SMTP_PORT`**: Your port (usually `587`)
-- **`SMTP_USER`**: Your SMTP login email or username.
-- **`SMTP_PASS`**: Your SMTP password or App Password (if using Gmail).
-- **`FROM_EMAIL`**: The email address you want the emails to appear from (e.g. `alfred@sella.io`)
+
+For the highest deliverability and a generous free tier, **Brevo (formerly Sendinblue)** is highly recommended. It offers 300 free emails per day, which perfectly covers our script's maximum limit of 80 emails per run. If you have a custom domain and want the emails to look extremely professional right off the bat, Brevo is the absolute best free tier for marketing. You get an SMTP key immediately upon signing up and verifying it.
+
+**Step-by-step Setup for Brevo:**
+1. Go to [https://brevo.com](https://brevo.com) and create a free account.
+2. In the top right dropdown menu under your profile name, click **SMTP & API**.
+3. Click the **SMTP** tab.
+4. Click **Generate a new SMTP key**, name it "GitHub Actions", and copy the generated credentials.
+5. Add those credentials to your GitHub secrets using these strict values:
+   - **`SMTP_HOST`**: `smtp-relay.brevo.com`
+   - **`SMTP_PORT`**: `587`
+   - **`SMTP_USER`**: The login email value shown on the Brevo SMTP page.
+   - **`SMTP_PASS`**: The long API key/password you just generated.
+   - **`FROM_EMAIL`**: The email address attached to your verified Brevo domain (e.g., `hello@sella.io`).
 
 *(Optional default variable via code: `WAITLIST_URL` exists but if you don't add it to secrets, it defaults correctly to your frontend vercel app string `https://sella-app.vercel.app`)*
 
