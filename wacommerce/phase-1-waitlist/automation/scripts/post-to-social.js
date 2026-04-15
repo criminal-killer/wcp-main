@@ -13,7 +13,7 @@ async function postToSocial() {
   
   // Fetch posts: status APPROVED, scheduledAt <= now
   const result = await client.execute({
-    sql: "SELECT * FROM marketing_posts WHERE status = 'APPROVED' AND (scheduledAt <= ? OR scheduledAt IS NULL)",
+    sql: "SELECT * FROM marketing_posts WHERE status = 'APPROVED' AND (scheduled_at <= ? OR scheduled_at IS NULL)",
     args: [now]
   });
 
