@@ -450,23 +450,29 @@ export const notifications = sqliteTable('notifications', {
 })
 
 // ============================================
-// RELATIONS
+// MARKETING AUTOMATION
 // ============================================
 
-export const supportTicketsRelations = relations(support_tickets, ({ one }) => ({
-  user: one(users, {
-    fields: [support_tickets.user_id],
-    references: [users.id],
-  }),
-  org: one(organizations, {
-    fields: [support_tickets.org_id],
-    references: [organizations.id],
-  }),
+export const leads = sqliteTable('leads', {
+  id: text('id').primaryKey().default(sql`(lower(hex(randomblob(16))))`),
+  business_name: text('business_name').notNull(),
+  email: text('email'),
+  phone: text('phone'),
+  website: text('website'),
+  city: text('city'),
+  status: text('status').default('APPROVED'), // APPROVED, SENT, REJECTED
+  source: text('source').default('OSM'),
+  created_at: text('created_at').default(sql`(datetime('now'))`),
+}, (table) => ({
+  nameCityIdx: uniqueIndex('leads_name_city_idx').on(table.business_name, table.city),
 }))
 
-export const payoutRelations = relations(affiliate_payouts, ({ one }) => ({
-  affiliate: one(affiliates, {
-    fields: [affiliate_payouts.affiliate_id],
-    references: [affiliates.id]
-  })
-}))
+export const marketing_posts = sqliteTable('marketing_posts', {
+  id: text('id').primaryKey().default(sql`(lower(hex(randomblob(16))))`),
+  org_id: text('org_id').references(() => organizations.id),
+  content: text('content').notNull(),
+  platform: text('platform').notNull(), // fb, ig, tw
+  status: text('status').default('APPROVED'), // PENDING, APPROVED, POSTED, FAILED
+  scheduled_at: integer('scheduled_at'), // timestamp in ms
+  created_at: text('created_at').default(sql`(datetime('now'))`),
+})
