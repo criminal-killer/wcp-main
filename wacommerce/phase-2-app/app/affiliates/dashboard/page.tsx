@@ -18,7 +18,7 @@ export default function AffiliateDashboard() {
       <aside className="w-64 bg-white border-r border-slate-200 hidden md:flex flex-col h-screen fixed">
         <div className="p-6 border-b border-slate-100">
           <Link href="/" className="font-serif font-black text-2xl text-primary block">
-            SELLA <span className="text-[10px] uppercase font-sans tracking-widest text-slate-400">Affiliates</span>
+            Chatevo <span className="text-[10px] uppercase font-sans tracking-widest text-slate-400">Affiliates</span>
           </Link>
         </div>
         <nav className="flex-1 p-4 space-y-2">
@@ -51,7 +51,7 @@ export default function AffiliateDashboard() {
           </div>
           <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-sm">
             <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Your Link:</span>
-            <code className="text-sm font-bold text-primary">sella-app.vercel.app/?ref={mockAffiliate.referralCode}</code>
+            <code className="text-sm font-bold text-primary">Chatevo-app.vercel.app/?ref={mockAffiliate.referralCode}</code>
             <button className="ml-2 p-1.5 hover:bg-slate-100 rounded-lg transition-colors text-slate-400 hover:text-slate-800">
               <Copy size={16} />
             </button>
@@ -124,9 +124,9 @@ export default function AffiliateDashboard() {
                   <p><strong>Subject:</strong> Transform your WhatsApp into a real store 🚀</p>
                   <hr className="border-slate-200" />
                   <p>Hey [Name],</p>
-                  <p>I know you've been struggling with managing orders on WhatsApp. I just found SELLA and it's a game-changer.</p>
+                  <p>I know you've been struggling with managing orders on WhatsApp. I just found Chatevo and it's a game-changer.</p>
                   <p>It lets you build a full catalog, accept payments (Paystack/Stripe/M-Pesa), and manage orders without buyers ever leaving the chat.</p>
-                  <p>Check it out here: <strong>https://sella-app.vercel.app/?ref={mockAffiliate.referralCode}</strong></p>
+                  <p>Check it out here: <strong>https://Chatevo-app.vercel.app/?ref={mockAffiliate.referralCode}</strong></p>
                   <p>Best,<br/>[Your Name]</p>
                 </div>
               </div>

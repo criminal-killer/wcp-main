@@ -244,16 +244,16 @@ function SettingsContent({ org, autoReplies }: { org: Org, autoReplies: AutoRepl
 
   const PLANS = [
     { 
-      id: 'starter', name: 'Starter', price: 29, trial: 7, 
-      features: ['100 Products', 'Sella AI (20/day, 350/mo)', 'Bot Styling (Standard)', 'WhatsApp Storefront', '7-Day Free Trial']
+      id: 'starter', name: 'Chatevo Starter', price: 3500, currency: 'KES', paystackUrl: 'https://paystack.shop/pay/chatevo-starter',
+      features: ['50 Products', 'AI WhatsApp Bot', 'MPesa/Paybill/Bank Payments', 'Order Management', 'Basic Analytics']
     },
     { 
-      id: 'pro', name: 'Pro', price: 59, trial: 7, 
-      features: ['500 Products', 'Unlimited AI Assistant', 'Custom Bot Styles (5)', 'Bulk Product Upload', 'Abandoned Cart Recovery']
+      id: 'growth', name: 'Chatevo Growth', price: 7000, currency: 'KES', paystackUrl: 'https://paystack.shop/pay/chatevo-growth',
+      features: ['Unlimited Products', 'Digital Product Delivery', 'Abandoned Cart Recovery', 'Custom Bot Persona', 'Bulk Broadcasts']
     },
     { 
-      id: 'elite', name: 'Elite', price: 99, trial: 7, 
-      features: ['5,000 Products', 'White-label Storefront', 'Dedicated Account Manager', 'Custom API Integrations', 'Priority AI Processing']
+      id: 'elite', name: 'Chatevo Elite', price: 13000, currency: 'KES', paystackUrl: 'https://paystack.shop/pay/chatevo-elite',
+      features: ['Everything in Growth', '5 Team Members', 'API Access', 'Priority Support', 'Dedicated Account Manager']
     }
   ]
 
@@ -381,7 +381,7 @@ function SettingsContent({ org, autoReplies }: { org: Org, autoReplies: AutoRepl
               <div className="space-y-3">
                 <div className="bg-white rounded-xl p-3 border border-slate-100">
                   <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Callback URL</p>
-                  <code className="text-[11px] font-bold text-primary break-all">https://sella-app.vercel.app/api/webhook</code>
+                  <code className="text-[11px] font-bold text-primary break-all">{process.env.NEXT_PUBLIC_APP_URL || 'https://sella-app.vercel.app'}/api/webhook</code>
                 </div>
                 <div className="bg-white rounded-xl p-3 border border-slate-100">
                   <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Verify Token</p>
@@ -553,7 +553,8 @@ function SettingsContent({ org, autoReplies }: { org: Org, autoReplies: AutoRepl
                     <div>
                       <h4 className="text-xl font-black text-[#075E54] font-serif italic">{plan.name}</h4>
                       <div className="flex items-baseline gap-1 mt-1">
-                        <span className="text-2xl font-black">${plan.price}</span>
+                        <span className="text-xs font-black text-slate-400">KES</span>
+                        <span className="text-2xl font-black">{plan.price.toLocaleString()}</span>
                         <span className="text-xs font-bold text-slate-400">/mo</span>
                       </div>
                     </div>
@@ -577,22 +578,12 @@ function SettingsContent({ org, autoReplies }: { org: Org, autoReplies: AutoRepl
 
                   {(org.plan !== plan.id || showAllPlans) && (
                     <div className="space-y-2 mt-auto">
-                      <button 
-                        onClick={() => handleSubscribe(plan.id, 'paystack')}
-                        disabled={!!loadingPlan}
-                        className={`w-full ${org.plan === plan.id ? 'bg-secondary text-foreground border border-border' : 'bg-[#075E54] text-white'} py-3 rounded-xl font-black text-xs uppercase tracking-widest hover:opacity-95 transition-all disabled:opacity-50`}
+                      <a 
+                        href={(plan as any).paystackUrl}
+                        className={`block w-full text-center ${org.plan === plan.id ? 'bg-secondary text-foreground border border-border' : 'bg-[#075E54] text-white'} py-3 rounded-xl font-black text-xs uppercase tracking-widest hover:opacity-95 transition-all`}
                       >
-                        {loadingPlan === `${plan.id}-paystack` ? 'Processing...' : (org.plan === plan.id ? 'Current Plan' : 'Pay via Paystack (Local)')}
-                      </button>
-                      {org.plan !== plan.id && (
-                        <button 
-                          onClick={() => handleSubscribe(plan.id, 'paypal')}
-                          disabled={!!loadingPlan}
-                          className="w-full bg-blue-600 text-white py-3 rounded-xl font-black text-xs uppercase tracking-widest hover:opacity-95 transition-all disabled:opacity-50"
-                        >
-                          {loadingPlan === `${plan.id}-paypal` ? 'Processing...' : 'Pay via PayPal (Global)'}
-                        </button>
-                      )}
+                        {org.plan === plan.id ? 'Current Plan' : `Subscribe via Paystack`}
+                      </a>
                     </div>
                   )}
                 </div>
@@ -711,7 +702,7 @@ function SettingsContent({ org, autoReplies }: { org: Org, autoReplies: AutoRepl
                 <input 
                   value={botForm.custom_footer} 
                   onChange={e => setBotForm({ ...botForm, custom_footer: e.target.value })}
-                  placeholder="e.g. Powered by Sella"
+                  placeholder="e.g. Powered by Chatevo"
                   className="w-full border border-border rounded-xl px-4 py-3 text-sm font-bold bg-slate-50" 
                 />
               </div>
@@ -783,7 +774,7 @@ function SettingsContent({ org, autoReplies }: { org: Org, autoReplies: AutoRepl
                   onChange={e => setAiForm({ ...aiForm, provider: e.target.value })}
                   className="w-full border border-border rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50"
                 >
-                  <option value="sella">Sella Default (Groq/Llama)</option>
+                  <option value="sella">Chatevo Default (Groq/Llama)</option>
                   <option value="google">Google Gemini (Fast & Efficient)</option>
                   <option value="anthropic">Anthropic Claude</option>
                   <option value="openai">OpenAI (GPT-4o)</option>

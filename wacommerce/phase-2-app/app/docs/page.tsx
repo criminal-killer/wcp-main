@@ -5,7 +5,7 @@ const docsSections = [
   {
     title: 'Getting Started',
     icon: BookOpen,
-    description: 'Learn how to set up your Sella store, configure your WhatsApp connection, and start selling.',
+    description: 'Learn how to set up your Chatevo store, configure your WhatsApp connection, and start selling.',
     steps: [
       'Connect your WhatsApp Business API number.',
       'Configure your store details (currency, theme).',
@@ -40,7 +40,7 @@ const docsSections = [
     icon: Zap,
     description: 'Understand how payments and WhatsApp webhooks trigger actions automatically.',
     steps: [
-      'When a customer approves a cart on WhatsApp, it appears in Sella instantly.',
+      'When a customer approves a cart on WhatsApp, it appears in Chatevo instantly.',
       'Successful Paystack/Stripe/PayPal payments automatically mark the order as "Paid".',
       'Order status changes generate automated WhatsApp receipt messages.',
       'Webhook failures are logged for easy debugging.'
@@ -56,7 +56,7 @@ export default function DocsPage() {
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link href="/" className="font-serif font-black text-2xl tracking-tighter text-primary">
-              SELLA
+              Chatevo
             </Link>
             <span className="text-muted-foreground font-medium text-sm border-l border-border pl-4">
               Documentation
@@ -75,7 +75,7 @@ export default function DocsPage() {
             <BookOpen size={16} /> Official Guide
           </div>
           <h1 className="font-serif text-5xl md:text-6xl text-white tracking-tight">
-            How to use SELLA
+            How to use Chatevo
           </h1>
           <p className="text-emerald-100/70 text-lg md:text-xl max-w-2xl mx-auto font-medium">
             Everything you need to know about setting up your WhatsApp Commerce platform, processing orders, and scaling your business.

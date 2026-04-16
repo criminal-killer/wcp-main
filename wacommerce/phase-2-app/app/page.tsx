@@ -210,8 +210,8 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-12">
             <Link href="/" className="flex items-center gap-3 group">
-              <div className="w-10 h-10 bg-[#25D366] rounded-xl flex items-center justify-center text-white font-serif font-black text-xl shadow-lg shadow-primary/20 group-hover:scale-110 transition-transform">S</div>
-              <span className="font-serif font-black text-2xl tracking-tighter text-[#075E54]">SELLA</span>
+              <div className="w-10 h-10 bg-[#25D366] rounded-xl flex items-center justify-center text-white font-serif font-black text-xl shadow-lg shadow-primary/20 group-hover:scale-110 transition-transform">C</div>
+              <span className="font-serif font-black text-2xl tracking-tighter text-[#075E54]">Chatevo</span>
             </Link>
             
             <nav className="hidden md:flex items-center gap-8 text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">
@@ -248,10 +248,10 @@ export default function HomePage() {
       <nav className="fixed top-0 w-full z-50 transition-all border-b border-white/5 bg-black/5 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3 group cursor-pointer">
-            <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(212,175,55,0.3)] group-hover:scale-110 transition-transform">
-              <span className="text-primary-foreground font-black text-xl font-serif">S</span>
+            <div className="w-10 h-10 bg-[#25D366] rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(37,211,102,0.3)] group-hover:scale-110 transition-transform">
+              <span className="text-white font-black text-xl font-serif">C</span>
             </div>
-            <span className="font-serif font-black text-2xl tracking-tighter italic">SELLA</span>
+            <span className="font-serif font-black text-2xl tracking-tighter italic">Chatevo</span>
           </div>
           
           <div className="hidden md:flex items-center gap-10 mr-auto ml-12">
@@ -287,15 +287,14 @@ export default function HomePage() {
             <h1 className="text-6xl md:text-8xl font-serif font-black mb-6 leading-[0.9] tracking-tight text-[#075E54]">
               Sell <br />
               <span className="text-primary italic">
-                <Typewriter texts={['Easily', 'Faster', 'Smart', 'Global']} />
+                <Typewriter texts={['Smarter', 'Faster', 'via MPesa', 'on WhatsApp']} />
               </span> <br />
               on WhatsApp
             </h1>
 
             <p className="text-xl text-muted-foreground mb-12 max-w-xl font-medium leading-relaxed">
-              The professional way to sell products directly inside chat. 
-              Let your customers checkout without leaving WhatsApp. 
-              Built for speed. Loved by merchants.
+              Chatevo turns your WhatsApp number into a fully automated AI store.
+              Customers browse, order, and pay via M-Pesa — all inside chat.
             </p>
 
             <div className="flex flex-wrap gap-5">
@@ -339,7 +338,7 @@ export default function HomePage() {
               </h2>
             </div>
             <p className="text-muted-foreground max-w-md font-medium text-lg mb-4">
-              Stop manually taking orders. Sella handles everything from catalog to confirmation.
+              Stop manually taking orders. Chatevo handles everything from catalog to M-Pesa confirmation.
             </p>
           </div>
 
@@ -442,7 +441,7 @@ export default function HomePage() {
                     <span className="text-primary italic">Your Identity.</span>
                   </h2>
                   <p className="text-muted-foreground/70 font-medium mb-12 max-w-md leading-relaxed">
-                    Sella adapts to your aesthetic. Choose from 10+ professional themes or create your own signature palette.
+                    Chatevo adapts to your aesthetic. Choose from 10+ professional themes or create your own signature palette.
                   </p>
                   <div className="grid grid-cols-5 gap-4">
                     {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(i => (
@@ -469,11 +468,11 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto grid md:grid-cols-4 gap-12">
           <div className="col-span-2">
             <div className="flex items-center gap-3 mb-8">
-              <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-white font-bold font-serif text-xl">S</div>
-              <span className="font-serif font-black text-2xl tracking-tight text-[#075E54]">SELLA</span>
+              <div className="w-10 h-10 bg-[#25D366] rounded-xl flex items-center justify-center text-white font-bold font-serif text-xl">C</div>
+              <span className="font-serif font-black text-2xl tracking-tight text-[#075E54]">Chatevo</span>
             </div>
             <p className="text-muted-foreground max-w-sm font-medium leading-relaxed">
-              The professional way to sell on WhatsApp. Built for modern merchants who value speed and customer experience.
+              Sell Smarter on WhatsApp. Built for Kenyan merchants — M-Pesa, Paybill, Bank, and AI automation all in one place.
             </p>
           </div>
           <div>
@@ -494,7 +493,7 @@ export default function HomePage() {
           </div>
         </div>
         <div className="max-w-7xl mx-auto mt-20 pt-12 border-t border-slate-100 flex flex-col md:flex-row justify-between text-muted-foreground text-xs font-bold tracking-tight gap-4">
-          <p>© 2026 SELLA TECHNOLOGIES INC.</p>
+          <p>© 2026 CHATEVO TECHNOLOGIES · Sell Smarter on WhatsApp</p>
           <div className="flex gap-10">
             <Link href="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link>
             <Link href="/terms" className="hover:text-primary transition-colors">Terms of Service</Link>

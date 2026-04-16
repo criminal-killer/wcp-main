@@ -19,16 +19,16 @@ const outfit = Outfit({
 
 export const metadata: Metadata = {
   title: {
-    default: 'SELLA — WhatsApp Commerce Platform | Sell Products Directly in Chat',
-    template: '%s | SELLA'
+    default: 'Chatevo — Sell Smarter on WhatsApp | AI-Powered Commerce',
+    template: '%s | Chatevo'
   },
-  description: 'The professional way to sell products directly inside WhatsApp chat. Let your customers browse catalogs, add to cart, and checkout without ever leaving WhatsApp. Built for speed and loved by global merchants.',
+  description: 'Chatevo turns your WhatsApp into a fully automated AI store. Let customers browse, order, and pay without leaving chat. Built for Kenyan merchants — M-Pesa, Paybill, Bank all supported.',
   keywords: [
-    'whatsapp commerce', 'whatsapp store', 'sell on whatsapp', 'whatsapp shopping', 
-    'whatsapp catalog', 'e-commerce over whatsapp', 'whatsapp checkout', 'sella app'
+    'whatsapp commerce', 'whatsapp store', 'sell on whatsapp', 'kenya whatsapp shop',
+    'mpesa payments', 'whatsapp catalog', 'chatevo', 'whatsapp bot shop kenya'
   ],
-  authors: [{ name: 'Sella Team' }],
-  creator: 'Sella',
+  authors: [{ name: 'Chatevo Team' }],
+  creator: 'Chatevo',
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_APP_URL?.startsWith('http') 
       ? process.env.NEXT_PUBLIC_APP_URL 
@@ -38,21 +38,21 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'en_US',
     url: '/',
-    title: 'SELLA — WhatsApp Commerce Platform',
-    description: 'Transform your WhatsApp into a high-converting storefront. Automate orders, accept global payments (Paystack, Stripe, PayPal, M-Pesa), and scale effortlessly.',
-    siteName: 'SELLA',
+    title: 'Chatevo — Sell Smarter on WhatsApp',
+    description: 'Transform your WhatsApp into a high-converting AI storefront. Automate orders, accept M-Pesa, Paybill, and Bank payments, all inside chat.',
+    siteName: 'Chatevo',
     images: [{
-      url: '/og-image.jpg', // Ensure you add this image in public folder later
+      url: '/og-image.jpg',
       width: 1200,
       height: 630,
-      alt: 'SELLA WhatsApp Commerce Platform',
+      alt: 'Chatevo — WhatsApp Commerce Platform',
     }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'SELLA — The Global WhatsApp Commerce Platform',
-    description: 'Sell globally on WhatsApp. Professional e-commerce directly inside chat.',
-    creator: '@sellahq',
+    title: 'Chatevo — Sell Smarter on WhatsApp',
+    description: 'AI-powered WhatsApp commerce for Kenyan merchants. M-Pesa, Paybill & more.',
+    creator: '@chatevohq',
   },
   robots: {
     index: true,
