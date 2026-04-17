@@ -15,9 +15,9 @@ export default async function AdminDashboard() {
   const totalSubCount = planCounts.reduce((acc, curr) => acc + curr.count, 0);
 
   const distribution = [
-    { label: "Starter", key: "starter", color: "bg-primary", price: 29 },
-    { label: "Growth", key: "growth", color: "bg-indigo-500", price: 59 },
-    { label: "Premium", key: "premium", color: "bg-amber-500", price: 99 },
+    { label: "Starter", key: "starter", color: "bg-emerald-500", price: 3500 },
+    { label: "Growth", key: "growth", color: "bg-indigo-500", price: 7000 },
+    { label: "Elite", key: "elite", color: "bg-amber-500", price: 13000 },
   ].map(p => {
     const pCount = planCounts.find(pc => pc.plan.toLowerCase() === p.key)?.count || 0;
     return {

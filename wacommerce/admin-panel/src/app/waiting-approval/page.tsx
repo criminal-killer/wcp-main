@@ -14,7 +14,7 @@ export default function WaitingApprovalPage() {
         </h1>
         
         <p className="text-slate-500 text-sm leading-relaxed mb-8">
-          Welcome to the **Sella Admin Platform**. Your account has been created successfully, but requires manual authorization by the <span className="font-bold text-slate-900 italic">SuperAdmin (Alfred)</span> before you can access the dashboard.
+          Welcome to the **Chatevo Admin Platform**. Your account has been created successfully, but requires manual authorization by the <span className="font-bold text-slate-900 italic">SuperAdmin (Alfred)</span> before you can access the dashboard.
         </p>
         
         <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 mb-8 flex items-start gap-3 text-left">
@@ -35,7 +35,7 @@ export default function WaitingApprovalPage() {
       </div>
       
       <div className="mt-8 italic font-serif font-black text-2xl text-slate-300 tracking-tighter opacity-50">
-        Sella <span className="not-italic font-sans text-[10px] uppercase tracking-widest align-middle ml-1">Admin</span>
+        Chatevo <span className="not-italic font-sans text-[10px] uppercase tracking-widest align-middle ml-1">Admin</span>
       </div>
     </div>
   );

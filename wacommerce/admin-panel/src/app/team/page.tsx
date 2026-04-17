@@ -32,7 +32,7 @@ export default async function TeamManagementPage() {
           <h1 className="text-3xl font-black text-slate-800 tracking-tight font-serif flex items-center gap-3 italic">
             <ShieldAlert size={32} className="text-primary not-italic" /> Team Management
           </h1>
-          <p className="text-slate-500 font-medium mt-2">Manage administrative access and roles for the Sella platform. Verify and authorize new staff members.</p>
+          <p className="text-slate-500 font-medium mt-2">Manage administrative access and roles for the Chatevo platform. Verify and authorize new staff members.</p>
         </div>
       </div>
 

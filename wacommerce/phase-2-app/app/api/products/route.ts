@@ -7,20 +7,20 @@ import { z } from 'zod'
 import { clearProductCache } from '@/lib/redis'
 
 const PLAN_LIMITS = { 
-  trial: 100, 
+  trial: 250, 
   free: 10, 
-  starter: 100, 
-  pro: 500, 
-  elite: 5000,
-  custom: 10000 
+  starter: 250, 
+  pro: 5000, 
+  elite: 10000,
+  custom: 20000 
 }
 const CATEGORY_LIMITS = { 
-  trial: 20, 
+  trial: 50, 
   free: 5, 
-  starter: 20, 
-  pro: 50, 
-  elite: 100,
-  custom: 200 
+  starter: 50, 
+  pro: 100, 
+  elite: 500,
+  custom: 1000 
 }
 
 const productSchema = z.object({

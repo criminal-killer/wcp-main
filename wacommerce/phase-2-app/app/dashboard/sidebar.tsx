@@ -8,13 +8,16 @@ import {
   CheckCircle2, Plus, Menu, X, Bell, BookOpen, Gift
 } from 'lucide-react'
 import { useState } from 'react'
+import { Badge } from '@/components/ui/badge'
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/dashboard/products', label: 'Products', icon: Package },
   { href: '/dashboard/orders', label: 'Orders', icon: ShoppingCart },
+  { href: '/dashboard/orders/abandoned', label: 'Abandoned Carts', icon: ShoppingCart, plan: 'growth' },
   { href: '/dashboard/inbox', label: 'Inbox', icon: MessageSquare },
   { href: '/dashboard/contacts', label: 'Contacts', icon: Users },
+  { href: '/dashboard/settings/team', label: 'Team Members', icon: Users, plan: 'elite' },
   { href: '/dashboard/settings/referrals', label: 'Referrals', icon: Gift },
   { href: '/dashboard/docs', label: 'Help & Docs', icon: BookOpen },
   { href: '/dashboard/settings', label: 'Settings', icon: Settings },
@@ -129,7 +132,11 @@ export default function DashboardSidebar({ org }: { org: Org }) {
 function NavContent({ pathname, org }: { pathname: string; org: Org }) {
   return (
     <nav className="space-y-1 px-2">
-      {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+      {NAV_ITEMS.map(({ href, label, icon: Icon, plan: reqPlan }: any) => {
+        // Gate visibility based on plan
+        if (reqPlan === 'growth' && org.plan === 'starter') return null
+        if (reqPlan === 'elite' && org.plan !== 'elite') return null
+
         const isActive = pathname === href || (href !== '/dashboard' && pathname.startsWith(href))
         return (
           <Link
@@ -147,6 +154,11 @@ function NavContent({ pathname, org }: { pathname: string; org: Org }) {
               <span className="ml-auto bg-whatsapp text-white text-[10px] px-2 py-0.5 rounded-full shadow-lg shadow-whatsapp/30">
                 LIVE
               </span>
+            )}
+            {reqPlan && (
+               <Badge className="ml-auto text-[8px] px-1.5 py-0 bg-slate-100 text-slate-500 border-none font-black uppercase tracking-tighter">
+                 {reqPlan}
+               </Badge>
             )}
           </Link>
         )

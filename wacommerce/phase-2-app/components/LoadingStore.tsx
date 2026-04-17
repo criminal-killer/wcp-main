@@ -12,7 +12,7 @@ export const LoadingStore = () => {
                 {/* Inner Logo Animation */}
                 <div className="absolute inset-0 flex items-center justify-center">
                     <div className="w-20 h-20 bg-primary rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(212,175,55,0.4)] animate-pulse">
-                        <span className="text-primary-foreground font-serif text-4xl font-black">S</span>
+                        <span className="text-primary-foreground font-serif text-4xl font-black">C</span>
                     </div>
                 </div>
             </div>

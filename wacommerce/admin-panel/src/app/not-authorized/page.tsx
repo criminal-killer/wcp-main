@@ -15,8 +15,8 @@ export default function NotAuthorized() {
             Unauthorized access attempts are logged and reported to the security team.
           </p>
         </div>
-        <Link href="https://sella-app.vercel.app" className="inline-flex items-center gap-2 bg-slate-900 text-white px-8 py-3 rounded-full font-bold hover:opacity-90 transition-all">
-          <Home size={18} /> Return to Sella
+        <Link href="http://localhost:3000" className="inline-flex items-center gap-2 bg-slate-900 text-white px-8 py-3 rounded-full font-bold hover:opacity-90 transition-all">
+          <Home size={18} /> Return to Chatevo
         </Link>
         <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] pt-8 border-t border-slate-200">
            Protected by Clerk & Advanced Security Layers

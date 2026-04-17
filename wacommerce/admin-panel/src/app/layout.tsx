@@ -15,8 +15,8 @@ import { currentUser } from "@clerk/nextjs/server";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Sella Admin | Platform Management",
-  description: "Administrative panel for Sella WhatsApp Commerce",
+  title: "Chatevo Admin | Platform Management",
+  description: "Administrative panel for Chatevo WhatsApp Commerce",
 };
 
 export default async function RootLayout({
@@ -78,7 +78,7 @@ export default async function RootLayout({
       <aside className={`${isSuper ? 'bg-slate-900 border-white/5' : 'bg-white border-slate-200'} w-64 border-r flex flex-col fixed h-full z-20`}>
         <div className={`p-6 border-b ${isSuper ? 'border-white/5' : 'border-slate-100'} flex flex-col gap-1`}>
           <div className="italic font-serif font-black text-2xl text-primary tracking-tighter text-nowrap">
-            Sella <span className={`${isSuper ? 'text-slate-500' : 'text-slate-400'} not-italic font-sans text-[10px] uppercase tracking-widest align-middle ml-1`}>Admin</span>
+            Chatevo <span className={`${isSuper ? 'text-slate-500' : 'text-slate-400'} not-italic font-sans text-[10px] uppercase tracking-widest align-middle ml-1`}>Admin</span>
           </div>
           {isSuper && (
             <div className="inline-flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full w-fit mt-2">
@@ -153,7 +153,7 @@ export default async function RootLayout({
             <>
               <SignedOut>
                 <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 gap-8">
-                  <div className="italic font-serif font-black text-6xl text-primary tracking-tighter">Sella</div>
+                  <div className="italic font-serif font-black text-6xl text-primary tracking-tighter">Chatevo</div>
                   <SignInButton mode="modal">
                     <button className="bg-primary text-white px-12 py-4 rounded-2xl font-black shadow-xl shadow-primary/20 hover:-translate-y-1 transition-all">
                       Platform Login
