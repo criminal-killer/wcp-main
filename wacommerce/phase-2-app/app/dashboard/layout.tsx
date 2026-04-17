@@ -23,11 +23,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
   // Calculate trial status
   const trialDaysLeft = org.trial_ends_at
     ? Math.max(0, Math.ceil((new Date(org.trial_ends_at).getTime() - Date.now()) / 86400000))
-    : 0
+    : 7 // Default: if no trial_ends_at set, grant access (treat as trial still active)
   const isOnTrial = org.plan === 'trial' && trialDaysLeft > 0
   const isWaitlisted = org.is_waitlisted === 1
-  // ⛔ Trial expired: still on 'trial' plan but date is past
-  const isTrialExpired = org.plan === 'trial' && trialDaysLeft === 0
+  // ⛔ Trial expired ONLY when: plan=trial AND trial_ends_at is set AND it's in the past
+  const isTrialExpired = org.plan === 'trial' && org.trial_ends_at !== null && trialDaysLeft === 0
 
   if (isWaitlisted) {
     return <WaitlistOverlay country={org.country || 'Global'} />

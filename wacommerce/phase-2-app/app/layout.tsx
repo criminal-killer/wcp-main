@@ -68,9 +68,32 @@ export const metadata: Metadata = {
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Chatevo",
+    "applicationCategory": "BusinessApplication",
+    "description": "WhatsApp commerce platform for Kenyan merchants. AI-powered WhatsApp store with M-Pesa, Paybill, and Bank payments.",
+    "operatingSystem": "Web, Android, iOS",
+    "offers": [
+      { "@type": "Offer", "price": "3500", "priceCurrency": "KES", "name": "Starter Plan" },
+      { "@type": "Offer", "price": "7000", "priceCurrency": "KES", "name": "Growth Plan" },
+      { "@type": "Offer", "price": "13000", "priceCurrency": "KES", "name": "Elite Plan" },
+    ],
+    "aggregateRating": { "@type": "AggregateRating", "ratingValue": "4.9", "reviewCount": "120" },
+    "url": process.env.NEXT_PUBLIC_APP_URL || "https://chatevo.app",
+    "sameAs": ["https://instagram.com/chatevohq", "https://facebook.com/chatevohq"],
+  }
+
   return (
     <ClerkProvider>
       <html lang="en" suppressHydrationWarning className={`${serif.variable} ${outfit.variable}`}>
+        <head>
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          />
+        </head>
         <body className="font-outfit antialiased">
           <ThemeProvider
             attribute="class"

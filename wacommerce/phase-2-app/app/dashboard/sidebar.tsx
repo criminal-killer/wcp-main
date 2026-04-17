@@ -5,7 +5,7 @@ import { UserButton } from '@clerk/nextjs'
 import {
   LayoutDashboard, Package, ShoppingCart, MessageSquare,
   Users, Settings, Store, BarChart3, Globe, Shield,
-  CheckCircle2, Plus, Menu, X, Bell, BookOpen
+  CheckCircle2, Plus, Menu, X, Bell, BookOpen, Gift
 } from 'lucide-react'
 import { useState } from 'react'
 
@@ -15,6 +15,7 @@ const NAV_ITEMS = [
   { href: '/dashboard/orders', label: 'Orders', icon: ShoppingCart },
   { href: '/dashboard/inbox', label: 'Inbox', icon: MessageSquare },
   { href: '/dashboard/contacts', label: 'Contacts', icon: Users },
+  { href: '/dashboard/settings/referrals', label: 'Referrals', icon: Gift },
   { href: '/dashboard/docs', label: 'Help & Docs', icon: BookOpen },
   { href: '/dashboard/settings', label: 'Settings', icon: Settings },
 ]

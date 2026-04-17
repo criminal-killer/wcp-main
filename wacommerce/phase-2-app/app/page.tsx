@@ -1,502 +1,382 @@
 'use client'
-
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { ShoppingBag, CreditCard, LayoutDashboard, CheckCircle2, MessageSquare, Zap, Globe, BarChart3, ArrowRight, X } from 'lucide-react'
+import {
+  MessageSquare, Zap, BarChart3, ShieldCheck, Package, Users,
+  CheckCircle, ArrowRight, ChevronRight, Star,
+  Instagram, Facebook, Youtube, Twitter,
+  Clock, TrendingUp, Bot, Smartphone, Gift
+} from 'lucide-react'
 
-const Typewriter = ({ texts }: { texts: string[] }) => {
-  const [index, setIndex] = useState(0)
-  const [subIndex, setSubIndex] = useState(0)
-  const [reverse, setReverse] = useState(false)
+// ─── Typewriter ────────────────────────────────────────────────────────────────
+function Typewriter({ texts }: { texts: string[] }) {
+  const [idx, setIdx] = useState(0)
+  const [sub, setSub] = useState(0)
+  const [rev, setRev] = useState(false)
 
   useEffect(() => {
-    if (subIndex === texts[index].length + 1 && !reverse) {
-      setTimeout(() => setReverse(true), 2000)
-      return
-    }
-
-    if (subIndex === 0 && reverse) {
-      setReverse(false)
-      setIndex((prev) => (prev + 1) % texts.length)
-      return
-    }
-
-    const timeout = setTimeout(() => {
-      setSubIndex((prev) => prev + (reverse ? -1 : 1))
-    }, Math.max(reverse ? 50 : 100, Math.random() * 150))
-
-    return () => clearTimeout(timeout)
-  }, [subIndex, index, reverse, texts])
+    if (!rev && sub === texts[idx].length + 1) { setTimeout(() => setRev(true), 1800); return }
+    if (rev && sub === 0) { setRev(false); setIdx(p => (p + 1) % texts.length); return }
+    const t = setTimeout(() => setSub(p => p + (rev ? -1 : 1)), rev ? 40 : 95)
+    return () => clearTimeout(t)
+  }, [sub, idx, rev, texts])
 
   return (
     <span>
-      {texts[index].substring(0, subIndex)}
-      <span className="animate-pulse border-r-4 border-primary ml-1" />
+      {texts[idx].substring(0, sub)}
+      <span className="inline-block w-0.5 h-[1em] bg-emerald-500 ml-0.5 align-middle animate-pulse" />
     </span>
   )
 }
 
-const LiveActivity = () => {
-  const [visible, setVisible] = useState(false)
-  const [activity, setActivity] = useState({ name: 'Sarah', location: 'Nairobi', action: 'launched their store' })
-  
-  const activities = [
-    { name: 'Sarah', location: 'Nairobi', action: 'launched their store' },
-    { name: 'David', location: 'Lagos', action: 'just processed an order' },
-    { name: 'Amara', location: 'Accra', action: 'upgraded to Growth' },
-    { name: 'John', location: 'London', action: 'just connected WhatsApp' },
-    { name: 'Elena', location: 'Cape Town', action: 'added 50 products' },
-  ]
-
+// ─── Nav ───────────────────────────────────────────────────────────────────────
+function Nav() {
+  const [scrolled, setScrolled] = useState(false)
   useEffect(() => {
-    const show = () => {
-      setActivity(activities[Math.floor(Math.random() * activities.length)])
-      setVisible(true)
-      setTimeout(() => setVisible(false), 5000)
-    }
-
-    const interval = setInterval(show, 15000)
-    setTimeout(show, 3000)
-    return () => clearInterval(interval)
+    const fn = () => setScrolled(window.scrollY > 20)
+    window.addEventListener('scroll', fn)
+    return () => window.removeEventListener('scroll', fn)
   }, [])
 
-  if (!visible) return null
-
   return (
-    <div className="fixed bottom-8 left-8 z-[100] animate-in fade-in slide-in-from-bottom-5 duration-500">
-      <div className="bg-card/90 backdrop-blur-xl border border-primary/20 rounded-2xl p-4 shadow-2xl flex items-center gap-4 max-w-sm">
-        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
-          {activity.name[0]}
+    <header className={`fixed top-0 w-full z-50 transition-all duration-200 ${scrolled ? 'bg-white/95 backdrop-blur-sm border-b border-slate-100 shadow-sm' : 'bg-transparent'}`}>
+      <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+        <Link href="/" className="flex items-center gap-2.5 group">
+          <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center shadow-sm group-hover:bg-emerald-600 transition-colors">
+            <MessageSquare size={16} className="text-white" />
+          </div>
+          <span className="font-bold text-lg text-slate-900 tracking-tight">Chatevo</span>
+        </Link>
+        <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600">
+          <a href="#features" className="hover:text-slate-900 transition-colors">Features</a>
+          <a href="#pricing" className="hover:text-slate-900 transition-colors">Pricing</a>
+          <Link href="/affiliates/apply" className="hover:text-slate-900 transition-colors">Affiliates</Link>
+          <Link href="/docs" className="hover:text-slate-900 transition-colors">Docs</Link>
+        </nav>
+        <div className="flex items-center gap-3">
+          <Link href="/sign-in" className="hidden md:block text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">Sign in</Link>
+          <Link href="/sign-up" className="bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors shadow-sm">
+            Start free trial
+          </Link>
         </div>
-        <div className="flex-1">
-          <p className="text-xs font-bold text-[#075E54]">
-            {activity.name} from {activity.location}
-          </p>
-          <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-tight">
-            {activity.action} · 2m ago
-          </p>
-        </div>
-        <button onClick={() => setVisible(false)} className="text-slate-300 hover:text-slate-500">
-          <X size={12} />
-        </button>
       </div>
-    </div>
+    </header>
   )
 }
 
-const WhatsAppWalkthrough = () => {
-  const [step, setStep] = useState(0)
-  const [animating, setAnimating] = useState(false)
+// ─── Features ─────────────────────────────────────────────────────────────────
+const FEATURES = [
+  { icon: Bot, title: 'AI Sales Agent', desc: 'Your WhatsApp number becomes a 24/7 AI agent that takes orders, answers questions, and processes payments automatically.' },
+  { icon: Package, title: 'Product Catalog', desc: 'Add unlimited products with images, variants, and inventory tracking. Customers browse and buy without leaving WhatsApp.' },
+  { icon: Smartphone, title: 'M-Pesa & Paybill', desc: 'Customers pay via MPesa, Paybill, or bank. You get notified, confirm, and the order is fulfilled — all in the same chat.' },
+  { icon: BarChart3, title: 'Smart Analytics', desc: 'Track revenue, best-selling products, peak hours, and customer behavior in a clean dashboard built for mobile merchants.' },
+  { icon: Users, title: 'Customer CRM', desc: 'Every customer becomes a contact with order history, chat history, and spend analytics automatically.' },
+  { icon: Zap, title: 'Order Automation', desc: 'Auto-confirm payments, send tracking updates, trigger follow-ups, and recover abandoned carts — all automated.' },
+]
 
-  const steps = [
-    {
-      title: 'Storefront',
-      subtitle: 'Customer browses catalog',
-      content: (
-        <div className="space-y-3">
-          <div className="bg-card p-3 rounded-xl rounded-tl-none shadow-sm text-[10px] w-3/4">Welcome to our store! 👋 Check our latest drop.</div>
-          <div className="bg-card p-2 rounded-2xl shadow-lg border border-slate-50">
-            <div className="aspect-square bg-slate-100 rounded-lg mb-2" />
-            <div className="h-2 w-3/4 bg-slate-200 rounded-full mb-1" />
-            <div className="h-3 w-1/2 bg-primary/20 rounded-full" />
-          </div>
-        </div>
-      )
-    },
-    {
-      title: 'Cart',
-      subtitle: 'Items added via chat',
-      content: (
-        <div className="space-y-3">
-          <div className="bg-[#DCF8C6] p-3 rounded-xl rounded-tr-none shadow-sm text-[10px] w-3/4 ml-auto">I want to order the Silk Shirt in Blue.</div>
-          <div className="bg-card p-3 rounded-xl rounded-tl-none shadow-sm text-[10px] w-3/4">Great choice! Added to your cart. 🛒</div>
-          <div className="bg-card p-4 rounded-xl border border-primary/20 shadow-md flex items-center gap-3">
-             <div className="w-8 h-8 bg-primary/10 rounded flex items-center justify-center text-primary italic font-serif text-[10px]">S</div>
-             <div className="flex-1">
-                <div className="h-2 w-20 bg-slate-200 rounded-full mb-1" />
-                <div className="h-1.5 w-12 bg-slate-100 rounded-full" />
-             </div>
-             <div className="text-[10px] font-black text-primary">$45.00</div>
-          </div>
-        </div>
-      )
-    },
-    {
-      title: 'Checkout',
-      subtitle: 'Secure delivery details',
-      content: (
-        <div className="space-y-3">
-          <div className="bg-card p-3 rounded-xl rounded-tl-none shadow-sm text-[10px] w-3/4">Please provide your delivery address below.</div>
-          <div className="bg-[#DCF8C6] p-3 rounded-xl rounded-tr-none shadow-sm text-[10px] w-3/4 ml-auto">House 42, Victoria Island, Lagos.</div>
-          <div className="bg-card p-3 rounded-xl rounded-tl-none shadow-sm text-[10px] w-3/4 italic">Calculating delivery fee... 🚚</div>
-        </div>
-      )
-    },
-    {
-      title: 'Confirmation',
-      subtitle: 'Instant payment & sync',
-      content: (
-        <div className="space-y-3">
-          <div className="bg-card p-3 rounded-xl rounded-tl-none shadow-sm text-[10px] w-full border-l-4 border-primary">
-            ✅ Order #7721 Confirmed! <br />
-            Total: $45.00 <br />
-            <button className="mt-2 w-full bg-primary text-white py-2 rounded-lg font-bold text-[10px]">Pay via Paystack</button>
-          </div>
-          <div className="bg-[#DCF8C6] p-3 rounded-xl rounded-tr-none shadow-sm text-[10px] w-3/4 ml-auto">Paid! Thank you.</div>
-        </div>
-      )
-    }
-  ]
+const PLANS = [
+  {
+    name: 'Starter', price: 3500, color: 'slate',
+    href: 'https://paystack.shop/pay/chatevo-starter',
+    features: ['AI WhatsApp Bot', '50 Products', 'MPesa/Bank Payments', 'Order Management', 'Basic Analytics'],
+  },
+  {
+    name: 'Growth', price: 7000, color: 'emerald', popular: true,
+    href: 'https://paystack.shop/pay/chatevo-growth',
+    features: ['Everything in Starter', 'Unlimited Products', 'Digital Product Delivery', 'Abandoned Cart Recovery', 'Custom Bot Persona', 'Bulk Broadcasts'],
+  },
+  {
+    name: 'Elite', price: 13000, color: 'amber',
+    href: 'https://paystack.shop/pay/chatevo-elite',
+    features: ['Everything in Growth', '5 Team Members', 'API Access', 'Priority Support', 'White-label Option'],
+  },
+]
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setAnimating(true)
-      setTimeout(() => {
-        setStep((prev) => (prev + 1) % steps.length)
-        setAnimating(false)
-      }, 500)
-    }, 4000)
-    return () => clearInterval(interval)
-  }, [steps.length])
-
-  return (
-    <div className="relative group">
-      <div className="absolute -inset-4 bg-gradient-to-r from-primary/20 to-indigo-500/20 blur-2xl rounded-[60px] opacity-20 group-hover:opacity-40 transition-opacity" />
-      <div className="relative bg-[#111B21] rounded-[50px] p-4 shadow-2xl overflow-hidden aspect-[9/18.5] border-[6px] border-slate-800">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/3 h-6 bg-slate-800 rounded-b-3xl z-10" />
-        <div className="h-full bg-[#ECE5DD] rounded-[32px] overflow-hidden flex flex-col relative">
-          <div className="bg-[#075E54] p-6 pt-10 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-card/20 flex items-center justify-center text-white font-bold text-lg">S</div>
-            <div className="flex-1">
-              <div className="h-3 w-24 bg-card/40 rounded-full mb-1" />
-              <div className="text-[10px] text-white/60 font-medium">Online</div>
-            </div>
-          </div>
-          
-          <div className={`flex-1 p-5 space-y-4 transition-all duration-500 ${animating ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'}`}>
-            {steps[step].content}
-          </div>
-
-          <div className="p-4 bg-card/80 backdrop-blur-md flex items-center gap-2">
-             <div className="flex-1 h-10 bg-card rounded-full border border-slate-200 px-4 flex items-center text-slate-300 text-xs">Message...</div>
-             <div className="w-10 h-10 bg-[#075E54] rounded-full flex items-center justify-center text-white">
-                <Zap size={18} fill="currentColor" />
-             </div>
-          </div>
-
-          <div className="absolute top-24 right-4 flex flex-col gap-2">
-            {steps.map((_, i) => (
-              <div key={i} className={`w-1.5 h-1.5 rounded-full transition-all ${i === step ? 'bg-primary h-4' : 'bg-primary/20'}`} />
-            ))}
-          </div>
-        </div>
-      </div>
-      
-      <div className="absolute -right-8 bottom-12 bg-card rounded-2xl p-4 shadow-xl border border-primary/10 max-w-[200px] animate-bounce">
-         <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1">{steps[step].title}</p>
-         <p className="text-[11px] font-bold text-slate-500">{steps[step].subtitle}</p>
-      </div>
-    </div>
-  )
-}
+const TESTIMONIALS = [
+  { name: 'Wanjiku M.', biz: 'Wanjiku\'s Fashion, Nairobi', text: 'I was manually replying to 40+ WhatsApp messages a day. Now Chatevo handles everything. I make more sales with less stress.', stars: 5 },
+  { name: 'David O.', biz: 'Fresh Groceries, Mombasa', text: 'MPesa integration is exactly what I needed. My customers pay, I confirm, and they get their delivery info — all in one chat.', stars: 5 },
+  { name: 'Sarah K.', biz: 'Digital Courses, Nairobi', text: 'For digital products it\'s incredible. Customer pays, AI sends the download link automatically. No manual work at all.', stars: 5 },
+]
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-card text-slate-900 selection:bg-primary/30 selection:text-primary-foreground font-sans overflow-x-hidden">
-      <LiveActivity />
-      
-      {/* Premium Navigation Header */}
-      <header className="fixed top-0 left-0 right-0 z-[100] bg-card/70 backdrop-blur-2xl border-b border-slate-100/50">
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-12">
-            <Link href="/" className="flex items-center gap-3 group">
-              <div className="w-10 h-10 bg-[#25D366] rounded-xl flex items-center justify-center text-white font-serif font-black text-xl shadow-lg shadow-primary/20 group-hover:scale-110 transition-transform">C</div>
-              <span className="font-serif font-black text-2xl tracking-tighter text-[#075E54]">Chatevo</span>
-            </Link>
-            
-            <nav className="hidden md:flex items-center gap-8 text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">
-              <Link href="#features" className="hover:text-primary transition-colors">Features</Link>
-              <Link href="#pricing" className="hover:text-primary transition-colors">Pricing</Link>
-              <Link href="#themes" className="hover:text-primary transition-colors">Themes</Link>
-              <Link href="/docs" className="hover:text-primary transition-colors">Docs</Link>
-            </nav>
+    <div className="min-h-screen bg-white text-slate-900 antialiased">
+      <Nav />
+
+      {/* ── Hero ─────────────────────────────────────────────────── */}
+      <section className="pt-32 pb-24 px-6 max-w-6xl mx-auto">
+        <div className="max-w-3xl">
+          <div className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-100 rounded-full px-4 py-1.5 mb-8">
+            <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+            <span className="text-sm font-medium text-emerald-700">Now live — 7-day free trial</span>
           </div>
 
-          <div className="flex items-center gap-4">
-            <Link 
-              href="/dashboard" 
-              className="px-6 py-2.5 rounded-full text-[11px] font-black uppercase tracking-widest text-slate-600 hover:text-[#075E54] hover:bg-slate-50 transition-all border border-transparent hover:border-slate-100"
+          <h1 className="text-5xl md:text-6xl font-bold text-slate-900 leading-tight tracking-tight mb-6">
+            Sell{' '}
+            <span className="text-emerald-600">
+              <Typewriter texts={['Smarter', 'Faster', 'via MPesa', 'on WhatsApp']} />
+            </span>
+            <br />on WhatsApp
+          </h1>
+
+          <p className="text-xl text-slate-500 mb-10 max-w-xl leading-relaxed">
+            Chatevo turns your WhatsApp number into a fully automated AI store.
+            Customers browse, order, and pay via M-Pesa — all inside chat, no app needed.
+          </p>
+
+          <div className="flex flex-wrap items-center gap-4">
+            <Link
+              href="/sign-up"
+              className="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold px-6 py-3.5 rounded-xl transition-colors shadow-sm text-sm"
             >
-              Log In
-            </Link>
-            <Link 
-              href="/sign-up/choose-plan" 
-              className="bg-[#075E54] text-white px-8 py-3 rounded-full text-[11px] font-black uppercase tracking-[0.2em] hover:opacity-90 transition-all shadow-xl shadow-primary/10"
-            >
-              Get Started
-            </Link>
-          </div>
-        </div>
-      </header>
-
-      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-        <div className="absolute inset-0 bg-noise opacity-[0.03] mix-blend-overlay" />
-        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-primary/5 blur-[120px] rounded-full" />
-        <div className="absolute bottom-[0%] right-[-5%] w-[40%] h-[40%] bg-primary/5 blur-[100px] rounded-full" />
-      </div>
-
-      <nav className="fixed top-0 w-full z-50 transition-all border-b border-white/5 bg-black/5 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-3 group cursor-pointer">
-            <div className="w-10 h-10 bg-[#25D366] rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(37,211,102,0.3)] group-hover:scale-110 transition-transform">
-              <span className="text-white font-black text-xl font-serif">C</span>
-            </div>
-            <span className="font-serif font-black text-2xl tracking-tighter italic">Chatevo</span>
-          </div>
-          
-          <div className="hidden md:flex items-center gap-10 mr-auto ml-12">
-            {['Features', 'Pricing', 'Demo'].map((item) => (
-              <a key={item} href={`#${item.toLowerCase()}`} className="text-sm font-bold text-muted-foreground hover:text-primary transition-colors tracking-tight">
-                {item}
-              </a>
-            ))}
-          </div>
-
-          <div className="flex items-center gap-6">
-            <Link href="/sign-in" className="text-muted-foreground hover:text-foreground font-semibold text-sm transition-colors uppercase tracking-widest">
-              Sign In
+              Start free for 7 days <ArrowRight size={16} />
             </Link>
             <Link
               href="/sign-up/choose-plan"
-              className="bg-primary text-primary-foreground px-8 py-3 rounded-full font-bold text-sm hover:opacity-90 transition-all active:scale-95 tracking-tight shadow-lg shadow-primary/20"
+              className="inline-flex items-center gap-2 text-slate-600 hover:text-slate-900 font-medium text-sm transition-colors"
             >
-              Get Started
+              View pricing <ChevronRight size={16} />
             </Link>
           </div>
+
+          <div className="flex flex-wrap items-center gap-6 mt-10 text-sm text-slate-400 font-medium">
+            <span className="flex items-center gap-1.5"><CheckCircle size={15} className="text-emerald-500" /> No credit card required</span>
+            <span className="flex items-center gap-1.5"><CheckCircle size={15} className="text-emerald-500" /> 7-day free trial</span>
+            <span className="flex items-center gap-1.5"><CheckCircle size={15} className="text-emerald-500" /> Setup in 5 minutes</span>
+          </div>
         </div>
-      </nav>
+      </section>
 
-      <main className="relative pt-32 pb-20">
-        <section className="max-w-7xl mx-auto px-6 pt-12 pb-32 grid lg:grid-cols-2 gap-24 items-center">
-          <div className="text-left">
-            <div className="inline-flex items-center gap-2 bg-primary/5 border border-primary/20 rounded-full px-5 py-2 mb-10 group cursor-default">
-              <span className="w-2 h-2 bg-primary rounded-full animate-ping"></span>
-              <span className="text-primary text-xs font-black tracking-[0.2em] uppercase">Phase 2 Premium · Invitation Only</span>
+      {/* ── Stats ────────────────────────────────────────────────── */}
+      <section className="border-y border-slate-100 bg-slate-50 py-12 px-6">
+        <div className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8">
+          {[
+            { value: '500+', label: 'Active stores' },
+            { value: 'KES 2M+', label: 'Processed monthly' },
+            { value: '4.9 / 5', label: 'Average rating' },
+            { value: '< 3 min', label: 'Avg response time' },
+          ].map(s => (
+            <div key={s.label} className="text-center">
+              <p className="text-3xl font-bold text-slate-900">{s.value}</p>
+              <p className="text-sm text-slate-500 mt-1 font-medium">{s.label}</p>
             </div>
+          ))}
+        </div>
+      </section>
 
-            <h1 className="text-6xl md:text-8xl font-serif font-black mb-6 leading-[0.9] tracking-tight text-[#075E54]">
-              Sell <br />
-              <span className="text-primary italic">
-                <Typewriter texts={['Smarter', 'Faster', 'via MPesa', 'on WhatsApp']} />
-              </span> <br />
-              on WhatsApp
-            </h1>
-
-            <p className="text-xl text-muted-foreground mb-12 max-w-xl font-medium leading-relaxed">
-              Chatevo turns your WhatsApp number into a fully automated AI store.
-              Customers browse, order, and pay via M-Pesa — all inside chat.
-            </p>
-
-            <div className="flex flex-wrap gap-5">
-              <Link
-                href="/sign-up/choose-plan"
-                className="bg-primary text-primary-foreground px-12 py-6 rounded-full font-black text-lg hover:opacity-95 transition-all flex items-center gap-2 group shadow-xl shadow-primary/20 tracking-tight"
-              >
-                Create Your Store <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </Link>
-              <Link
-                href="/store/demo"
-                className="bg-card text-primary px-10 py-5 rounded-full font-black text-lg border border-primary/20 hover:bg-primary/5 transition-all shadow-sm"
-              >
-                Watch Demo
-              </Link>
+      {/* ── Features ─────────────────────────────────────────────── */}
+      <section id="features" className="py-24 px-6 max-w-6xl mx-auto">
+        <div className="mb-14">
+          <p className="text-sm font-semibold text-emerald-600 uppercase tracking-wider mb-3">Everything you need</p>
+          <h2 className="text-4xl font-bold text-slate-900 tracking-tight">Built for Kenyan merchants</h2>
+          <p className="text-slate-500 mt-3 text-lg max-w-xl">
+            Stop losing sales to ignored WhatsApp messages. Chatevo handles the full commerce flow automatically.
+          </p>
+        </div>
+        <div className="grid md:grid-cols-3 gap-6">
+          {FEATURES.map(f => (
+            <div key={f.title} className="p-6 rounded-2xl border border-slate-100 hover:border-emerald-200 hover:shadow-sm transition-all bg-white">
+              <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center mb-4">
+                <f.icon size={20} className="text-emerald-600" />
+              </div>
+              <h3 className="font-semibold text-slate-900 mb-2">{f.title}</h3>
+              <p className="text-slate-500 text-sm leading-relaxed">{f.desc}</p>
             </div>
-            
-            <div className="mt-12 flex items-center gap-4 text-muted-foreground text-sm font-bold">
-              <div className="flex -space-x-3">
-                {[1, 2, 3, 4].map(i => (
-                  <div key={i} className="w-8 h-8 rounded-full border-2 border-white bg-slate-200 flex items-center justify-center text-[10px] font-bold">
-                    U{i}
+          ))}
+        </div>
+      </section>
+
+      {/* ── How it works ─────────────────────────────────────────── */}
+      <section className="py-20 px-6 bg-slate-50 border-y border-slate-100">
+        <div className="max-w-6xl mx-auto">
+          <div className="mb-12 text-center">
+            <p className="text-sm font-semibold text-emerald-600 uppercase tracking-wider mb-3">Simple setup</p>
+            <h2 className="text-4xl font-bold text-slate-900 tracking-tight">Up in 5 minutes</h2>
+          </div>
+          <div className="grid md:grid-cols-4 gap-6">
+            {[
+              { n: '1', title: 'Create account', desc: 'Sign up, choose your plan, and set up your store name.' },
+              { n: '2', title: 'Add products', desc: 'Upload your catalog with photos, prices, and descriptions.' },
+              { n: '3', title: 'Connect WhatsApp', desc: 'Link your WhatsApp Business number via the Meta API.' },
+              { n: '4', title: 'Start selling', desc: 'Share your store link. The AI handles every customer conversation.' },
+            ].map(s => (
+              <div key={s.n} className="bg-white rounded-2xl p-6 border border-slate-100">
+                <div className="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center text-white font-bold text-sm mb-4">{s.n}</div>
+                <h3 className="font-semibold text-slate-900 mb-2">{s.title}</h3>
+                <p className="text-slate-500 text-sm leading-relaxed">{s.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Pricing ──────────────────────────────────────────────── */}
+      <section id="pricing" className="py-24 px-6 max-w-6xl mx-auto">
+        <div className="mb-14 text-center">
+          <p className="text-sm font-semibold text-emerald-600 uppercase tracking-wider mb-3">Simple pricing</p>
+          <h2 className="text-4xl font-bold text-slate-900 tracking-tight">Start free, pay in KES</h2>
+          <p className="text-slate-500 mt-3">7-day free trial on all plans. No hidden fees. Cancel anytime.</p>
+        </div>
+        <div className="grid md:grid-cols-3 gap-6 items-start">
+          {PLANS.map(plan => (
+            <div
+              key={plan.name}
+              className={`rounded-2xl p-8 border-2 ${plan.popular ? 'border-emerald-500 shadow-lg' : 'border-slate-100 bg-white'}`}
+            >
+              {plan.popular && (
+                <div className="inline-flex items-center gap-1.5 bg-emerald-500 text-white text-[11px] font-semibold px-3 py-1 rounded-full mb-4">
+                  <Star size={10} fill="white" /> Most Popular
+                </div>
+              )}
+              <h3 className="text-lg font-bold text-slate-900 mb-1">{plan.name}</h3>
+              <div className="flex items-baseline gap-1 mb-6">
+                <span className="text-sm text-slate-400 font-medium">KES</span>
+                <span className="text-3xl font-bold text-slate-900">{plan.price.toLocaleString()}</span>
+                <span className="text-slate-400 text-sm">/mo</span>
+              </div>
+              <ul className="space-y-3 mb-8">
+                {plan.features.map(f => (
+                  <li key={f} className="flex items-center gap-2.5 text-sm text-slate-600">
+                    <CheckCircle size={15} className="text-emerald-500 shrink-0" />
+                    {f}
+                  </li>
+                ))}
+              </ul>
+              <div className="space-y-2">
+                <a
+                  href={plan.href}
+                  className={`block w-full text-center py-3 rounded-xl font-semibold text-sm transition-colors ${plan.popular ? 'bg-emerald-500 hover:bg-emerald-600 text-white' : 'bg-slate-900 hover:bg-slate-800 text-white'}`}
+                >
+                  Pay KES {plan.price.toLocaleString()}
+                </a>
+                <Link href="/sign-up" className="block w-full text-center py-3 rounded-xl font-medium text-sm text-slate-500 hover:text-slate-700 border border-slate-200 hover:border-slate-300 transition-colors">
+                  Start 7-day free trial
+                </Link>
+              </div>
+            </div>
+          ))}
+        </div>
+        <p className="text-center text-sm text-slate-400 mt-8">All payments via Paystack · M-Pesa accepted · Secure checkout</p>
+      </section>
+
+      {/* ── Testimonials ─────────────────────────────────────────── */}
+      <section className="py-20 px-6 bg-slate-50 border-y border-slate-100">
+        <div className="max-w-6xl mx-auto">
+          <div className="mb-12 text-center">
+            <h2 className="text-4xl font-bold text-slate-900 tracking-tight">Loved by merchants</h2>
+          </div>
+          <div className="grid md:grid-cols-3 gap-6">
+            {TESTIMONIALS.map(t => (
+              <div key={t.name} className="bg-white rounded-2xl p-6 border border-slate-100">
+                <div className="flex gap-0.5 mb-4">
+                  {[...Array(t.stars)].map((_, i) => <Star key={i} size={14} className="text-amber-400 fill-amber-400" />)}
+                </div>
+                <p className="text-slate-600 text-sm leading-relaxed mb-4">"{t.text}"</p>
+                <div>
+                  <p className="font-semibold text-slate-900 text-sm">{t.name}</p>
+                  <p className="text-slate-400 text-xs">{t.biz}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── CTA ──────────────────────────────────────────────────── */}
+      <section className="py-24 px-6">
+        <div className="max-w-2xl mx-auto text-center">
+          <h2 className="text-4xl font-bold text-slate-900 tracking-tight mb-4">Ready to automate your sales?</h2>
+          <p className="text-slate-500 mb-8">Set up in 5 minutes. No credit card needed for the free trial.</p>
+          <Link
+            href="/sign-up"
+            className="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold px-8 py-4 rounded-xl transition-colors shadow-sm text-base"
+          >
+            Start free for 7 days <ArrowRight size={18} />
+          </Link>
+        </div>
+      </section>
+
+      {/* ── Footer ───────────────────────────────────────────────── */}
+      <footer className="bg-slate-900 text-slate-300 py-16 px-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-10 mb-12">
+            {/* Brand */}
+            <div className="col-span-2">
+              <Link href="/" className="flex items-center gap-2.5 mb-4">
+                <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center shadow-sm">
+                  <MessageSquare size={15} className="text-white" />
+                </div>
+                <span className="font-bold text-white text-base tracking-tight">Chatevo</span>
+              </Link>
+              <p className="text-sm text-slate-400 leading-relaxed max-w-[240px]">
+                WhatsApp commerce made simple. Built for Kenyan merchants — M-Pesa, Paybill, and Bank all supported.
+              </p>
+              {/* Social Icons */}
+              <div className="flex items-center gap-3 mt-6">
+                {[
+                  { icon: Instagram, label: 'Instagram' },
+                  { icon: Facebook, label: 'Facebook' },
+                  { icon: Youtube, label: 'YouTube' },
+                  { icon: Twitter, label: 'TikTok' },
+                ].map(s => (
+                  <div key={s.label} className="relative group">
+                    <div className="w-9 h-9 bg-slate-800 hover:bg-slate-700 rounded-lg flex items-center justify-center cursor-not-allowed opacity-60 transition-colors">
+                      <s.icon size={16} className="text-slate-400" />
+                    </div>
+                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-700 text-white text-[10px] font-medium px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                      Coming soon
+                    </div>
                   </div>
                 ))}
               </div>
-              Join 1,000+ professional merchants
             </div>
-          </div>
 
-          <div className="flex justify-center">
-            <WhatsAppWalkthrough />
-          </div>
-        </section>
-
-        <section id="features" className="max-w-7xl mx-auto px-6 py-32">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-20 border-b border-white/10 pb-12">
+            {/* Product Links */}
             <div>
-              <h2 className="text-5xl md:text-7xl font-serif font-black tracking-tight leading-none text-[#075E54]">
-                Everything <br />
-                <span className="text-primary italic">Automated.</span>
-              </h2>
+              <p className="font-semibold text-white text-sm mb-4">Product</p>
+              <ul className="space-y-3 text-sm">
+                <li><a href="#features" className="hover:text-white transition-colors">Features</a></li>
+                <li><a href="#pricing" className="hover:text-white transition-colors">Pricing</a></li>
+                <li><Link href="/sign-up/choose-plan" className="hover:text-white transition-colors">Compare Plans</Link></li>
+                <li><Link href="/docs" className="hover:text-white transition-colors">Documentation</Link></li>
+              </ul>
             </div>
-            <p className="text-muted-foreground max-w-md font-medium text-lg mb-4">
-              Stop manually taking orders. Chatevo handles everything from catalog to M-Pesa confirmation.
-            </p>
-          </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-              { title: 'AI Catalog', desc: 'Sync your products and let AI handle customer questions.', icon: <Zap className="w-6 h-6" /> },
-              { title: 'Safe Checkout', desc: 'Secure payment links sent directly in WhatsApp.', icon: <CreditCard className="w-6 h-6" /> },
-              { title: 'Global Reach', desc: 'Sell to anyone, anywhere in their native currency.', icon: <Globe className="w-6 h-6" /> },
-            ].map((f, i) => (
-              <div key={i} className="bg-card p-12 rounded-[40px] border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all group">
-                <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center text-primary mb-8 group-hover:scale-110 transition-transform">
-                  {f.icon}
+            {/* Company */}
+            <div>
+              <p className="font-semibold text-white text-sm mb-4">Company</p>
+              <ul className="space-y-3 text-sm">
+                <li><Link href="/affiliates/apply" className="hover:text-white transition-colors">Affiliate Program</Link></li>
+                <li><a href="mailto:support@chatevo.app" className="hover:text-white transition-colors">Contact Us</a></li>
+                <li><Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link></li>
+                <li><Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link></li>
+              </ul>
+            </div>
+
+            {/* Referral CTA */}
+            <div>
+              <p className="font-semibold text-white text-sm mb-4">Earn with Chatevo</p>
+              <div className="bg-slate-800 rounded-xl p-4 space-y-3">
+                <div className="w-8 h-8 bg-emerald-500/20 rounded-lg flex items-center justify-center">
+                  <Gift size={16} className="text-emerald-400" />
                 </div>
-                <h3 className="text-2xl font-serif font-black mb-4 text-[#075E54]">{f.title}</h3>
-                <p className="text-muted-foreground font-medium leading-relaxed">{f.desc}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section id="pricing" className="max-w-7xl mx-auto px-6 py-32">
-          <div className="text-center mb-24">
-             <h2 className="text-5xl md:text-7xl font-serif font-black tracking-tight mb-8 text-[#075E54]">Simple <span className="text-primary italic">Pricing.</span></h2>
-             <p className="text-muted-foreground max-w-2xl mx-auto text-xl font-medium">No hidden fees. Just professional tools to grow your brand.</p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-              { 
-                name: 'Starter', price: '29', popular: false, trial: '7-Day Free Trial', desc: 'Perfect for new merchants starting their journey.',
-                features: ['1 Store', '50 Products', 'Basic Analytics', 'WhatsApp Catalog'] 
-              },
-              { 
-                name: 'Pro', price: '59', popular: true, trial: '7 Days Free', desc: 'Our most popular plan for established brands.',
-                features: ['3 Stores', '500 Products', 'Advanced Analytics', 'Priority Support', 'Custom Themes'] 
-              },
-              { 
-                name: 'Elite', price: '99', popular: false, trial: '7 Days Free', desc: 'Enterprise-grade features for high-volume stores.',
-                features: ['Unlimited Products', 'API Access', 'Dedicated Manager', 'White-labeling', 'Advanced AI'] 
-              },
-            ].map((plan) => (
-              <div key={plan.name} className={`relative p-12 rounded-[50px] border transition-all ${plan.popular ? 'bg-[#075E54] text-white shadow-2xl scale-105 z-10' : 'bg-card border-slate-100 shadow-sm'}`}>
-                {plan.popular && (
-                  <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.2em]">
-                    Best Value
-                  </div>
-                )}
-                
-                <div className="mb-10">
-                  <h3 className="text-sm font-black uppercase tracking-[0.2em] mb-4 opacity-60">
-                    {plan.name}
-                  </h3>
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-5xl font-serif font-black">${plan.price}</span>
-                    <span className="text-sm font-bold opacity-60">/mo</span>
-                  </div>
-                </div>
-
-                <div className="mb-10 min-h-[60px]">
-                  <p className={`text-sm font-bold mb-2 ${plan.popular ? 'opacity-90' : 'text-[#075E54]'}`}>
-                    {plan.trial}
-                  </p>
-                  <p className={`text-xs font-medium leading-relaxed ${plan.popular ? 'opacity-70' : 'text-muted-foreground'}`}>
-                    {plan.desc}
-                  </p>
-                </div>
-
-                <div className="space-y-4 mb-12">
-                  {plan.features.map((f) => (
-                    <div key={f} className="flex items-center gap-3">
-                      <div className={`w-5 h-5 rounded-full flex items-center justify-center border ${plan.popular ? 'bg-card/20 border-white/30' : 'bg-primary/10 border-primary/20'}`}>
-                        <CheckCircle2 className={`w-3 h-3 ${plan.popular ? 'text-white' : 'text-primary'}`} />
-                      </div>
-                      <span className={`text-[11px] font-bold uppercase tracking-widest ${plan.popular ? 'opacity-80' : 'text-slate-500'}`}>
-                        {f}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-
+                <p className="text-sm text-slate-300 leading-relaxed">Refer merchants and earn <strong className="text-emerald-400">30%</strong> on month 1, <strong className="text-emerald-400">10%</strong> on months 2–7.</p>
                 <Link
-                  href="/sign-up/choose-plan"
-                  className={`block w-full text-center py-5 rounded-full font-serif font-black text-lg transition-all ${
-                    plan.popular 
-                      ? 'bg-card text-primary hover:bg-slate-50' 
-                      : 'bg-[#075E54] text-white hover:opacity-90'
-                  }`}
+                  href="/affiliates/apply"
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-400 hover:text-emerald-300 transition-colors"
                 >
-                  Apply Now
+                  Join affiliate program <ArrowRight size={12} />
                 </Link>
               </div>
-            ))}
-          </div>
-
-          <div className="mt-40 bg-[#111B21] rounded-[60px] p-12 md:p-24 overflow-hidden relative border border-white/5">
-             <div className="grid lg:grid-cols-2 gap-20 items-center">
-               <div>
-                  <h2 className="text-4xl md:text-6xl font-serif font-black text-white mb-8 leading-[0.9] tracking-tight">
-                    Your Brand, <br />
-                    <span className="text-primary italic">Your Identity.</span>
-                  </h2>
-                  <p className="text-muted-foreground/70 font-medium mb-12 max-w-md leading-relaxed">
-                    Chatevo adapts to your aesthetic. Choose from 10+ professional themes or create your own signature palette.
-                  </p>
-                  <div className="grid grid-cols-5 gap-4">
-                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(i => (
-                      <div key={i} className="w-10 h-10 rounded-full bg-primary opacity-20 hover:opacity-100 cursor-pointer transition-all border border-white/10 hover:scale-110" />
-                    ))}
-                  </div>
-               </div>
-               <div className="relative group">
-                  <div className="absolute inset-0 bg-primary/20 blur-[80px] rounded-full group-hover:bg-primary/30 transition-all" />
-                  <div className="relative bg-card/5 backdrop-blur-3xl rounded-[40px] p-10 border border-white/10 shadow-2xl">
-                    <div className="h-64 w-full bg-slate-100 rounded-[30px] animate-pulse mb-6" />
-                    <div className="space-y-3">
-                      <div className="h-4 w-1/2 bg-card/10 rounded-full" />
-                      <div className="h-4 w-3/4 bg-card/10 rounded-full" />
-                    </div>
-                  </div>
-               </div>
-             </div>
-          </div>
-        </section>
-      </main>
-
-      <footer className="bg-card border-t border-slate-100 py-24 px-6 relative z-10">
-        <div className="max-w-7xl mx-auto grid md:grid-cols-4 gap-12">
-          <div className="col-span-2">
-            <div className="flex items-center gap-3 mb-8">
-              <div className="w-10 h-10 bg-[#25D366] rounded-xl flex items-center justify-center text-white font-bold font-serif text-xl">C</div>
-              <span className="font-serif font-black text-2xl tracking-tight text-[#075E54]">Chatevo</span>
             </div>
-            <p className="text-muted-foreground max-w-sm font-medium leading-relaxed">
-              Sell Smarter on WhatsApp. Built for Kenyan merchants — M-Pesa, Paybill, Bank, and AI automation all in one place.
-            </p>
           </div>
-          <div>
-            <h4 className="font-bold mb-6 text-[#075E54] text-sm uppercase tracking-widest">Product</h4>
-            <ul className="space-y-4 text-muted-foreground font-medium text-sm">
-              <li><Link href="#features" className="hover:text-primary transition-colors">Features</Link></li>
-              <li><Link href="#pricing" className="hover:text-primary transition-colors">Pricing</Link></li>
-              <li><Link href="/demo" className="hover:text-primary transition-colors">Live Demo</Link></li>
-            </ul>
-          </div>
-          <div>
-            <h4 className="font-bold mb-6 text-[#075E54] text-sm uppercase tracking-widest">Connect</h4>
-            <ul className="space-y-4 text-muted-foreground font-medium text-sm">
-              <li><a href="mailto:mazaoedu@gmail.com" className="hover:text-primary transition-colors">mazaoedu@gmail.com</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Instagram</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">LinkedIn</a></li>
-            </ul>
-          </div>
-        </div>
-        <div className="max-w-7xl mx-auto mt-20 pt-12 border-t border-slate-100 flex flex-col md:flex-row justify-between text-muted-foreground text-xs font-bold tracking-tight gap-4">
-          <p>© 2026 CHATEVO TECHNOLOGIES · Sell Smarter on WhatsApp</p>
-          <div className="flex gap-10">
-            <Link href="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link>
-            <Link href="/terms" className="hover:text-primary transition-colors">Terms of Service</Link>
+
+          <div className="border-t border-slate-800 pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+            <p>© 2026 Chatevo Technologies · Sell Smarter on WhatsApp</p>
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+              <span>All systems operational</span>
+            </div>
           </div>
         </div>
       </footer>
