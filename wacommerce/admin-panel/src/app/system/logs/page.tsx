@@ -4,7 +4,13 @@ import { desc } from "drizzle-orm"
 import { Activity, Shield, User, Globe, Clock, ChevronRight } from "lucide-react"
 
 export default async function AuditLogsPage() {
-  const logs = await db.select().from(audit_logs).orderBy(desc(audit_logs.created_at)).limit(100)
+  let logs: any[] = []
+  try {
+    logs = await db.select().from(audit_logs).orderBy(desc(audit_logs.created_at)).limit(100)
+  } catch (err) {
+    console.error("Error fetching logs:", err)
+    // Silently fallback to empty if the table isn't migrated
+  }
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">

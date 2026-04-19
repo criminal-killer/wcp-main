@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { Bell, Send, Users, AlertTriangle, CheckCircle2 } from 'lucide-react'
+import { sendNotification } from '../actions/notifications'
 
 export default function NotificationsAdminPage() {
   const [title, setTitle] = useState('')
@@ -13,15 +14,15 @@ export default function NotificationsAdminPage() {
     e.preventDefault()
     setStatus('sending')
     try {
-      // In a real implementation this calls an API route
-      // Example: await fetch('/api/admin/notifications', { method: 'POST', body: JSON.stringify({ title, message, type, targetOrgId }) })
-      // which inserts into the global notifications table
-      setTimeout(() => {
+      const res = await sendNotification({ title, message, type, targetOrgId })
+      if (res.success) {
         setStatus('success')
         setTitle('')
         setMessage('')
         setTargetOrgId('')
-      }, 1000)
+      } else {
+        setStatus('error')
+      }
     } catch {
       setStatus('error')
     }

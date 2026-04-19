@@ -408,12 +408,16 @@ export const support_tickets = sqliteTable('support_tickets', {
 // ============================================
 export const affiliates = sqliteTable('affiliates', {
   id: text('id').primaryKey().default(sql`(lower(hex(randomblob(16))))`),
+  clerk_id: text('clerk_id').unique(), // For auth logic
+  referred_by_id: text('referred_by_id'), // The affiliate id who referred this affiliate
   name: text('name').notNull(),
+  username: text('username').unique(), // Display name in charts
   email: text('email').notNull().unique(),
   phone: text('phone'),
   referral_code: text('referral_code').notNull().unique(),
   status: text('status').default('pending'), // pending, approved, rejected
-  total_referred: integer('total_referred').default(0),
+  total_referred: integer('total_referred').default(0), // Direct invites
+  total_network: integer('total_network').default(0), // Tier 2 invites
   total_earned: real('total_earned').default(0),
   balance: real('balance').default(0),
   payment_details: text('payment_details'), // JSON holding bank/paypal info

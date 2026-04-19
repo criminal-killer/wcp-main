@@ -358,7 +358,7 @@ function SettingsContent({ org, autoReplies }: { org: Org, autoReplies: AutoRepl
                 </div>
                 <div className="flex items-center justify-between mt-2">
                   <p className="text-[9px] text-muted-foreground/70 font-bold uppercase tracking-tight">Token is AES-256 encrypted.</p>
-                  {org.wa_webhook_verified ? (
+                  {org.wa_phone_number_id ? (
                     <button 
                       onClick={async (e) => {
                         e.preventDefault();
@@ -448,9 +448,27 @@ function SettingsContent({ org, autoReplies }: { org: Org, autoReplies: AutoRepl
               {testResult?.error && <p className="text-[10px] text-red-500 font-bold bg-red-50 p-3 rounded-lg border border-red-100 italic">{testResult.error}</p>}
               {testResult?.success && <p className="text-[10px] text-green-600 font-bold bg-green-50 p-3 rounded-lg border border-green-100 italic font-serif">Success! Engine is now activated.</p>}
             </div>
-
-            <button onClick={async () => { setSaving(true); await fetch('/api/settings/whatsapp', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(waForm) }); setSaving(false); setSaved(true); setTimeout(() => setSaved(false), 2000) }} disabled={saving}
-              className="w-full bg-[#075E54] text-white py-4 rounded-xl font-bold hover:shadow-xl hover:shadow-[#075E54]/20 transition-all disabled:opacity-60">
+            <button 
+              onClick={async () => { 
+                setSaving(true); 
+                try {
+                  const res = await fetch('/api/settings/whatsapp', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(waForm) }); 
+                  const data = await res.json();
+                  if (!res.ok) {
+                    alert(data.error || 'Failed to save credentials.');
+                  } else {
+                    setSaved(true); 
+                    setTimeout(() => setSaved(false), 2000);
+                  }
+                } catch(e) {
+                  alert('Network error while saving credentials.');
+                } finally {
+                  setSaving(false);
+                }
+              }} 
+              disabled={saving}
+              className="w-full bg-[#075E54] text-white py-4 rounded-xl font-bold hover:shadow-xl hover:shadow-[#075E54]/20 transition-all disabled:opacity-60"
+            >
               {saved ? '✓ Credentials Saved' : saving ? 'Saving...' : 'Save WhatsApp Credentials'}
             </button>
           </div>

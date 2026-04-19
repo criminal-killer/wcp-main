@@ -14,7 +14,18 @@ export async function PUT(req: NextRequest) {
   const body = await req.json() as { phone_number_id?: string; access_token?: string }
   const update: Partial<typeof organizations.$inferInsert> = { updated_at: new Date().toISOString() }
 
-  if (body.phone_number_id) update.wa_phone_number_id = body.phone_number_id
+  if (body.phone_number_id) {
+    // Check if another organization is already using this phone number id
+    const existingOrg = await db.query.organizations.findFirst({
+      where: eq(organizations.wa_phone_number_id, body.phone_number_id)
+    })
+    
+    if (existingOrg && existingOrg.id !== user.org_id) {
+      return NextResponse.json({ error: 'This WhatsApp Phone ID is already registered to another store.' }, { status: 400 })
+    }
+
+    update.wa_phone_number_id = body.phone_number_id
+  }
   if (body.access_token) update.wa_access_token_encrypted = encrypt(body.access_token)
   // Reset webhook verification when credentials change
   if (body.phone_number_id || body.access_token) update.wa_webhook_verified = 0
