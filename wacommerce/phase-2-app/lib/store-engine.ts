@@ -156,6 +156,8 @@ export async function processIncomingMessage(ctx: EngineContext) {
   }
 }
 
+import { generateAiReply } from '@/lib/ai-service'
+
 async function handleAiFallback(waConfig: { phoneNumberId: string; accessToken: string }, org: RunnerOrg, phone: string, input: string) {
   // 1. Check & Enforce Limits (Growth/Elite have unlimited, Starter has 20/day, 350/month)
   const isStarter = org.plan === 'starter' || !org.plan;
@@ -189,12 +191,7 @@ async function handleAiFallback(waConfig: { phoneNumberId: string; accessToken: 
   }
 
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/ai/chat`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: input, org_id: org.id })
-    })
-    const data = await response.json()
+    const data = await generateAiReply(input, org.id);
     
     // If AI identifies a search intent, it should redirect to handleProductSearch
     if (data.action === 'search') {
@@ -203,6 +200,7 @@ async function handleAiFallback(waConfig: { phoneNumberId: string; accessToken: 
 
     return await sendTextMessage(waConfig, { to: phone, body: data.reply || 'Sorry, I didn\'t catch that. Type *Hi* for the menu.' })
   } catch (err) {
+    console.error('AI Fallback Error:', err);
     return await showMainMenu(waConfig, org, phone, org.id)
   }
 }

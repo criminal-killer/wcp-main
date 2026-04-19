@@ -1,65 +1,6 @@
 import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
-import Groq from 'groq-sdk'
-import { db } from '@/lib/db'
-import { users, organizations, products } from '@/lib/schema'
-import { eq, and } from 'drizzle-orm'
-import { decrypt } from '@/lib/encryption'
-
-const PERSONA_PROMPTS = {
-  educator: `
-You are the **Sella Support Teacher** 🧑‍🏫. Your goal is to help merchants set up their WhatsApp store with zero stress!
-Explanations should be very simple, friendly, and clear.
-
-### 🌟 Your Persona:
-- Patient, encouraging, and clear.
-- Use simple words. Instead of "Configure Webhook", say "Connect the bridge between Meta and Sella 🌉".
-- Use emojis only for key points or highlights (🚀, 💡, ✅, ⚠️).
-
-### 🛠️ The "Interactive Setup" Protocol:
-If a user asks "How do I set up WhatsApp?", **ALWAYS** offer two choices:
-1. **"The Full Guide"** 📚 (List all steps at once).
-2. **"Step-by-Step"** 🐾 (We do one small part at a time. I explain Part 1, then wait for you to say "Done" before moving to Part 2).
-
-### 💳 Billing & Plans:
-- **Free Trial**: Every new store starts with a **7-Day Free Trial** 🎁.
-- **Plans**: 
-  - **Starter**: Perfect for beginners! ($29/mo)
-  - **Pro**: For growing stores. ($59/mo)
-  - **Elite**: For power sellers! ($99/mo)
-- **Referrals**: If you invite a friend using your referral link, you earn **50% commission** on their subscription! 💸
-`,
-  sales: `
-You are a **Elite Assistant / Personal Shopper** 💰 for this store on WhatsApp.
-Your goal is to convert inquiries into orders. Be persuasive, helpful, and professional.
-
-### 🎯 Sales Strategy & Intent Detection:
-1. **Search Intent**: If the user asks for products, a specific color, or a price range, you MUST return a JSON object with this format exactly:
-   \`{"action": "search", "query": "their refined search query", "reply": "a short helpful intro like 'Sure! Here are some red shoes under 1000 for you...'"}\`
-   Examples: 
-   - User: "Got any red shoes?" -> query: "red shoes", action: "search"
-   - User: "What can I get for 500?" -> query: "under 500", action: "search"
-   - User: "Show me shirts" -> query: "shirts", action: "search"
-
-2. **Standard Chat**: If it's just a general question about the store or a greeting, reply normally in plain text.
-3. **Product Awareness**: Use the provided product list to suggest specific items if appropriate.
-4. **Conversion**: If a user shows interest, explain how to add to cart or checkout.
-5. **Accuracy**: Only talk about products that are actually in the store's list.
-6. **Upselling**: Suggest complementary products if they ask about one.
-
-IMPORTANT: When detecting search intent, DO NOT include any text outside the JSON.
-`,
-
-  support: `
-You are a **Customer Support Specialist** 🛠️.
-Your goal is to handle post-purchase inquiries, shipping questions, and store policies.
-
-### 🛡️ Support Strategy:
-- **Patience**: Be extremely helpful and empathetic.
-- **Policies**: Refer to the store's description for shipping/return info if available.
-- **Escalation**: If you can't solve a problem, suggest they wait for a human agent.
-`
-}
+import { generateAiReply } from '@/lib/ai-service'
 
 export async function POST(req: Request) {
   try {
@@ -69,95 +10,16 @@ export async function POST(req: Request) {
 
     if (!userId && !org_id) return new NextResponse('Unauthorized', { status: 401 })
 
-    let targetOrgId = org_id
-    if (userId) {
-      const user = await db.query.users.findFirst({ where: eq(users.clerk_id, userId) })
-      if (user) targetOrgId = user.org_id
-    }
-
-    const org = await db.query.organizations.findFirst({ where: eq(organizations.id, targetOrgId) })
-    if (!org) return NextResponse.json({ reply: "Organization context not found." })
-
-    // Build Context
-    let context = `\nStore Context: Brand name is "${org.name}", currency is ${org.currency}. `
-    if (org.description) context += `Description: ${org.description}. `
-
-    // Inject Products for Sales Persona
-    if (org.ai_persona === 'sales') {
-      const activeProducts = await db.select().from(products).where(and(eq(products.org_id, org.id), eq(products.is_active, 1))).limit(20)
-      if (activeProducts.length > 0) {
-        context += `\nAvailable Products:\n${activeProducts.map(p => `- ${p.name}: ${org.currency} ${p.price} (${p.category})`).join('\n')}`
-      }
-    }
-
-    const persona = (org.ai_persona as keyof typeof PERSONA_PROMPTS) || 'educator'
-    const systemPrompt = (PERSONA_PROMPTS[persona] || PERSONA_PROMPTS.educator) + context + (org.ai_system_prompt || '')
-
-    // AI Provider Gating
-    const isPremium = ['pro', 'elite', 'custom'].includes(org.plan || '')
-    const provider = (isPremium || org.ai_provider === 'sella') ? (org.ai_provider || 'sella') : 'sella'
+    const response = await generateAiReply(message, org_id, userId)
     
-    let reply = ""
-
-    if (provider === 'sella') {
-      const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
-      const completion = await groq.chat.completions.create({
-        messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: message }],
-        model: 'llama-3.3-70b-versatile',
-      })
-      reply = completion.choices[0]?.message?.content || ""
-    } else {
-      // Custom AI Providers (OpenAI, Gemini, Claude, Custom)
-      const apiKey = org.ai_api_key_encrypted ? decrypt(org.ai_api_key_encrypted) : ""
-      if (!apiKey) throw new Error("Custom AI provider selected but no API key found.")
-
-      let endpoint = ""
-      let headers: Record<string, string> = { 'Content-Type': 'application/json' }
-      let payload: any = { model: org.ai_model || 'gpt-4o-mini', messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: message }] }
-
-      if (provider === 'google') {
-        endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${org.ai_model || 'gemini-1.5-flash'}:generateContent?key=${apiKey}`
-        payload = { contents: [{ role: 'user', parts: [{ text: systemPrompt + "\n\nUser: " + message }] }] }
-      } else if (provider === 'anthropic') {
-        endpoint = "https://api.anthropic.com/v1/messages"
-        headers['x-api-key'] = apiKey
-        headers['anthropic-version'] = '2023-06-01'
-        payload = { model: org.ai_model || 'claude-3-5-sonnet-20240620', max_tokens: 1024, system: systemPrompt, messages: [{ role: 'user', content: message }] }
-      } else {
-        // OpenAI or Custom
-        endpoint = provider === 'custom' ? (org.ai_endpoint_url || "") : "https://api.openai.com/v1/chat/completions"
-        headers['Authorization'] = `Bearer ${apiKey}`
-      }
-
-      if (!endpoint) throw new Error("API endpoint missing for custom provider.")
-
-      const response = await fetch(endpoint, { method: 'POST', headers, body: JSON.stringify(payload) })
-      const data = await response.json()
-      
-      // Basic response parsing for OpenAI-compatible and specialty formats
-      if (provider === 'google') reply = data.candidates?.[0]?.content?.parts?.[0]?.text
-      else if (provider === 'anthropic') reply = data.content?.[0]?.text
-      else reply = data.choices?.[0]?.message?.content
-    }
-
-    // Try to parse if it's a JSON response (Search Intent)
-    if (reply.trim().startsWith('{') && reply.trim().endsWith('}')) {
-      try {
-        const parsed = JSON.parse(reply.trim())
-        if (parsed.action === 'search') {
-          return NextResponse.json({ ...parsed })
-        }
-      } catch (e) {
-        // Not valid JSON, return as plain text
-      }
-    }
-
-    return NextResponse.json({ reply: reply || "I'm having trouble processing that right now." })
+    // Return standard search action or standard text reply
+    return NextResponse.json(response)
 
   } catch (error: any) {
-    console.error('AI Chat Error:', error)
+    console.error('AI Chat Route Error:', error)
     return NextResponse.json({ 
-      reply: "I'm experiencing a high volume of requests. Please try again or contact support at mazaoedu@gmail.com" 
+      reply: "I'm experiencing a high volume of requests. Please try again or contact support." 
     })
   }
 }
+
