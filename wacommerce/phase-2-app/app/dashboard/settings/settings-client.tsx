@@ -49,6 +49,7 @@ interface AutoReply {
   is_active: number | null | boolean
 }
 
+const TABS = [
   { id: 'account', label: 'My Account', icon: Users },
   { id: 'store', label: 'Store Info', icon: Settings },
   { id: 'whatsapp', label: 'WhatsApp', icon: MessageSquare, secure: true },
@@ -60,6 +61,7 @@ interface AutoReply {
   { id: 'fulfillment', label: 'Fulfillment', icon: Globe, secure: true },
   { id: 'appearance', label: 'Store Theme', icon: Palette },
   { id: 'billing', label: 'Billing', icon: Globe },
+]
 
 const SecureSection = ({ children, email, onUnlock }: { children: React.ReactNode, email: string, onUnlock: () => void }) => {
   const [unlocked, setUnlocked] = useState(true) // BYPASSED FOR TESTING
