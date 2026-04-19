@@ -1,6 +1,6 @@
-# SELLA: WhatsApp Commerce Platform 🛍️📱
+# CHATEVO: WhatsApp Commerce Platform 🛍️📱
 
-Welcome to the **Sella Platform**! This monorepo contains the entire suite for the WhatsApp Commerce application. The various services have also been synced to their own repositories for independent deployment tracking.
+Welcome to the **Chatevo Platform**! This monorepo contains the entire suite for the WhatsApp Commerce application. The various services have also been synced to their own repositories for independent deployment tracking.
 
 ## 🔗 Project Links
 

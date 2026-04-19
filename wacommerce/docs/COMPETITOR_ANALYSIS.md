@@ -1,5 +1,5 @@
 # Competitor Analysis
-# SELLA
+# CHATEVO
 
 ---
 
@@ -42,9 +42,9 @@
 
 ---
 
-## Sella's Position
+## Chatevo's Position
 
-| Dimension | Competitors | Sella |
+| Dimension | Competitors | Chatevo |
 |-----------|------------|-------|
 | Focus | Messaging first | Commerce first |
 | In-chat store | None/partial | Full shopping flow |

@@ -5,7 +5,7 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Sella Marketing Hub",
+  title: "Chatevo Marketing Hub",
   description: "Growth Command Center",
 };
 
@@ -20,3 +20,4 @@ export default function RootLayout({
     </html>
   );
 }
+

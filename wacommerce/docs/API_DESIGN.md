@@ -1,12 +1,12 @@
 # API Design
-# SELLA — WhatsApp Commerce Platform
+# CHATEVO — WhatsApp Commerce Platform
 
 ---
 
 ## 1. API Overview
 
 All APIs are Next.js API Routes (serverless functions on Vercel).
-Base URL: `https://app.sella.io/api` (production) or `http://localhost:3000/api` (dev)
+Base URL: `https://app.chatevo.io/api` (production) or `http://localhost:3000/api` (dev)
 
 ### Authentication
 - Dashboard APIs: Clerk JWT via `auth()` — extracts userId and orgId
@@ -337,7 +337,7 @@ Add/remove/clear cart items.
 ## 8. Payment APIs
 
 ### POST /api/payments/subscribe
-Create subscription checkout for Sella SaaS.
+Create subscription checkout for Chatevo SaaS.
 **Auth:** Required
 **Body:**
 ```json
@@ -448,7 +448,7 @@ Send bulk email/WhatsApp notification.
 {
   "channel": "email",
   "segment": "all",
-  "subject": "Sella is live!",
+  "subject": "Chatevo is live!",
   "message": "Your account is ready..."
 }
 ```

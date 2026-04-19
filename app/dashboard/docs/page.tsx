@@ -13,7 +13,7 @@ const SECTIONS = [
     icon: Rocket,
     content: (
       <div className="space-y-6">
-        <p className="text-slate-600 leading-relaxed font-medium">Welcome to Sella! 🚀 This guide will help you launch your automated WhatsApp store in minutes. Our platform is designed to turn your WhatsApp number into a 24/7 sales machine.</p>
+        <p className="text-slate-600 leading-relaxed font-medium">Welcome to Chatevo! 🚀 This guide will help you launch your automated WhatsApp store in minutes. Our platform is designed to turn your WhatsApp number into a 24/7 sales machine.</p>
         
         <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-6">
            <h4 className="flex items-center gap-2 text-emerald-800 font-black uppercase tracking-widest text-xs mb-3">
@@ -38,7 +38,7 @@ const SECTIONS = [
     icon: MessageSquare,
     content: (
       <div className="space-y-6">
-        <p className="text-slate-600 leading-relaxed font-medium">Sella uses the official WhatsApp Cloud API to handle messages. This ensures your number is never banned and your messages are delivered instantly.</p>
+        <p className="text-slate-600 leading-relaxed font-medium">Chatevo uses the official WhatsApp Cloud API to handle messages. This ensures your number is never banned and your messages are delivered instantly.</p>
         
         <div className="space-y-8">
           <div className="relative pl-8 border-l-2 border-slate-100">
@@ -56,7 +56,7 @@ const SECTIONS = [
           <div className="relative pl-8 border-l-2 border-slate-100">
             <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-slate-200 border-4 border-white shadow-sm" />
             <h4 className="font-black text-slate-900 text-sm italic">Step 3: Webhook Configuration</h4>
-            <p className="text-xs text-slate-500 mt-1 font-medium">Enter your Sella Webhook URL in Meta. Ensure you subscribe to the **"messages"** field in the Webhook fields management section.</p>
+            <p className="text-xs text-slate-500 mt-1 font-medium">Enter your Chatevo Webhook URL in Meta. Ensure you subscribe to the **"messages"** field in the Webhook fields management section.</p>
           </div>
         </div>
 
@@ -76,11 +76,11 @@ const SECTIONS = [
     icon: Zap,
     content: (
       <div className="space-y-6">
-        <p className="text-slate-600 leading-relaxed font-medium">Sella is powered by an advanced AI engine that understands customer intent and handles sales autonomously.</p>
+        <p className="text-slate-600 leading-relaxed font-medium">Chatevo is powered by an advanced AI engine that understands customer intent and handles sales autonomously.</p>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="bg-white border-2 border-slate-50 rounded-2xl p-6 shadow-sm">
-            <h4 className="font-black text-primary text-sm mb-2">Sella Default AI</h4>
+            <h4 className="font-black text-primary text-sm mb-2">Chatevo Default AI</h4>
             <p className="text-xs text-slate-500 font-bold">Standard on all plans. Powered by **Groq (Llama-3)** for lightning-fast responses. No configuration required.</p>
           </div>
           <div className="bg-white border-2 border-primary/10 rounded-2xl p-6 shadow-sm">
@@ -111,7 +111,7 @@ const SECTIONS = [
     icon: CreditCard,
     content: (
       <div className="space-y-6">
-        <p className="text-slate-600 leading-relaxed font-medium">Collect payments directly via WhatsApp. Sella automatically generates checkout links and tracks order status.</p>
+        <p className="text-slate-600 leading-relaxed font-medium">Collect payments directly via WhatsApp. Chatevo automatically generates checkout links and tracks order status.</p>
         
         <div className="space-y-4">
           <div className="flex gap-4 p-5 bg-slate-50 border border-slate-100 rounded-2xl">
@@ -146,7 +146,7 @@ export default function DocsPage() {
         {/* Sidebar Nav */}
         <div className="w-full md:w-64 space-y-2 sticky top-8 h-fit">
           <div className="px-4 mb-6">
-            <h1 className="text-2xl font-black text-primary italic font-serif">Sella Nexus</h1>
+            <h1 className="text-2xl font-black text-primary italic font-serif">Chatevo Nexus</h1>
             <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] mt-1">Platform Documentation</p>
           </div>
           
@@ -167,7 +167,7 @@ export default function DocsPage() {
           ))}
           
           <div className="pt-8 mt-8 border-t border-slate-100">
-             <a href="mailto:support@sella.app" className="flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black text-slate-400 hover:text-primary transition-colors">
+             <a href="mailto:support@Chatevo.app" className="flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black text-slate-400 hover:text-primary transition-colors">
                 <HelpCircle size={16} />
                 Need Human Help?
              </a>
@@ -209,3 +209,4 @@ export default function DocsPage() {
     </div>
   )
 }
+

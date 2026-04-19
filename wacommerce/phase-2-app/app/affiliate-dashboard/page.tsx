@@ -19,7 +19,7 @@ export default async function AffiliateDashboardPage() {
   }
 
   // The base URL for the app (can be dynamic based on env)
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sella-app.vercel.app'
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://chatevo-app.vercel.app'
   const targetLink = `${baseUrl}/affiliates/apply?ref=${affiliate.referral_code}`
 
   return (

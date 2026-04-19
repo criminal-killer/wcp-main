@@ -1,4 +1,4 @@
-# Sella Roadmap: Marketing, Beta Launch & Bot Styling
+# Chatevo Roadmap: Marketing, Beta Launch & Bot Styling
 
 ## ✅ Phase 2 Finalized (Technical Delivery)
 - [x] Managed Payment (MoR) system + 5% Fee logic
@@ -27,5 +27,5 @@
 
 ## 🌍 Public Launch
 - [ ] Final production deployment
-- [ ] Custom domain configuration (Sella.app)
+- [ ] Custom domain configuration (Chatevo.app)
 - [ ] Official public announcement

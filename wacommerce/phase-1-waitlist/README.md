@@ -1,6 +1,6 @@
-# SELLA Phase 1 — Setup Guide
+# CHATEVO Phase 1 — Setup Guide
 
-This directory contains everything needed to launch the **SELLA** waitlist landing page and the automated outreach pipeline.
+This directory contains everything needed to launch the **CHATEVO** waitlist landing page and the automated outreach pipeline.
 
 ---
 
@@ -8,7 +8,7 @@ This directory contains everything needed to launch the **SELLA** waitlist landi
 
 ### Database Configuration
 1. Log in to your InfinityFree Control Panel.
-2. Create a new **MySQL Database** (e.g., `if0_38000000_sella`).
+2. Create a new **MySQL Database** (e.g., `if0_38000000_chatevo`).
 3. Open **phpMyAdmin** and import `landing-page/database.sql`.
 4. Update `landing-page/config.php` with your database credentials:
    - `$db_host`: Usually something like `sql123.infinityfree.com`
@@ -32,7 +32,7 @@ Go to your repo `Settings > Secrets and variables > Actions` and add:
 
 | Secret Name | Description |
 | ----------- | ----------- |
-| `WAITLIST_URL` | Your landing page URL (e.g., `https://sella.io`) |
+| `WAITLIST_URL` | Your landing page URL (e.g., `https://chatevo.io`) |
 | `FACEBOOK_PAGE_ID` | Your FB Page ID for posts and comments. |
 | `FACEBOOK_ACCESS_TOKEN` | Page Access Token from Meta Developers. |
 | `SMTP_HOST` | Your email provider SMTP host. |
@@ -65,5 +65,5 @@ phase-1-waitlist/
 
 ## 4. Admin Dashboard
 Access your waitlist data at `yourdomain.com/admin.php`.
-- **Default Password**: `SellaBeta2025` (Change this in `config.php`)
+- **Default Password**: `ChatevoBeta2025` (Change this in `config.php`)
 - **Features**: View total count, view entries, and export to CSV.

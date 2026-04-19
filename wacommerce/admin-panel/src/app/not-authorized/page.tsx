@@ -11,7 +11,7 @@ export default function NotAuthorized() {
         <div>
           <h1 className="text-3xl font-serif font-black text-slate-900 italic tracking-tight">Access Denied</h1>
           <p className="text-sm text-slate-500 mt-4 leading-relaxed font-medium">
-            This area is reserved for the <span className="text-primary font-bold italic">Sella Platform Owner</span>. 
+            This area is reserved for the <span className="text-primary font-bold italic">Chatevo Platform Owner</span>. 
             Unauthorized access attempts are logged and reported to the security team.
           </p>
         </div>

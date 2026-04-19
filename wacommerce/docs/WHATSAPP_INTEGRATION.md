@@ -1,20 +1,20 @@
 # WhatsApp Integration Guide
-# SELLA
+# CHATEVO
 
 ---
 
 ## 1. Overview
 
-Sella uses Meta's Cloud API (official WhatsApp Business Platform).
+Chatevo uses Meta's Cloud API (official WhatsApp Business Platform).
 Each store owner connects THEIR OWN WhatsApp Business Account.
-Meta handles message delivery. Sella provides the software layer.
+Meta handles message delivery. Chatevo provides the software layer.
 
 **Key Concept:**
 - Store owner has their own Meta Business Account
 - Store owner has their own WhatsApp Business Phone Number
-- Store owner's access token is stored (encrypted) in Sella
-- Sella sends/receives messages using the store owner's credentials
-- Meta charges the STORE OWNER per conversation (not Sella)
+- Store owner's access token is stored (encrypted) in Chatevo
+- Chatevo sends/receives messages using the store owner's credentials
+- Meta charges the STORE OWNER per conversation (not Chatevo)
 
 ---
 
@@ -29,8 +29,8 @@ Inside Meta Business Suite, store owner adds WhatsApp product:
 - Adds a phone number (gets Phone Number ID)
 - Gets a permanent access token via System User
 
-### Step 3: Connect to Sella
-In Sella Dashboard → Settings → WhatsApp:
+### Step 3: Connect to Chatevo
+In Chatevo Dashboard → Settings → WhatsApp:
 - Paste Phone Number ID
 - Paste Access Token
 - Click "Test Connection" (sends test message to verify)
@@ -38,8 +38,8 @@ In Sella Dashboard → Settings → WhatsApp:
 
 ### Step 4: Webhook Configuration
 Store owner adds webhook URL in Meta Developer Console:
-- Webhook URL: `https://app.sella.io/api/webhook`
-- Verify Token: (from Sella settings)
+- Webhook URL: `https://app.chatevo.io/api/webhook`
+- Verify Token: (from Chatevo settings)
 - Subscribe to: `messages`, `message_deliveries`, `message_reads`
 
 ---
@@ -48,7 +48,7 @@ Store owner adds webhook URL in Meta Developer Console:
 
 ### Verification (GET /api/webhook)
 Meta sends: `GET /api/webhook?hub.mode=subscribe&hub.verify_token=xxx&hub.challenge=123`
-Sella checks: `hub.verify_token === process.env.WHATSAPP_VERIFY_TOKEN`
+Chatevo checks: `hub.verify_token === process.env.WHATSAPP_VERIFY_TOKEN`
 If match: respond with `hub.challenge` (plain text, 200)
 If no match: respond 403
 
@@ -189,7 +189,7 @@ The store-engine (`lib/whatsapp/store-engine.ts`) handles the complete in-chat s
 ### State Management
 Customer's current position in the flow is tracked via Redis:
 
-- **Key:** `sella:flow:{org_id}:{phone}`
+- **Key:** `chatevo:flow:{org_id}:{phone}`
 - **Value:** `{ "step": "browsing_category", "category": "Clothing", "cart_id": "..." }`
 - **TTL:** 30 minutes
 
@@ -220,7 +220,7 @@ For sending messages OUTSIDE the 24-hour window:
 
 ### Creating Templates
 Templates must be submitted to Meta for approval.
-Store owner creates template in Sella dashboard → Sella submits via API → Meta reviews (1-24 hours).
+Store owner creates template in Chatevo dashboard → Chatevo submits via API → Meta reviews (1-24 hours).
 
 ### Sending Template Messages
 ```json
@@ -246,7 +246,7 @@ Store owner creates template in Sella dashboard → Sella submits via API → Me
 Meta's rate limits:
 - **Standard:** 80 messages/second per phone number
 - **Business-initiated:** varies by quality rating and tier
-- **Sella adds buffer:** send max 10 messages/second per org
+- **Chatevo adds buffer:** send max 10 messages/second per org
 
 ## 8. 24-Hour Window Rule
 - When customer messages you → 24-hour window opens

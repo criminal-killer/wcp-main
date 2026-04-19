@@ -6,7 +6,7 @@ Copy everything below this line and paste into Claude (Arena/Cursor).
 
 ## PROMPT START
 
-You are building a SaaS application called SELLA — a WhatsApp Commerce Platform.
+You are building a SaaS application called CHATEVO — a WhatsApp Commerce Platform.
 
 ### WHAT IT IS
 A tool that lets businesses sell products directly inside WhatsApp. Customers browse, buy, and pay without leaving the chat. The business owner manages everything from a web dashboard.

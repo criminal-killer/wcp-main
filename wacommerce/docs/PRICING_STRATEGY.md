@@ -1,5 +1,5 @@
 # Pricing Strategy
-# SELLA
+# CHATEVO
 
 ---
 
@@ -16,7 +16,7 @@
 | In-chat payments | ✅ | ✅ | ✅ |
 | Order management | ✅ | ✅ | ✅ |
 | Auto-replies | Basic (5 keywords) | Chatbot builder | AI-powered |
-| Mini website | ✅ (Sella branding) | ✅ (removable) | White-label |
+| Mini website | ✅ (Chatevo branding) | ✅ (removable) | White-label |
 | Dashboard | Basic stats | Full analytics | Advanced + AI |
 | Campaigns | ❌ | 10/month | Unlimited |
 | Abandoned cart | ❌ | ✅ | ✅ |
@@ -33,7 +33,7 @@
 
 ## Free Plan (Post-Trial)
 - 10 products, 20 orders/month, 50 contacts
-- "Powered by Sella" watermark (cannot remove)
+- "Powered by Chatevo" watermark (cannot remove)
 - Enough to test but not enough to run a real business
 - Designed to convert to Starter
 

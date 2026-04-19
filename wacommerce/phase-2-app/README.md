@@ -1,4 +1,4 @@
-# SELLA — WhatsApp Commerce Platform (App Console)
+# CHATEVO — WhatsApp Commerce Platform (App Console)
 
 > **Phase 2 MVP** · Sell products directly inside WhatsApp. Set up your store in 5 minutes.
 
@@ -8,7 +8,7 @@
 
 ---
 
-## 🌟 What's New? (Sella Global)
+## 🌟 What's New? (Chatevo Global)
 
 We have upgraded the platform to support **Global Fulfillment** and **Granular Bot Personalization**.
 

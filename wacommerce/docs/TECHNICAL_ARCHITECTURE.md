@@ -1,5 +1,5 @@
 # Technical Architecture
-## SELLA
+## CHATEVO
 
 ---
 
@@ -191,4 +191,4 @@ ADMIN_USER_ID=your-clerk-user-id
 
 # App
 NEXT_PUBLIC_APP_URL=https://yoursaas.com
-NEXT_PUBLIC_APP_NAME=SELLA
+NEXT_PUBLIC_APP_NAME=CHATEVO

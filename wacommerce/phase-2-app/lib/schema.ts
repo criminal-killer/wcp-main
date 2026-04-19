@@ -57,7 +57,7 @@ export const organizations = sqliteTable('organizations', {
   managed_payout_interval: text('managed_payout_interval').default('weekly'),
 
   // AI Configuration
-  ai_provider: text('ai_provider').default('sella'), // sella (groq), openai, anthropic, google, custom
+  ai_provider: text('ai_provider').default('chatevo'), // chatevo (groq), openai, anthropic, google, custom
   ai_api_key_encrypted: text('ai_api_key_encrypted'),
   ai_model: text('ai_model'),
   ai_persona: text('ai_persona').default('educator'), // educator, sales, support
@@ -67,7 +67,7 @@ export const organizations = sqliteTable('organizations', {
   // Bot Customization (Growth/Elite Features)
   bot_menu_style: text('bot_menu_style').default('professional'), // professional, street, minimal, corporate, friendly
   bot_emojis_enabled: integer('bot_emojis_enabled').default(1),
-  bot_custom_footer: text('bot_custom_footer').default('Powered by Sella'),
+  bot_custom_footer: text('bot_custom_footer').default('Powered by Chatevo'),
   bot_show_search: integer('bot_show_search').default(1),
   bot_show_categories: integer('bot_show_categories').default(1),
   bot_show_cart: integer('bot_show_cart').default(1),

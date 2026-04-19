@@ -1,4 +1,4 @@
-# SELLA — WhatsApp Commerce Platform
+# CHATEVO — WhatsApp Commerce Platform
 
 > **Phase 2 MVP** · Sell products directly inside WhatsApp. Set up your store in 5 minutes.
 
@@ -9,7 +9,7 @@
 
 ---
 
-## 🚀 The Move to Sella Global (Latest Update)
+## 🚀 The Move to Chatevo Global (Latest Update)
 
 We have successfully transitioned from a localized Kenyan MVP to a **Global-Ready Commerce Engine**. This update introduces critical infrastructure for international scaling and merchant flexibility:
 
@@ -28,9 +28,9 @@ We have successfully transitioned from a localized Kenyan MVP to a **Global-Read
 
 ---
 
-## 🌟 What is SELLA?
+## 🌟 What is CHATEVO?
 
-SELLA is a multi-tenant SaaS platform that turns any WhatsApp Business account into a fully automated online store. Customers can:
+CHATEVO is a multi-tenant SaaS platform that turns any WhatsApp Business account into a fully automated online store. Customers can:
 - Browse products via interactive menus
 - Add items to cart
 - Select delivery details
@@ -78,7 +78,7 @@ Store owners get a full dashboard: product management, order tracking, inbox, co
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                        SELLA Platform                       │
+│                        CHATEVO Platform                       │
 ├──────────────┬──────────────┬───────────────┬──────────────┤
 │  Next.js 14  │   Clerk Auth │  Turso SQLite │  Upstash     │
 │  App Router  │  Multi-tenant│  Drizzle ORM  │  Redis       │
@@ -152,7 +152,7 @@ cp .env.example .env.local
 | `STRIPE_SECRET_KEY` | Stripe Dashboard → API Keys |
 | `CRON_SECRET` | Any random string for cron auth |
 | `ADMIN_USER_ID` | Your Clerk User ID for admin panel access |
-| `NEXT_PUBLIC_APP_URL` | Your deployment URL (e.g. `https://sella-app.vercel.app`) |
+| `NEXT_PUBLIC_APP_URL` | Your deployment URL (e.g. `https://chatevo-app.vercel.app`) |
 
 ### Step 3 — Database Setup
 
@@ -190,7 +190,7 @@ npx drizzle-kit push
 ## 📞 Support
 
 - Email: mazaoedu@gmail.com
-- Docs: [Click here](https://sella-app.vercel.app/docs)
+- Docs: [Click here](https://chatevo-app.vercel.app/docs)
 
 ---
 

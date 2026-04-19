@@ -11,12 +11,12 @@ export default function NotAuthorized() {
         <div>
           <h1 className="text-3xl font-serif font-black text-slate-900 italic tracking-tight">Access Denied</h1>
           <p className="text-sm text-slate-500 mt-4 leading-relaxed font-medium">
-            This area is reserved for the <span className="text-primary font-bold italic">Sella Platform Owner</span>. 
+            This area is reserved for the <span className="text-primary font-bold italic">Chatevo Platform Owner</span>. 
             Unauthorized access attempts are logged and reported to the security team.
           </p>
         </div>
-        <Link href="https://sella-app.vercel.app" className="inline-flex items-center gap-2 bg-slate-900 text-white px-8 py-3 rounded-full font-bold hover:opacity-90 transition-all">
-          <Home size={18} /> Return to Sella
+        <Link href="https://Chatevo-app.vercel.app" className="inline-flex items-center gap-2 bg-slate-900 text-white px-8 py-3 rounded-full font-bold hover:opacity-90 transition-all">
+          <Home size={18} /> Return to Chatevo
         </Link>
         <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] pt-8 border-t border-slate-200">
            Protected by Clerk & Advanced Security Layers
@@ -25,3 +25,4 @@ export default function NotAuthorized() {
     </div>
   );
 }
+

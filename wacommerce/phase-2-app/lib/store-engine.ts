@@ -303,7 +303,7 @@ async function showMainMenu(waConfig: { phoneNumberId: string; accessToken: stri
       to: phone,
       header: org.name,
       body: finalCta,
-      footer: org.bot_custom_footer || 'Powered by Sella',
+      footer: org.bot_custom_footer || 'Powered by Chatevo',
       buttonText: 'Main Menu',
       sections: [{ 
         title: 'Options', 
@@ -316,7 +316,7 @@ async function showMainMenu(waConfig: { phoneNumberId: string; accessToken: stri
     to: phone,
     header: org.name,
     body: finalCta,
-    footer: org.bot_custom_footer || 'Powered by Sella',
+    footer: org.bot_custom_footer || 'Powered by Chatevo',
     buttons: buttons,
   })
 }
@@ -669,7 +669,7 @@ async function handlePaymentSelected(
     // Generate Paystack payment link
     try {
       const { createStorePaymentLink } = await import('@/lib/payments')
-      // Decrypt merchant key if available, otherwise use null (triggers Sella-Managed MoR)
+      // Decrypt merchant key if available, otherwise use null (triggers Chatevo-Managed MoR)
       const secretKey = org.store_paystack_key_encrypted ? decrypt(org.store_paystack_key_encrypted) : null
       
       paymentLink = await createStorePaymentLink(secretKey, {

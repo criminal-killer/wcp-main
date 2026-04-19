@@ -1,12 +1,12 @@
-# Sella — WhatsApp AI Commerce Engine (Source of Truth)
+# Chatevo — WhatsApp AI Commerce Engine (Source of Truth)
 
-This document serves as the complete technical and functional specification for the Sella WhatsApp AI-powered storefront. It defines how Sella bridges the gap between conversational social media and structured e-commerce.
+This document serves as the complete technical and functional specification for the Chatevo WhatsApp AI-powered storefront. It defines how Chatevo bridges the gap between conversational social media and structured e-commerce.
 
 ---
 
 ## 🏗️ 1. The Core Architecture: The "Hybrid Engine"
 
-Sella operates on a **Hybrid Engine** model to balance the speed of a structured checkout with the flexibility of a modern LLM.
+Chatevo operates on a **Hybrid Engine** model to balance the speed of a structured checkout with the flexibility of a modern LLM.
 
 ### A. The State Machine (The "How")
 Managed in `wacommerce/phase-2-app/lib/store-engine.ts`, this layer uses **Redis** to track a customer's journey.
@@ -27,14 +27,14 @@ Managed in `wacommerce/phase-2-app/app/api/ai/chat/route.ts`. When a user types 
 
 ## 🌩️ 2. The Problem vs. Solution Matrix
 
-Sella solves primary friction points for the "Social Merchant."
+Chatevo solves primary friction points for the "Social Merchant."
 
-| Problem (Manual WhatsApp Sales) | Sella Solution (Automated AI Commerce) |
+| Problem (Manual WhatsApp Sales) | Chatevo Solution (Automated AI Commerce) |
 |---------------------------------|----------------------------------------|
 | **Manual Cataloging**: Merchants must send multiple photos and track prices in their head. | **Automated Catalog**: Stores use Meta's List Messages for category/product selection. |
 | **"Dead Air"**: Customers message at 11:00 PM, and the merchant is asleep. | **24/7 AI Sales**: The AI identifies product interest, searches the inventory, and helps the user build a cart immediately. |
 | **Calculation Errors**: Tallying prices, delivery fees, and discounts by hand is slow and error-prone. | **Redis Totals**: Real-time cart calculation with automated delivery zone fees and metadata. |
-| **Friction-Filled Checkout**: User has to type their address every time. | **Contextual Memory**: Sella remembers the customer's phone from `contacts` and saves delivery preferences. |
+| **Friction-Filled Checkout**: User has to type their address every time. | **Contextual Memory**: Chatevo remembers the customer's phone from `contacts` and saves delivery preferences. |
 | **Unverified Payments**: High risk of "fake" payment screenshots in DMs. | **Payment Integration**: Automatic M-Pesa/Flutterwave status checks vs. manual flow logic. |
 
 ---
@@ -47,7 +47,7 @@ Sella solves primary friction points for the "Social Merchant."
     *   *If Button Reply*: It immediately maps to a commerce function (e.g., `handleProductAction`).
     *   *If Plain Text*: It checks for "Global Keywords" (Menu, Cart, Back).
 4.  **AI Fallback**: If no direct match exists, the AI is prompted with the current store context.
-5.  **Search Loop**: If AI says "Search", Sella performs a database query on `products.name` and `category` and returns an interactive results list to the user.
+5.  **Search Loop**: If AI says "Search", Chatevo performs a database query on `products.name` and `category` and returns an interactive results list to the user.
 6.  **Persistence**: Finalized orders are moved from Redis into Postgres (`orders` table) for merchant fulfillment.
 
 ---
@@ -61,4 +61,4 @@ Sella solves primary friction points for the "Social Merchant."
 ---
 
 ## 🌟 5. Summary: Why It Wins
-Traditional bots are either too "stupid" (fixed buttons only) or too "loose" (AI that chats forever but never sells). **Sella wins by combining the two:** It uses AI to listen but keeps the user in a disciplined commerce flow to **close the sale.**
+Traditional bots are either too "stupid" (fixed buttons only) or too "loose" (AI that chats forever but never sells). **Chatevo wins by combining the two:** It uses AI to listen but keeps the user in a disciplined commerce flow to **close the sale.**

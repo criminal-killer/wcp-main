@@ -1,5 +1,5 @@
 # Admin Dashboard Specification
-# SELLA — Platform Owner Panel
+# CHATEVO — Platform Owner Panel
 
 ---
 

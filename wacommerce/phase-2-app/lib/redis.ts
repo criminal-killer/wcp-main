@@ -42,20 +42,20 @@ export async function rateLimit(key: string, limit: number, window: number): Pro
 // Org cache helpers (for webhook — most frequent DB query)
 export async function getCachedOrg(phoneNumberId: string) {
   return await exec(async (r) => {
-    const key = `sella:org:phone:${phoneNumberId}`
+    const key = `chatevo:org:phone:${phoneNumberId}`
     return await r.get<Record<string, unknown>>(key)
   }, null)
 }
 
 export async function setCachedOrg(phoneNumberId: string, org: unknown) {
-  const key = `sella:org:phone:${phoneNumberId}`
+  const key = `chatevo:org:phone:${phoneNumberId}`
   await exec(async (r) => {
     await r.setex(key, 300, JSON.stringify(org)) // 5 min TTL
   }, null)
 }
 
 export async function clearCachedOrg(phoneNumberId: string) {
-  const key = `sella:org:phone:${phoneNumberId}`
+  const key = `chatevo:org:phone:${phoneNumberId}`
   await exec(async (r) => {
     await r.del(key)
   }, null)
@@ -65,13 +65,13 @@ export async function clearCachedOrg(phoneNumberId: string) {
 // Cart helpers
 export async function getCart(orgId: string, phone: string) {
   return await exec(async (r) => {
-    const key = `sella:cart:${orgId}:${phone}`
+    const key = `chatevo:cart:${orgId}:${phone}`
     return await r.get(key)
   }, null)
 }
 
 export async function setCart(orgId: string, phone: string, cart: unknown) {
-  const key = `sella:cart:${orgId}:${phone}`
+  const key = `chatevo:cart:${orgId}:${phone}`
   await exec(async (r) => {
     await r.setex(key, 86400, JSON.stringify(cart)) // 24 hour TTL
   }, null)
@@ -81,7 +81,7 @@ export async function setCart(orgId: string, phone: string, cart: unknown) {
 export async function getFlowState(orgId: string, phone: string) {
   // 1. Try Redis first
   const redisState = await exec(async (r) => {
-    const key = `sella:flow:${orgId}:${phone}`
+    const key = `chatevo:flow:${orgId}:${phone}`
     return await r.get<Record<string, unknown>>(key)
   }, null)
 
@@ -105,7 +105,7 @@ export async function getFlowState(orgId: string, phone: string) {
 }
 
 export async function setFlowState(orgId: string, phone: string, state: Record<string, unknown>) {
-  const key = `sella:flow:${orgId}:${phone}`
+  const key = `chatevo:flow:${orgId}:${phone}`
   const stateStr = JSON.stringify(state)
 
   // 1. Set in Redis
@@ -127,7 +127,7 @@ export async function setFlowState(orgId: string, phone: string, state: Record<s
 }
 
 export async function clearFlowState(orgId: string, phone: string) {
-  const key = `sella:flow:${orgId}:${phone}`
+  const key = `chatevo:flow:${orgId}:${phone}`
   
   // 1. Clear Redis
   await exec(async (r) => {
@@ -150,7 +150,7 @@ export async function clearFlowState(orgId: string, phone: string) {
 export const deleteFlowState = clearFlowState
 
 export async function clearCart(orgId: string, phone: string) {
-  const key = `sella:cart:${orgId}:${phone}`
+  const key = `chatevo:cart:${orgId}:${phone}`
   await exec(async (r) => {
     await r.del(key)
   }, null)
@@ -159,20 +159,20 @@ export async function clearCart(orgId: string, phone: string) {
 // Product cache helpers
 export async function getCachedProducts(orgId: string) {
   return await exec(async (r) => {
-    const key = `sella:products:${orgId}`
+    const key = `chatevo:products:${orgId}`
     return await r.get(key)
   }, null)
 }
 
 export async function setCachedProducts(orgId: string, products: unknown) {
-  const key = `sella:products:${orgId}`
+  const key = `chatevo:products:${orgId}`
   await exec(async (r) => {
     await r.setex(key, 300, JSON.stringify(products)) // 5 min TTL
   }, null)
 }
 
 export async function clearProductCache(orgId: string) {
-  const key = `sella:products:${orgId}`
+  const key = `chatevo:products:${orgId}`
   await exec(async (r) => {
     await r.del(key)
   }, null)

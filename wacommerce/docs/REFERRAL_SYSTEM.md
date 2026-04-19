@@ -1,12 +1,12 @@
 # Referral System
-# SELLA
+# CHATEVO
 
 ---
 
 ## How It Works
 
-Every Sella user gets a unique referral link:
-`https://sella.io/ref/{referral_code}`
+Every Chatevo user gets a unique referral link:
+`https://chatevo.io/ref/{referral_code}`
 
 When someone signs up using that link:
 - **Referrer** gets 1 month free (credited to their subscription)
@@ -45,7 +45,7 @@ UPDATE referrals SET status = 'subscribed'
 ```
 
 ### Tracking Flow
-1. Visitor clicks `sella.io/ref/amani-x7k2`
+1. Visitor clicks `chatevo.io/ref/amani-x7k2`
 2. Referral code stored in cookie (30-day expiry)
 3. Visitor signs up → referral recorded as "signed_up"
 4. Visitor subscribes → referral recorded as "subscribed"
@@ -61,7 +61,7 @@ Each user sees in their dashboard:
 - Rewards earned
 
 ### Growth Loops
-1. **Powered by Sella:** Footer on every mini-website → clicks → signups
-2. **Order confirmations:** "Powered by Sella" in WhatsApp messages
+1. **Powered by Chatevo:** Footer on every mini-website → clicks → signups
+2. **Order confirmations:** "Powered by Chatevo" in WhatsApp messages
 3. **Referral sharing:** Users share link with other business owners
-4. **WhatsApp Status:** Feature to share products on WA Status (with Sella branding)
+4. **WhatsApp Status:** Feature to share products on WA Status (with Chatevo branding)

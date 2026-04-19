@@ -20,6 +20,7 @@ const NAV_ITEMS = [
   { href: '/dashboard/settings/team', label: 'Team Members', icon: Users, plan: 'elite' },
   { href: '/dashboard/settings/referrals', label: 'Referrals', icon: Gift },
   { href: '/dashboard/docs', label: 'Help & Docs', icon: BookOpen },
+  { href: '/dashboard/notifications', label: 'Notifications', icon: Bell },
   { href: '/dashboard/settings', label: 'Settings', icon: Settings },
 ]
 

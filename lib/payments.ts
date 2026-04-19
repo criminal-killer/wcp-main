@@ -6,7 +6,7 @@ export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 })
 
 // ============================================
-// SaaS Subscription Payments (Store Owner → Sella)
+// SaaS Subscription Payments (Store Owner → Chatevo)
 // ============================================
 
 export async function createPaystackSubscriptionCheckout(
@@ -78,7 +78,7 @@ export async function createStorePaymentLink(
     metadata: Record<string, unknown>
   }
 ) {
-  // Use Sella's key if store doesn't have one (MoR / Managed mode)
+  // Use Chatevo's key if store doesn't have one (MoR / Managed mode)
   const apiKey = storePaystackKey || process.env.PAYSTACK_SECRET_KEY
 
   const response = await fetch('https://api.paystack.co/transaction/initialize', {
@@ -126,7 +126,7 @@ export function verifyStripeWebhook(
 }
 
 // ============================================
-// Paystack Transfers (Sella → Store Owner)
+// Paystack Transfers (Chatevo → Store Owner)
 // ============================================
 
 export async function createTransferRecipient(recipientData: {
@@ -168,3 +168,4 @@ export async function initiatePaystackTransfer(transferData: {
   const data = await response.json()
   return data.data as { reference: string; status: string; transfer_code: string } | undefined
 }
+

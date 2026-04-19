@@ -1,4 +1,4 @@
-# Social Media Automation — SELLA
+# Social Media Automation — CHATEVO
 
 ## The Comment Keyword Strategy
 

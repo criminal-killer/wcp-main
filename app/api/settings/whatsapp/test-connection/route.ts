@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
   
   const result = await sendTextMessage(
     { phoneNumberId: org.wa_phone_number_id, accessToken },
-    { to: body.test_phone, body: '🚀 Sella: WhatsApp Connection Verified! Your bot is now ready to sell.' }
+    { to: body.test_phone, body: '🚀 Chatevo: WhatsApp Connection Verified! Your bot is now ready to sell.' }
   )
 
   if (result.error) {
@@ -37,3 +37,4 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ success: true, message: 'Test message sent and connection verified!' })
 }
+

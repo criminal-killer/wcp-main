@@ -25,7 +25,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   // Check for Super Admin Backdoor
-  const token = cookies().get('sella_admin_token')?.value;
+  const token = cookies().get('chatevo_admin_token')?.value;
   let isSuperAdmin = false;
 
   if (token) {

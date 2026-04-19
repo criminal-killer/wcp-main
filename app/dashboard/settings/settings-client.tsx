@@ -157,7 +157,7 @@ function SettingsContent({ org, autoReplies }: { org: Org, autoReplies: AutoRepl
     cod_enabled: String(org.store_cod_enabled ?? 1) === '1',
   })
   const [aiForm, setAiForm] = useState({
-    provider: (org as any).ai_provider || 'sella',
+    provider: (org as any).ai_provider || 'Chatevo',
     model: (org as any).ai_model || '',
     persona: (org as any).ai_persona || 'educator',
     api_key: '',
@@ -195,7 +195,7 @@ function SettingsContent({ org, autoReplies }: { org: Org, autoReplies: AutoRepl
   const PLANS = [
     { 
       id: 'starter', name: 'Starter', price: 29, trial: 7, 
-      features: ['100 Products', 'Sella AI Default', 'Standard Admin', 'WhatsApp Storefront', '7-Day Free Trial']
+      features: ['100 Products', 'Chatevo AI Default', 'Standard Admin', 'WhatsApp Storefront', '7-Day Free Trial']
     },
     { 
       id: 'pro', name: 'Pro', price: 59, trial: 7, 
@@ -307,11 +307,11 @@ function SettingsContent({ org, autoReplies }: { org: Org, autoReplies: AutoRepl
               <div className="space-y-3">
                 <div className="bg-white rounded-xl p-3 border border-slate-100">
                   <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Callback URL</p>
-                  <code className="text-[11px] font-bold text-primary break-all">https://sella-app.vercel.app/api/webhook</code>
+                  <code className="text-[11px] font-bold text-primary break-all">https://Chatevo-app.vercel.app/api/webhook</code>
                 </div>
                 <div className="bg-white rounded-xl p-3 border border-slate-100">
                   <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Verify Token</p>
-                  <code className="text-[11px] font-bold text-primary">sella-webhook-verification-2024</code>
+                  <code className="text-[11px] font-bold text-primary">Chatevo-webhook-verification-2024</code>
                 </div>
               </div>
               <ul className="text-[10px] font-bold text-slate-500 space-y-2 list-disc pl-4">
@@ -590,7 +590,7 @@ function SettingsContent({ org, autoReplies }: { org: Org, autoReplies: AutoRepl
                   onChange={e => setAiForm({ ...aiForm, provider: e.target.value })}
                   className="w-full border border-border rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50"
                 >
-                  <option value="sella">Sella Default (Groq/Llama)</option>
+                  <option value="Chatevo">Chatevo Default (Groq/Llama)</option>
                   <option value="google">Google Gemini (Fast & Efficient)</option>
                   <option value="anthropic">Anthropic Claude</option>
                   <option value="openai">OpenAI (GPT-4o)</option>
@@ -612,7 +612,7 @@ function SettingsContent({ org, autoReplies }: { org: Org, autoReplies: AutoRepl
               </div>
             </div>
 
-            {aiForm.provider !== 'sella' && (
+            {aiForm.provider !== 'Chatevo' && (
               <div className="space-y-6 animate-in fade-in slide-in-from-top-4 duration-500">
                 <div>
                   <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Custom API Key</label>
@@ -697,3 +697,4 @@ function SettingsContent({ org, autoReplies }: { org: Org, autoReplies: AutoRepl
     </div>
   )
 }
+

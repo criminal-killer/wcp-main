@@ -25,7 +25,7 @@ export default async function MerchantReferralPage() {
     <div className="max-w-4xl space-y-8">
       <div>
          <h1 className="text-3xl font-black text-foreground tracking-tight font-serif mb-2">Merchant Referrals</h1>
-         <p className="text-muted-foreground font-medium">Refer other businesses to Sella and get 50% off your subscription.</p>
+         <p className="text-muted-foreground font-medium">Refer other businesses to Chatevo and get 50% off your subscription.</p>
       </div>
 
       <div className="bg-gradient-to-br from-emerald-900 to-emerald-950 rounded-3xl p-8 md:p-12 text-white relative overflow-hidden shadow-xl shadow-emerald-900/20">
@@ -42,7 +42,7 @@ export default async function MerchantReferralPage() {
               Get 50% Off<br/>For 6 Months
             </h2>
             <p className="text-emerald-100 font-medium text-lg max-w-sm">
-              Refer {GOAL} paying merchants to Sella and automatically unlock half-price scaling.
+              Refer {GOAL} paying merchants to Chatevo and automatically unlock half-price scaling.
             </p>
           </div>
 
@@ -103,3 +103,4 @@ export default async function MerchantReferralPage() {
     </div>
   )
 }
+

@@ -127,7 +127,7 @@ export default function WaitlistClient({ initialOrgs }: { initialOrgs: any[] }) 
                       </div>
                       <div>
                         <p className="text-gray-900">{org.name}</p>
-                        <p className="text-xs font-medium text-gray-400 lowercase">{org.slug}.sella.ai</p>
+                        <p className="text-xs font-medium text-gray-400 lowercase">{org.slug}.chatevo.ai</p>
                       </div>
                     </div>
                   </td>

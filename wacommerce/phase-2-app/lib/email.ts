@@ -1,9 +1,9 @@
 import { Resend } from 'resend'
 
 const resend = new Resend(process.env.RESEND_API_KEY!)
-const FROM = process.env.RESEND_FROM_EMAIL || 'Sella <onboarding@resend.dev>'
-const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME || 'SELLA'
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://sella-app.vercel.app'
+const FROM = process.env.RESEND_FROM_EMAIL || 'Chatevo <onboarding@resend.dev>'
+const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME || 'CHATEVO'
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://chatevo-app.vercel.app'
 
 export async function sendWelcomeEmail(email: string, name: string, orgName: string) {
   await resend.emails.send({
@@ -13,7 +13,7 @@ export async function sendWelcomeEmail(email: string, name: string, orgName: str
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <div style="background: #25D366; padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
-          <h1 style="color: white; margin: 0; font-size: 28px;">SELLA</h1>
+          <h1 style="color: white; margin: 0; font-size: 28px;">CHATEVO</h1>
           <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0;">WhatsApp Commerce Platform</p>
         </div>
         <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 8px 8px;">

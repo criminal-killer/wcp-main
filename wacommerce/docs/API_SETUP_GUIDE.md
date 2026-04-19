@@ -1,6 +1,6 @@
-# Sella API Setup Guide
+# Chatevo API Setup Guide
 
-This guide provides step-by-step instructions for configuring all required external services for the Sella WhatsApp Commerce Platform.
+This guide provides step-by-step instructions for configuring all required external services for the Chatevo WhatsApp Commerce Platform.
 
 ---
 
@@ -12,9 +12,9 @@ This guide provides step-by-step instructions for configuring all required exter
 
 ## 2. Database (Turso)
 1. Sign up at [Turso.tech](https://turso.tech).
-2. Create a new database named `sella-db`.
-3. Run `turso db show sella-db` to get the `TURSO_DATABASE_URL`.
-4. Run `turso db tokens create sella-db` to get the `TURSO_AUTH_TOKEN`.
+2. Create a new database named `chatevo-db`.
+3. Run `turso db show chatevo-db` to get the `TURSO_DATABASE_URL`.
+4. Run `turso db tokens create chatevo-db` to get the `TURSO_AUTH_TOKEN`.
 
 ## 3. WhatsApp / Meta (Developer Console)
 1. Sign up at [Meta for Developers](https://developers.facebook.com).
@@ -40,7 +40,7 @@ This guide provides step-by-step instructions for configuring all required exter
 ### Stripe (Global)
 1. Sign up at [Stripe.com](https://stripe.com).
 2. In **Developers > API Keys**, copy `STRIPE_SECRET_KEY` and `STRIPE_PUBLISHABLE_KEY`.
-3. Create a Product named "Sella Starter" and copy the **Price ID** as `STRIPE_STARTER_PRICE_ID`.
+3. Create a Product named "Chatevo Starter" and copy the **Price ID** as `STRIPE_STARTER_PRICE_ID`.
 4. Set up a webhook at `https://your-domain/api/payments/webhook/stripe`.
 
 ### PayPal
@@ -51,7 +51,7 @@ This guide provides step-by-step instructions for configuring all required exter
 ## 6. Email (Resend)
 1. Sign up at [Resend.com](https://resend.com).
 2. Create an API Key as `RESEND_API_KEY`.
-3. Verify your domain (e.g., `sella.io`) to send from `noreply@sella.io`.
+3. Verify your domain (e.g., `chatevo.io`) to send from `noreply@chatevo.io`.
 
 ## 7. Cache (Upstash)
 1. Sign up at [Upstash.com](https://console.upstash.com).

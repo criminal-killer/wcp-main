@@ -1,4 +1,4 @@
-# Sella Platform — Repository Deployment Guide (CRITICAL)
+# Chatevo Platform — Repository Deployment Guide (CRITICAL)
 
 > [!CAUTION]
 > **This is a multi-repo project with a shared local structure.** 
@@ -13,7 +13,7 @@
 |--------------|-------------|-------------------|----------------|---------|
 | `(root)` | `wcp-main` | `criminal-killer/wcp-main` | (Workflows/Marketing) | Marketing Workflows & Global Context |
 | `wacommerce/admin-panel` | `origin` | `criminal-killer/adm-pan` | `adm-pan.vercel.app` | **Management Dashboard** (Waitlist, User Stats) |
-| `wacommerce/phase-2-app` | `phase-2` | `criminal-killer/Phase-2-app` | `sella-app.vercel.app` | **Merchant App & Bot** (Products, Orders, Inbox) |
+| `wacommerce/phase-2-app` | `phase-2` | `criminal-killer/Phase-2-app` | `chatevo-app.vercel.app` | **Merchant App & Bot** (Products, Orders, Inbox) |
 
 ---
 
@@ -26,7 +26,7 @@ To avoid contamination, do **NOT** use `git subtree` without extreme caution. In
 2. Initialize a temporary git instance if needed.
 3. Push ONLY this folder's contents to the `origin` remote on the `main` branch.
 
-### 2. Syncing Phase-2 App (`sella-app.vercel.app`)
+### 2. Syncing Phase-2 App (`chatevo-app.vercel.app`)
 1. Enter the directory: `cd wacommerce/phase-2-app`
 2. Initialize a temporary git instance if needed.
 3. Push ONLY this folder's contents to the `phase-2` remote on the `main` branch.
@@ -39,5 +39,5 @@ To avoid contamination, do **NOT** use `git subtree` without extreme caution. In
 
 ## 🛠️ Verification Checklist
 - [ ] Check `adm-pan.vercel.app`: Should show "Platform Overview" (Admin Dashboard).
-- [ ] Check `sella-app.vercel.app`: Should show "Sell Easy on WhatsApp" (Merchant Entry).
+- [ ] Check `chatevo-app.vercel.app`: Should show "Sell Easy on WhatsApp" (Merchant Entry).
 - [ ] Check `wcp-main`: Should contain `.github/workflows` for marketing.

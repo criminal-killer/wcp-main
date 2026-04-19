@@ -1,5 +1,5 @@
 {
-  "name": "sella-marketing-hub",
+  "name": "Chatevo-marketing-hub",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -35,3 +35,4 @@
     "drizzle-kit": "^0.28.0"
   }
 }
+

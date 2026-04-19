@@ -33,7 +33,7 @@ export default function AffiliateApplyPage() {
           </div>
           <h1 className="text-3xl font-black font-serif mb-2">Application Received!</h1>
           <p className="text-muted-foreground font-medium mb-8">
-            Thank you for applying to the Sella Affiliate Program. Our team will review your application and email you once approved.
+            Thank you for applying to the Chatevo Affiliate Program. Our team will review your application and email you once approved.
           </p>
           <Link href="/" className="inline-block bg-[#25D366] text-white font-bold px-8 py-3 rounded-xl hover:opacity-90 transition-opacity">
             Return Home
@@ -47,9 +47,9 @@ export default function AffiliateApplyPage() {
     <div className="min-h-screen bg-slate-50 py-12 px-4 font-outfit">
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-12">
-          <Link href="/" className="inline-block font-serif font-black text-2xl text-primary mb-6">SELLA</Link>
+          <Link href="/" className="inline-block font-serif font-black text-2xl text-primary mb-6">Chatevo</Link>
           <h1 className="text-4xl md:text-5xl font-black font-serif tracking-tight text-slate-900 mb-4">
-            Become a Sella Partner
+            Become a Chatevo Partner
           </h1>
           <p className="text-lg text-slate-600 font-medium max-w-2xl mx-auto">
             Earn 40% on the first payment and 10% recurring commissions for every merchant you refer to our WhatsApp Commerce platform.
@@ -98,12 +98,12 @@ export default function AffiliateApplyPage() {
               </div>
 
               <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs text-slate-600 space-y-2 h-32 overflow-y-auto">
-                <p className="font-bold text-slate-800">Sella Affiliate Terms & Conditions</p>
+                <p className="font-bold text-slate-800">Chatevo Affiliate Terms & Conditions</p>
                 <p>1. Commissions are earned on successful, non-refunded payments.</p>
                 <p>2. The minimum payout threshold is $100 USD.</p>
                 <p>3. Self-referrals or creating fake accounts to generate commissions is strictly prohibited and will result in immediate ban and forfeiture of funds.</p>
-                <p>4. You may not bid on branded search terms (e.g., "Sella coupon", "Sella discount") in paid advertising.</p>
-                <p>5. Sella reserves the right to modify the commission structure with 30 days notice.</p>
+                <p>4. You may not bid on branded search terms (e.g., "Chatevo coupon", "Chatevo discount") in paid advertising.</p>
+                <p>5. Chatevo reserves the right to modify the commission structure with 30 days notice.</p>
               </div>
 
               <div className="flex items-start gap-3">
@@ -115,7 +115,7 @@ export default function AffiliateApplyPage() {
                   className="mt-1 w-4 h-4 text-primary rounded border-slate-300 focus:ring-primary"
                 />
                 <label htmlFor="terms" className="text-sm text-slate-600">
-                  I have read and agree to the Sella Affiliate Terms & Conditions.
+                  I have read and agree to the Chatevo Affiliate Terms & Conditions.
                 </label>
               </div>
 
@@ -133,3 +133,4 @@ export default function AffiliateApplyPage() {
     </div>
   )
 }
+

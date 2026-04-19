@@ -25,7 +25,7 @@ export default async function NotificationsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-black text-foreground tracking-tight font-serif">Notifications</h1>
-          <p className="text-muted-foreground font-medium mt-1">Updates and alerts for your Sella store.</p>
+          <p className="text-muted-foreground font-medium mt-1">Updates and alerts for your Chatevo store.</p>
         </div>
         <div className="w-12 h-12 bg-secondary rounded-2xl flex items-center justify-center shadow-inner">
           <Bell size={24} className="text-primary" />

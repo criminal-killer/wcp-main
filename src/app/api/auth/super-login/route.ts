@@ -26,7 +26,7 @@ export async function POST(req: Request) {
         .sign(new TextEncoder().encode(secret))
 
       // Set cookie for session
-      cookies().set('sella_admin_token', token, {
+      cookies().set('Chatevo_admin_token', token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
@@ -43,3 +43,4 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
+

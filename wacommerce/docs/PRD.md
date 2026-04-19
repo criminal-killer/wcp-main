@@ -1,5 +1,5 @@
 # Product Requirements Document (PRD)
-## SELLA — WhatsApp Commerce Platform
+## CHATEVO — WhatsApp Commerce Platform
 
 ---
 
@@ -227,14 +227,14 @@ and their history.
 business without building one myself.
 
 **Features:**
-- Auto-generated at [slug].sella.io
+- Auto-generated at [slug].chatevo.io
 - Homepage: store name, logo, featured products
 - Category pages
 - Product detail pages
 - "Buy on WhatsApp" button on every product
 - Mobile responsive
 - Store owner can customize: logo, theme color, description
-- "Powered by SELLA" footer
+- "Powered by CHATEVO" footer
 
 **Acceptance Criteria:**
 - [ ] Website auto-generates when store owner adds first product

@@ -8,14 +8,14 @@ export async function POST(req: NextRequest) {
   const body = await req.text()
   const signature = req.headers.get('x-paystack-signature') || ''
 
-  // For Managed Payments (MoR), we use Sella's Secret Key
+  // For Managed Payments (MoR), we use Chatevo's Secret Key
   // For Direct Payments, the merchant key is used. 
   // However, Paystack only supports one webhook URL per app.
   // So all store payments come here. 
-  // We try to verify with Sella's key first (Managed), then fallback to Org's key if we can identify it.
+  // We try to verify with Chatevo's key first (Managed), then fallback to Org's key if we can identify it.
   
-  const sellaSecret = process.env.PAYSTACK_SECRET_KEY || ''
-  const isSellaManaged = verifyPaystackSignature(body, signature, sellaSecret)
+  const ChatevoSecret = process.env.PAYSTACK_SECRET_KEY || ''
+  const isChatevoManaged = verifyPaystackSignature(body, signature, ChatevoSecret)
   
   const event = JSON.parse(body)
   const { data } = event
@@ -41,13 +41,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Org not found' }, { status: 404 })
   }
 
-  // --- Double-check signature if not verified with Sella key ---
-  if (!isSellaManaged) {
+  // --- Double-check signature if not verified with Chatevo key ---
+  if (!isChatevoManaged) {
     // This might be a direct payment using the merchant's own key
     // We would need to decrypt their key and verify. 
-    // To keep it simple for MVP, we'll focus on Sella-Managed mode first.
+    // To keep it simple for MVP, we'll focus on Chatevo-Managed mode first.
     // In a real multi-tenant setup, you'd either use Paystack Subaccounts or multiple Webhook URLs.
-    console.warn(`Payment received for org ${orgId} but signature didn't match Sella secret. Assuming managed mode fallback or legacy.`)
+    console.warn(`Payment received for org ${orgId} but signature didn't match Chatevo secret. Assuming managed mode fallback or legacy.`)
   }
 
   // Update Order Status
@@ -63,8 +63,8 @@ export async function POST(req: NextRequest) {
   // --- Managed Balance Logic (5% Fee) ---
   if (org.payment_mode === 'managed' || !org.store_paystack_key_encrypted) {
     const totalAmount = data.amount / 100 // Convert from kobo/cents
-    const sellaFee = totalAmount * 0.05
-    const merchantEarnings = totalAmount - sellaFee
+    const ChatevoFee = totalAmount * 0.05
+    const merchantEarnings = totalAmount - ChatevoFee
 
     await db.update(organizations)
       .set({
@@ -72,8 +72,9 @@ export async function POST(req: NextRequest) {
       })
       .where(eq(organizations.id, orgId))
       
-    console.log(`MoR: Credited ${merchantEarnings} to Org ${orgId} (Fee: ${sellaFee})`)
+    console.log(`MoR: Credited ${merchantEarnings} to Org ${orgId} (Fee: ${ChatevoFee})`)
   }
 
   return NextResponse.json({ received: true })
 }
+

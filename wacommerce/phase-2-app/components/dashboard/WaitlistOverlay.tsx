@@ -23,7 +23,7 @@ export default function WaitlistOverlay({ country }: WaitlistOverlayProps) {
 
         <div className="space-y-4">
           <h1 className="text-4xl font-black text-[#075E54] tracking-tight">
-            Sella is coming to <span className="text-[#128C7E]">{country}</span>!
+            Chatevo is coming to <span className="text-[#128C7E]">{country}</span>!
           </h1>
           <p className="text-gray-600 text-lg leading-relaxed">
             We are currently in a <span className="font-bold text-[#25D366]">Private Beta</span> exclusively for the Kenyan market. 

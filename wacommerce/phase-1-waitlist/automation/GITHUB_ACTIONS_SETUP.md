@@ -1,4 +1,4 @@
-# ⚙️ Sella Marketing Hub - GitHub Actions Setup Guide
+# ⚙️ Chatevo Marketing Hub - GitHub Actions Setup Guide
 
 In order for the automated marketing scripts (Cold Emails, FaceBook Posts, and DB maintenance) to run unattended completely in the cloud, you need to add the following **Repository Secrets** to your GitHub repository.
 
@@ -37,7 +37,7 @@ You can use a regular `@gmail.com` address. Google gives you 500 free SMTP sends
    - **`FROM_EMAIL`**: Your Gmail address.
 
 #### Option 2: Brevo (Most Professional)
-For the highest deliverability and a generous free tier (300 emails/day), **Brevo (formerly Sendinblue)** is highly recommended if you own a custom domain (like `@sella.io`). You get an SMTP key immediately upon signing up and verifying it.
+For the highest deliverability and a generous free tier (300 emails/day), **Brevo (formerly Sendinblue)** is highly recommended if you own a custom domain (like `@chatevo.io`). You get an SMTP key immediately upon signing up and verifying it.
 1. Go to [https://brevo.com](https://brevo.com) and create a free account.
 2. In the top right dropdown menu under your profile name, click **SMTP & API**.
 3. Click the **SMTP** tab.
@@ -49,7 +49,7 @@ For the highest deliverability and a generous free tier (300 emails/day), **Brev
    - **`SMTP_PASS`**: The long API key/password you just generated.
    - **`FROM_EMAIL`**: The email address attached to your verified Brevo domain.
 
-*(Optional default variable via code: `WAITLIST_URL` exists but if you don't add it to secrets, it defaults correctly to your frontend vercel app string `https://sella-app.vercel.app`)*
+*(Optional default variable via code: `WAITLIST_URL` exists but if you don't add it to secrets, it defaults correctly to your frontend vercel app string `https://chatevo-app.vercel.app`)*
 
 ### Social Media (Facebook Pages API)
 *Used by the daily Cron job to fetch approved AI-generated posts from your DB and publish them natively directly onto your Facebook Page.*

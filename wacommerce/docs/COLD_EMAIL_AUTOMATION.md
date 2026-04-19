@@ -1,5 +1,5 @@
 # Cold Email Automation
-# SELLA — Business Scraper + Email Outreach
+# CHATEVO — Business Scraper + Email Outreach
 
 ---
 
@@ -63,7 +63,7 @@ Hi {shop_name} team,
 I noticed your business on Google Maps and wanted to ask:
 Do you get a lot of "how much?" messages on WhatsApp?
 
-I'm building SELLA — a tool that turns WhatsApp into a full store.
+I'm building CHATEVO — a tool that turns WhatsApp into a full store.
 Your customers can browse products, select sizes, and pay via
 M-Pesa, all without leaving the chat.
 
@@ -71,7 +71,7 @@ We're launching soon. Want free early access?
 → {waitlist_link}
 
 No pressure at all!
-{your_name}, Founder @ SELLA
+{your_name}, Founder @ CHATEVO
 
 ### Template B: Problem-focused
 **Subject:** {shop_name} — your customers want to buy on WhatsApp
@@ -83,7 +83,7 @@ I bet you spend hours answering "how much?" messages on WhatsApp.
 What if your customers could browse your products, pick what they
 want, and pay via M-Pesa — all inside WhatsApp automatically?
 
-That's what SELLA does. And we're launching soon.
+That's what CHATEVO does. And we're launching soon.
 → {waitlist_link}
 
 Join {count}+ businesses already on the waitlist.

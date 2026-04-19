@@ -1,4 +1,4 @@
-# 🚀 Sella Platform: Future Expansion & Setup Guide
+# 🚀 Chatevo Platform: Future Expansion & Setup Guide
 
 This document outlines the steps required to transition the platform from the current Vercel production URL to a custom domain (Cloudflare) and how to implement Upstash Redis for advanced features.
 
@@ -6,7 +6,7 @@ This document outlines the steps required to transition the platform from the cu
 
 ## 🌩️ 1. Custom Domain Setup (Cloudflare)
 
-To move from `sella-app.vercel.app` to a custom domain like `sella.app`:
+To move from `Chatevo-app.vercel.app` to a custom domain like `Chatevo.app`:
 
 ### Step A: Configure Cloudflare DNS
 1. Add your site to Cloudflare.
@@ -15,13 +15,13 @@ To move from `sella-app.vercel.app` to a custom domain like `sella.app`:
 
 ### Step B: Update Vercel Settings
 1. Go to **Vercel Dashboard → Settings → Domains**.
-2. Add your new domain (e.g., `sella.app`).
+2. Add your new domain (e.g., `Chatevo.app`).
 3. Vercel will provide the DNS records needed; verify they match Cloudflare.
 
 ### Step C: Update Environment Variables
 You must update the following variables in the Vercel dashboard and re-deploy:
-- `NEXT_PUBLIC_APP_URL=https://sella.app`
-- `RESEND_FROM_EMAIL=Sella <onboarding@sella.app>` (after verifying your domain in Resend)
+- `NEXT_PUBLIC_APP_URL=https://Chatevo.app`
+- `RESEND_FROM_EMAIL=Chatevo <onboarding@Chatevo.app>` (after verifying your domain in Resend)
 
 ---
 
@@ -54,7 +54,7 @@ The code in `lib/redis.ts` is already configured to use these variables if prese
 Currently, the platform uses `onboarding@resend.dev`. To use a branded email:
 1. Verify your custom domain in the **Resend Dashboard → Domains**.
 2. Add the provided `MX` and `TXT` records to Cloudflare.
-3. Update `RESEND_FROM_EMAIL` in Vercel to `Sella <hello@sella.app>`.
+3. Update `RESEND_FROM_EMAIL` in Vercel to `Chatevo <hello@Chatevo.app>`.
 
 ---
 
@@ -63,3 +63,4 @@ Currently, the platform uses `onboarding@resend.dev`. To use a branded email:
 - **Database**: Monitor Turso usage. The free tier covers up to 1B rows/month (plentiful for now).
 - **AI**: The current Groq model (`llama-3.3-70b-versatile`) is optimal for speed and cost.
 - **Support**: All inquiries should be directed to `mazaoedu@gmail.com`.
+

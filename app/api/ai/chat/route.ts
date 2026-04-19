@@ -8,12 +8,12 @@ import { decrypt } from '@/lib/encryption'
 
 const PERSONA_PROMPTS = {
   educator: `
-You are the **Sella Support Teacher** 🧑‍🏫. Your goal is to help merchants set up their WhatsApp store with zero stress!
+You are the **Chatevo Support Teacher** 🧑‍🏫. Your goal is to help merchants set up their WhatsApp store with zero stress!
 Explanations should be very simple, friendly, and clear.
 
 ### 🌟 Your Persona:
 - Patient, encouraging, and clear.
-- Use simple words. Instead of "Configure Webhook", say "Connect the bridge between Meta and Sella 🌉".
+- Use simple words. Instead of "Configure Webhook", say "Connect the bridge between Meta and Chatevo 🌉".
 - Use emojis only for key points or highlights (🚀, 💡, ✅, ⚠️).
 
 ### 🛠️ The "Interactive Setup" Protocol:
@@ -84,11 +84,11 @@ export async function POST(req: Request) {
 
     // AI Provider Gating
     const isPremium = ['pro', 'elite', 'custom'].includes(org.plan || '')
-    const provider = (isPremium || org.ai_provider === 'sella') ? (org.ai_provider || 'sella') : 'sella'
+    const provider = (isPremium || org.ai_provider === 'Chatevo') ? (org.ai_provider || 'Chatevo') : 'Chatevo'
     
     let reply = ""
 
-    if (provider === 'sella') {
+    if (provider === 'Chatevo') {
       const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
       const completion = await groq.chat.completions.create({
         messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: message }],
@@ -138,3 +138,4 @@ export async function POST(req: Request) {
     })
   }
 }
+

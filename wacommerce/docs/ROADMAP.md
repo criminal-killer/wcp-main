@@ -1,11 +1,11 @@
 # Development Roadmap
-# SELLA — WhatsApp Commerce Platform
+# CHATEVO — WhatsApp Commerce Platform
 
 ---
 
 ## Phase 1: Pre-Launch & Waitlist (Week 1-2)
 **Goal:** Build hype and collect leads.
-- [x] Branding & Identity (SELLA)
+- [x] Branding & Identity (CHATEVO)
 - [x] Documentation & Project Structure
 - [ ] Landing page development (InfinityFree)
 - [ ] Waitlist form & database setup

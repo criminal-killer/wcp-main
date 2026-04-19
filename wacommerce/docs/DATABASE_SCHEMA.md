@@ -1,5 +1,5 @@
 # Database Schema
-## SELLA — Turso (SQLite)
+## CHATEVO — Turso (SQLite)
 
 ---
 

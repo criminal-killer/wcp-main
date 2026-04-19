@@ -98,7 +98,7 @@ export default function OnboardingPage() {
                 Create Your <span className="text-primary italic">Store</span>
             </h1>
             <p className="text-muted-foreground font-medium max-w-sm mx-auto">
-                Welcome, {user?.firstName}. Let's curate your digital storefront with SELLA.
+                Welcome, {user?.firstName}. Let's curate your digital storefront with Chatevo.
             </p>
         </div>
 
@@ -193,10 +193,11 @@ export default function OnboardingPage() {
                 ))}
             </div>
             <p className="text-xs font-bold text-muted-foreground">
-                "Simple, professional, and efficient." — Sella Team
+                "Simple, professional, and efficient." — Chatevo Team
             </p>
         </div>
       </div>
     </div>
   )
 }
+

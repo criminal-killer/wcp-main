@@ -1,10 +1,10 @@
 # Growth Strategy
-# SELLA
+# CHATEVO
 
 ---
 
 ## 1. The Core Growth Loop
-**Customers buy on WhatsApp → Customer sees "Powered by Sella" → Customer becomes a Seller.**
+**Customers buy on WhatsApp → Customer sees "Powered by Chatevo" → Customer becomes a Seller.**
 
 ## 2. Acquisition Channels
 
@@ -25,7 +25,7 @@
   - 10 Referrals: 1 Year Free (Growth Plan)
 
 ### Content Marketing
-- **Strategy:** Build "Sella Academy" — free guides on how to sell on WhatsApp.
+- **Strategy:** Build "Chatevo Academy" — free guides on how to sell on WhatsApp.
 - **Focus:** SEO-optimized blogs (e.g., "How to use M-Pesa on WhatsApp").
 
 ## 3. Localization & Market Focus

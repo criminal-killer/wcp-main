@@ -18,9 +18,9 @@ export async function PUT(req: NextRequest) {
 
     const body = await req.json()
     const isPremium = ['pro', 'elite', 'custom'].includes(org.plan || '')
-    const isStandardSella = body.ai_provider === 'sella'
+    const isStandardChatevo = body.ai_provider === 'chatevo'
 
-    if (!isPremium && !isStandardSella) {
+    if (!isPremium && !isStandardChatevo) {
       return NextResponse.json({ 
         error: 'Custom AI Providers are only available on Pro and Elite plans. Please upgrade to use your own keys.',
         code: 'PLAN_GATING'

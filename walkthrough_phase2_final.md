@@ -1,6 +1,6 @@
-# Sella WhatsApp SaaS: Phase 2 Finalization Walkthrough
+# Chatevo WhatsApp SaaS: Phase 2 Finalization Walkthrough
 
-All production-readiness blockers have been resolved. Sella is now equipped with a stable dashboard, an empathetic AI shopping concierge, and a fully automated Managed Payment (MoR) system.
+All production-readiness blockers have been resolved. Chatevo is now equipped with a stable dashboard, an empathetic AI shopping concierge, and a fully automated Managed Payment (MoR) system.
 
 ## 🛠️ Key Improvements
 
@@ -20,12 +20,12 @@ The "New Product" UI now includes a centralized, high-fidelity media preview are
 
 ## 💰 Managed Payment (MoR) System
 
-We've implemented a robust **Merchant of Record (MoR)** system, enabling Sella to scale globally while handling local African payments (M-Pesa, etc.) for our users.
+We've implemented a robust **Merchant of Record (MoR)** system, enabling Chatevo to scale globally while handling local African payments (M-Pesa, etc.) for our users.
 
 | Feature | Description | Status |
 | :--- | :--- | :--- |
-| **Merchant of Record** | Sella's central Paystack account receives all funds by default. | ✅ Active |
-| **5% Flat Fee** | Automatically calculated: 5% fee for Sella, 95% credited to merchant. | ✅ Implemented |
+| **Merchant of Record** | Chatevo's central Paystack account receives all funds by default. | ✅ Active |
+| **5% Flat Fee** | Automatically calculated: 5% fee for Chatevo, 95% credited to merchant. | ✅ Implemented |
 | **Balance Tracking** | Merchants now have a `managed_balance` field to track earnings. | ✅ Ready |
 | **Automated Payouts** | A daily cron job triggers bank/M-Pesa transfers for balances > 500 KES. | ✅ Scheduled |
 

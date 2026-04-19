@@ -82,7 +82,7 @@ export default function NotificationsAdminPage() {
             <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
               <Users size={16} className="text-slate-400" /> Target Organization ID (Optional)
             </label>
-            <p className="text-xs text-slate-500 mb-2">Leave blank to broadcast to ALL merchants on Sella.</p>
+            <p className="text-xs text-slate-500 mb-2">Leave blank to broadcast to ALL merchants on Chatevo.</p>
             <input 
               value={targetOrgId}
               onChange={e => setTargetOrgId(e.target.value)}

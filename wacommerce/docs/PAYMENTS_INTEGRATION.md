@@ -1,18 +1,18 @@
 # Payments Integration
-# SELLA
+# CHATEVO
 
 ---
 
 ## 1. Two Payment Streams
 
-### Stream 1: SaaS Subscription (Store Owner → Sella)
-Store owners pay Sella monthly ($29/$59/$99).
-Money goes to SELLA's payment accounts.
+### Stream 1: SaaS Subscription (Store Owner → Chatevo)
+Store owners pay Chatevo monthly ($29/$59/$99).
+Money goes to CHATEVO's payment accounts.
 
 ### Stream 2: Store Sales (End Customer → Store Owner)
 End customers pay for products they buy.
 Money goes to STORE OWNER's payment accounts.
-SELLA NEVER TOUCHES THIS MONEY.
+CHATEVO NEVER TOUCHES THIS MONEY.
 
 ---
 
@@ -39,7 +39,7 @@ Any → Show PayPal option
 ↓
 `POST /api/payments/subscribe { plan: "starter", provider: "paystack" }`
 ↓
-API creates checkout session with Sella's credentials
+API creates checkout session with Chatevo's credentials
 ↓
 Returns `checkout_url` → redirect store owner
 ↓
@@ -50,15 +50,15 @@ Provider sends webhook to `/api/payments/subscribe-webhook`
 Verify signature → update `org.plan` → send welcome email
 
 ### Paystack Subscription Setup
-Sella Paystack Dashboard:
-- Create Plan: "Sella Starter" → $29/month → plan_code: `PLN_xxx`
-- Create Plan: "Sella Growth" → $59/month → plan_code: `PLN_yyy`
-- Create Plan: "Sella Premium" → $99/month → plan_code: `PLN_zzz`
+Chatevo Paystack Dashboard:
+- Create Plan: "Chatevo Starter" → $29/month → plan_code: `PLN_xxx`
+- Create Plan: "Chatevo Growth" → $59/month → plan_code: `PLN_yyy`
+- Create Plan: "Chatevo Premium" → $99/month → plan_code: `PLN_zzz`
 
 ### Paystack Subscription API
 ```url
 POST https://api.paystack.co/transaction/initialize
-Authorization: Bearer sk_live_xxx (SELLA's key)
+Authorization: Bearer sk_live_xxx (CHATEVO's key)
 ```
 ```json
 {
@@ -66,7 +66,7 @@ Authorization: Bearer sk_live_xxx (SELLA's key)
 "amount": 2900, // $29 in cents
 "currency": "USD",
 "plan": "PLN_xxx",
-"callback_url": "https://app.sella.io/dashboard/settings/billing?success=true",
+"callback_url": "https://app.chatevo.io/dashboard/settings/billing?success=true",
 "metadata": {
 "org_id": "org_123",
 "plan": "starter"
@@ -82,8 +82,8 @@ line_items: [{
 price: 'price_xxx', // Stripe Price ID for Starter
 quantity: 1,
 }],
-success_url: 'https://app.sella.io/dashboard/settings/billing?success=true',
-cancel_url: 'https://app.sella.io/dashboard/settings/billing?cancelled=true',
+success_url: 'https://app.chatevo.io/dashboard/settings/billing?success=true',
+cancel_url: 'https://app.chatevo.io/dashboard/settings/billing?cancelled=true',
 metadata: { org_id: 'org_123', plan: 'starter' },
 customer_email: 'storeowner@email.com',
 })
@@ -116,12 +116,12 @@ In Dashboard → Settings → Payments:
 
 **Paystack:**
 - Store owner creates their own Paystack account at `paystack.com`
-- Enters their Paystack Public Key and Secret Key in Sella
+- Enters their Paystack Public Key and Secret Key in Chatevo
 - Keys are encrypted before storing in database
 
 **Stripe:**
 - Store owner connects via Stripe Connect (OAuth)
-- Sella stores their Stripe Account ID
+- Chatevo stores their Stripe Account ID
 - Uses Stripe Connect to create payments on their behalf
 
 **PayPal:**
@@ -157,7 +157,7 @@ Returns payment URL
 ↓
 Store-engine sends payment link to customer via WhatsApp:
 "💳 Pay KES 1,700:
-👉 https://paystack.com/pay/sella-ord-001
+👉 https://paystack.com/pay/chatevo-ord-001
 ⏰ This link expires in 30 minutes"
 ↓
 Customer pays
@@ -177,7 +177,7 @@ Send WhatsApp to customer: "✅ Payment received! Order #ORD-2025-0001"
 Send WhatsApp to store owner: "🛒 New paid order! ORD-2025-0001 — KES 1,700"
 ↓
 Money lands in STORE OWNER's Paystack/Stripe/PayPal account
-Sella NEVER touches this money
+Chatevo NEVER touches this money
 
 ### Paystack Store Payment
 ```url
@@ -189,8 +189,8 @@ Authorization: Bearer {STORE_OWNER_SECRET_KEY} // decrypted
 "email": "customer@email.com",
 "amount": 170000, // KES 1,700 in kobo/cents
 "currency": "KES",
-"reference": "sella-ord-2025-0001",
-"callback_url": "https://app.sella.io/api/payments/store-webhook",
+"reference": "chatevo-ord-2025-0001",
+"callback_url": "https://app.chatevo.io/api/payments/store-webhook",
 "metadata": {
 "org_id": "org_123",
 "order_id": "ord_456",
@@ -242,4 +242,4 @@ function verifyStripeWebhook(body: string, signature: string, webhookSecret: str
 | PayPal | 2.9% + $0.30 | 4.4% + fixed |
 
 These fees are paid by the STORE OWNER to the payment provider.
-Sella adds ZERO additional fees.
+Chatevo adds ZERO additional fees.

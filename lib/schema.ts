@@ -57,7 +57,7 @@ export const organizations = sqliteTable('organizations', {
   managed_payout_interval: text('managed_payout_interval').default('weekly'),
 
   // AI Configuration
-  ai_provider: text('ai_provider').default('sella'), // sella (groq), openai, anthropic, google, custom
+  ai_provider: text('ai_provider').default('Chatevo'), // Chatevo (groq), openai, anthropic, google, custom
   ai_api_key_encrypted: text('ai_api_key_encrypted'),
   ai_model: text('ai_model'),
   ai_persona: text('ai_persona').default('educator'), // educator, sales, support
@@ -420,3 +420,4 @@ export const affiliatePayoutRelations = relations(affiliate_payouts, ({ one }) =
     references: [affiliates.id]
   })
 }))
+

@@ -1,7 +1,7 @@
 # Production Deployment & Audit Report
 
 ## 1. Objective Status
-Executed a comprehensive check, bug fix, deployment, and live verification sequence for the **Sella WhatsApp SaaS** platform, encompassing root code, `admin-panel`, and `phase-2-app`.
+Executed a comprehensive check, bug fix, deployment, and live verification sequence for the **Chatevo WhatsApp SaaS** platform, encompassing root code, `admin-panel`, and `phase-2-app`.
 
 ## 2. Actions Performed
 
@@ -26,7 +26,7 @@ Per instructions in `REPO_GUIDE.md`:
 ### Web Application Testing (Live Vercel Review)
 Utilized the native `playwright` Python testing skills to programmatically hit the live production endpoints specified.
 
-- **`https://sella-app.vercel.app` (Phase-2 App)**: Successfully returned **200 OK** and completely rendered the DOM. The latest push incorporating the `card.tsx` fix is deploying cleanly on top of this.
+- **`https://chatevo-app.vercel.app` (Phase-2 App)**: Successfully returned **200 OK** and completely rendered the DOM. The latest push incorporating the `card.tsx` fix is deploying cleanly on top of this.
 - **`https://adm-pan.vercel.app` (Admin Panel)**: The endpoint returned a **404 error** on the live Vercel domain. This means the deployment might be disabled, misconfigured, or Vercel might be looking at the wrong Root Directory in the `criminal-killer/adm-pan` repo (e.g., trying to run the app in a non-existent subdirectory instead of `/`). 
 
 ## 3. Summary & Next Steps

@@ -12,7 +12,7 @@ export default function LoginPage() {
     <main className="min-h-screen flex items-center justify-center bg-[#09090b] text-white">
       <div className="w-full max-w-md p-8 space-y-8 bg-[#09090b] border border-[#27272a] rounded-xl shadow-2xl">
         <div className="text-center">
-          <h1 className="text-3xl font-bold tracking-tight text-white">Sella</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-white">Chatevo</h1>
           <p className="mt-2 text-sm text-[#a1a1aa]">Marketing Command Center</p>
         </div>
         
@@ -46,3 +46,4 @@ export default function LoginPage() {
     </main>
   );
 }
+

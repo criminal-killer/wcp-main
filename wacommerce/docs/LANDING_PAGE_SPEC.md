@@ -1,5 +1,5 @@
 # Landing Page Specification
-# SELLA — Pre-Launch Waitlist Page
+# CHATEVO — Pre-Launch Waitlist Page
 
 ---
 
@@ -9,14 +9,14 @@
 **Tech:** PHP + HTML + CSS + JavaScript
 **Purpose:** Collect waitlist signups before app launches
 **Languages:** English (default), Swahili, French
-**URL:** `sella.infinityfreeapp.com` (or `sella.io` when domain purchased)
+**URL:** `chatevo.infinityfreeapp.com` (or `chatevo.io` when domain purchased)
 
 ---
 
 ## 2. Page Sections
 
 ### Section 1: Hero
-[Sella Logo]
+[Chatevo Logo]
 
 **Sell smarter. On WhatsApp.**
 
@@ -78,7 +78,7 @@ You manage orders from your dashboard.
 ### Section 6: Pricing Preview
 **Why pay more for less?**
 
-| Feature | Others | Sella |
+| Feature | Others | Chatevo |
 |---------|--------|-------|
 | Price | $49-99/mo | $29/mo |
 | Markup | 12-20% | 0% |
@@ -93,7 +93,7 @@ You manage orders from your dashboard.
 (Full form as designed in brainstorm — see Section 3 below)
 
 ### Section 8: Footer
-© 2025 Sella. Sell smarter. On WhatsApp.
+© 2025 Chatevo. Sell smarter. On WhatsApp.
 [Twitter] [Facebook] [Instagram] [LinkedIn]
 
 ---

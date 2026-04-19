@@ -1,5 +1,5 @@
 # Migration Plan
-# SELLA — Waitlist → Live App
+# CHATEVO — Waitlist → Live App
 
 ---
 
@@ -17,7 +17,7 @@ When the app is ready (end of Week 8), migrate all waitlist signups from Infinit
 - Download to local machine
 
 ### Step 2: Import to Admin Panel
-- Login to Sella admin: `app.sella.io/admin`
+- Login to Chatevo admin: `app.chatevo.io/admin`
 - Go to `/admin/waitlist`
 - Click "Import CSV"
 - Upload the CSV file
@@ -36,7 +36,7 @@ When the app is ready (end of Week 8), migrate all waitlist signups from Infinit
 ### Step 4: Send Launch Notifications
 
 #### Email (via Resend):
-**Subject:** 🚀 Sella is LIVE! Your WhatsApp store is ready.
+**Subject:** 🚀 Chatevo is LIVE! Your WhatsApp store is ready.
 
 Hi {name},
 
@@ -44,7 +44,7 @@ Remember when you joined our waitlist? You were #{number}.
 
 Today, your WhatsApp store is READY.
 
-🔑 **Login:** `https://app.sella.io/sign-in`
+🔑 **Login:** `https://app.chatevo.io/sign-in`
 📧 **Email:** {email}
 🔐 **Temp Password:** {temp_password}
 
@@ -59,14 +59,14 @@ Start selling on WhatsApp in 5 minutes:
 4. Share your store link
 
 Let's go! 🚀
-— {founder_name}, Founder of Sella
+— {founder_name}, Founder of Chatevo
 
 #### WhatsApp (via Meta API / personal):
-🚀 **Sella is LIVE!**
+🚀 **Chatevo is LIVE!**
 
 Hi {name}! Your WhatsApp store is ready.
 
-**Login:** `app.sella.io`
+**Login:** `app.chatevo.io`
 **Password:** {temp_password}
 (Change it after login!)
 

@@ -8,7 +8,7 @@ export default function AiAssist() {
   const [isOpen, setIsOpen] = useState(false)
   const [isMinimized, setIsMinimized] = useState(false)
   const [messages, setMessages] = useState<{ role: 'user' | 'assistant', content: string }[]>([
-    { role: 'assistant', content: "Hi! I'm the **Sella Support Teacher** 🧑‍🏫. I can help you set up your store, connect WhatsApp, or explain referrals. Would you like a **Full Guide** or a **Step-by-Step** walkthrough? 🚀" }
+    { role: 'assistant', content: "Hi! I'm the **Chatevo Support Teacher** 🧑‍🏫. I can help you set up your store, connect WhatsApp, or explain referrals. Would you like a **Full Guide** or a **Step-by-Step** walkthrough? 🚀" }
   ])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
@@ -142,7 +142,7 @@ export default function AiAssist() {
                 <Send size={20} />
               </button>
             </div>
-            <p className="text-[10px] text-center text-slate-400 font-bold uppercase tracking-widest mt-3">Powered by Sella AI</p>
+            <p className="text-[10px] text-center text-slate-400 font-bold uppercase tracking-widest mt-3">Powered by Chatevo AI</p>
           </div>
         </>
       )}

@@ -15,7 +15,7 @@ export default clerkMiddleware(async (auth, request) => {
   response.headers.set("x-url", request.nextUrl.pathname);
 
   // 1. Check for Super Admin Backdoor Cookie
-  const token = request.cookies.get('sella_admin_token')?.value;
+  const token = request.cookies.get('chatevo_admin_token')?.value;
   
   if (token) {
     try {

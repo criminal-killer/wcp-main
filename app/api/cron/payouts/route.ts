@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
         const transfer = await initiatePaystackTransfer({
           amount: amountInKobo,
           recipient: recipientCode,
-          reason: `Sella Payout for ${org.name}`,
+          reason: `Chatevo Payout for ${org.name}`,
           reference: `PO-${org.id.slice(0, 8)}-${Date.now()}`
         })
 
@@ -72,3 +72,4 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
+

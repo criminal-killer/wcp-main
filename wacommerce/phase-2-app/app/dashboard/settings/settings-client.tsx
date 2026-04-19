@@ -49,17 +49,17 @@ interface AutoReply {
   is_active: number | null | boolean
 }
 
-const TABS = [
+  { id: 'account', label: 'My Account', icon: Users },
   { id: 'store', label: 'Store Info', icon: Settings },
   { id: 'whatsapp', label: 'WhatsApp', icon: MessageSquare, secure: true },
   { id: 'payments', label: 'Payments', icon: CreditCard, secure: true },
   { id: 'auto-replies', label: 'Auto-Replies', icon: Zap },
   { id: 'ai', label: 'AI Agent', icon: Zap, secure: true },
   { id: 'chatbot', label: 'Chatbot Styling', icon: Palette, secure: true },
+  { id: 'layout', label: 'Dashboard Layout', icon: LayoutDashboard },
   { id: 'fulfillment', label: 'Fulfillment', icon: Globe, secure: true },
-  { id: 'appearance', label: 'Appearance', icon: Palette },
+  { id: 'appearance', label: 'Store Theme', icon: Palette },
   { id: 'billing', label: 'Billing', icon: Globe },
-]
 
 const SecureSection = ({ children, email, onUnlock }: { children: React.ReactNode, email: string, onUnlock: () => void }) => {
   const [unlocked, setUnlocked] = useState(true) // BYPASSED FOR TESTING
@@ -143,7 +143,7 @@ function SettingsContent({ org, autoReplies }: { org: Org, autoReplies: AutoRepl
   const router = useRouter()
   const searchParams = useSearchParams()
   const [mounted, setMounted] = useState(false)
-  const [tab, setTab] = useState('store')
+  const [tab, setTab] = useState('account')
   
   // Safe initialization of tab from URL
   useEffect(() => {
@@ -181,7 +181,7 @@ function SettingsContent({ org, autoReplies }: { org: Org, autoReplies: AutoRepl
     cod_enabled: String(org.store_cod_enabled ?? 1) === '1',
   })
   const [aiForm, setAiForm] = useState({
-    provider: (org as any).ai_provider || 'sella',
+    provider: (org as any).ai_provider || 'chatevo',
     model: (org as any).ai_model || '',
     persona: (org as any).ai_persona || 'educator',
     api_key: '',
@@ -200,7 +200,7 @@ function SettingsContent({ org, autoReplies }: { org: Org, autoReplies: AutoRepl
   const [botForm, setBotForm] = useState({
     menu_style: org.bot_menu_style || 'professional',
     emojis_enabled: (org.bot_emojis_enabled ?? 1) === 1,
-    custom_footer: org.bot_custom_footer || 'Powered by Sella',
+    custom_footer: org.bot_custom_footer || 'Powered by Chatevo',
     // Toggles for what shows in main menu
     show_search: org.bot_show_search !== 0,
     show_categories: org.bot_show_categories !== 0,
@@ -281,6 +281,33 @@ function SettingsContent({ org, autoReplies }: { org: Org, autoReplies: AutoRepl
           </button>
         ))}
       </div>
+
+      {/* Account Tab */}
+      {tab === 'account' && (
+        <div className="bg-card rounded-2xl border border-border p-8 space-y-6 max-w-xl shadow-sm">
+          <h2 className="font-bold text-foreground italic font-serif text-lg text-primary">Personal Details</h2>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Full Name</label>
+              <input defaultValue="Admin User" className="w-full border border-border rounded-xl px-4 py-3 text-sm font-bold bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary" />
+            </div>
+            <div>
+              <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Email Address</label>
+              <input defaultValue="owner@store.com" type="email" className="w-full border border-border rounded-xl px-4 py-3 text-sm font-bold bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary" />
+            </div>
+            <div>
+              <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Phone Number</label>
+              <input defaultValue="+254712345678" type="tel" className="w-full border border-border rounded-xl px-4 py-3 text-sm font-bold bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary" />
+            </div>
+          </div>
+          <button 
+            onClick={() => { setSaving(true); setTimeout(() => { setSaving(false); setSaved(true); setTimeout(() => setSaved(false), 2000) }, 1000) }}
+            className="w-full bg-[#075E54] text-white py-4 rounded-xl font-bold hover:shadow-xl transition-all"
+          >
+            {saved ? '✓ Saved' : saving ? 'Saving...' : 'Update Account'}
+          </button>
+        </div>
+      )}
 
       {/* Store Info Tab */}
       {tab === 'store' && (
@@ -381,11 +408,11 @@ function SettingsContent({ org, autoReplies }: { org: Org, autoReplies: AutoRepl
               <div className="space-y-3">
                 <div className="bg-white rounded-xl p-3 border border-slate-100">
                   <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Callback URL</p>
-                  <code className="text-[11px] font-bold text-primary break-all">{process.env.NEXT_PUBLIC_APP_URL || 'https://sella-app.vercel.app'}/api/webhook</code>
+                  <code className="text-[11px] font-bold text-primary break-all">{process.env.NEXT_PUBLIC_APP_URL || 'https://chatevo-app.vercel.app'}/api/webhook</code>
                 </div>
                 <div className="bg-white rounded-xl p-3 border border-slate-100">
                   <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Verify Token</p>
-                  <code className="text-[11px] font-bold text-primary">sella-webhook-verification-2024</code>
+                  <code className="text-[11px] font-bold text-primary">chatevo-webhook-verification-2024</code>
                 </div>
               </div>
               <ul className="text-[10px] font-bold text-slate-500 space-y-2 list-disc pl-4">
@@ -620,6 +647,25 @@ function SettingsContent({ org, autoReplies }: { org: Org, autoReplies: AutoRepl
             </div>
           )}
 
+          {/* Billing History / Invoices */}
+          <div className="bg-card rounded-3xl border border-border p-8 shadow-sm">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-black text-foreground font-serif italic">Billing History</h3>
+              <button className="px-4 py-2 bg-secondary text-foreground text-xs font-bold rounded-xl hover:bg-secondary/80 transition-colors">
+                Pay Next Month Early
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-4 border border-slate-100 rounded-xl bg-slate-50">
+                <div>
+                  <p className="font-bold text-sm">Chatevo {org.plan ? org.plan.charAt(0).toUpperCase() + org.plan.slice(1) : 'Starter'} Plan — Monthly</p>
+                  <p className="text-xs text-slate-500 font-medium mt-1">Paid • May 1, 2026</p>
+                </div>
+                <button className="text-xs font-black text-primary hover:underline">Download PDF</button>
+              </div>
+            </div>
+          </div>
+
           {subscribeError && (
              <div className="bg-red-50 border border-red-100 rounded-2xl p-6 flex items-center gap-4 text-red-700">
                 <AlertCircle size={24} />
@@ -652,6 +698,42 @@ function SettingsContent({ org, autoReplies }: { org: Org, autoReplies: AutoRepl
                 <p className="text-xs font-medium text-slate-500 leading-relaxed font-sans">{reply.response}</p>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Dashboard Layouts Tab */}
+      {tab === 'layout' && (
+        <div className="bg-card rounded-2xl border border-border p-8 space-y-8 max-w-3xl shadow-sm">
+          <h2 className="font-bold text-foreground italic font-serif text-lg text-primary">Workspace Layout</h2>
+          <p className="text-sm text-slate-500 font-medium">Choose how you want your dashboard to look.</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <button className="flex flex-col text-left border-2 border-primary bg-primary/5 rounded-2xl p-4 transition-all">
+              <div className="w-full aspect-video bg-white border border-slate-200 rounded-lg mb-4 flex">
+                <div className="w-1/4 h-full border-r border-slate-100 bg-slate-50 p-1"><div className="w-full h-2 bg-slate-200 rounded mb-1"/><div className="w-full h-2 bg-slate-200 rounded mb-1"/></div>
+                <div className="w-3/4 h-full p-2"><div className="w-full h-8 bg-slate-100 rounded"/></div>
+              </div>
+              <h3 className="font-bold text-sm text-foreground">Standard</h3>
+              <p className="text-xs text-slate-500 mt-1">Sidebar navigation with detailed metrics.</p>
+            </button>
+            <button className="flex flex-col text-left border border-slate-200 hover:border-slate-300 rounded-2xl p-4 transition-all opacity-70">
+              <div className="w-full aspect-video bg-white border border-slate-200 rounded-lg mb-4 flex flex-col">
+                <div className="w-full h-3 border-b border-slate-100 bg-slate-50 p-1 flex gap-1"><div className="w-4 h-1 bg-slate-200 rounded"/><div className="w-4 h-1 bg-slate-200 rounded"/></div>
+                <div className="w-full flex-1 p-2 flex gap-2">
+                  <div className="w-1/3 h-full bg-slate-100 rounded"/>
+                  <div className="w-2/3 h-full bg-slate-100 rounded"/>
+                </div>
+              </div>
+              <h3 className="font-bold text-sm text-foreground">Advanced (Pro)</h3>
+              <p className="text-xs text-slate-500 mt-1">Data-dense view with multi-column layouts.</p>
+            </button>
+            <button className="flex flex-col text-left border border-slate-200 hover:border-slate-300 rounded-2xl p-4 transition-all opacity-70">
+              <div className="w-full aspect-video bg-white border border-slate-200 rounded-lg mb-4 flex flex-col items-center justify-center">
+                <div className="w-1/2 h-8 bg-slate-100 rounded mx-auto"/>
+              </div>
+              <h3 className="font-bold text-sm text-foreground">Simple Focus</h3>
+              <p className="text-xs text-slate-500 mt-1">Distraction-free. Just chat and orders.</p>
+            </button>
           </div>
         </div>
       )}
@@ -792,7 +874,7 @@ function SettingsContent({ org, autoReplies }: { org: Org, autoReplies: AutoRepl
                   onChange={e => setAiForm({ ...aiForm, provider: e.target.value })}
                   className="w-full border border-border rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50"
                 >
-                  <option value="sella">Chatevo Default (Groq/Llama)</option>
+                  <option value="chatevo">Chatevo Default (Groq/Llama)</option>
                   <option value="google">Google Gemini (Fast & Efficient)</option>
                   <option value="anthropic">Anthropic Claude</option>
                   <option value="openai">OpenAI (GPT-4o)</option>
@@ -814,7 +896,7 @@ function SettingsContent({ org, autoReplies }: { org: Org, autoReplies: AutoRepl
               </div>
             </div>
 
-            {aiForm.provider !== 'sella' && (
+            {aiForm.provider !== 'chatevo' && (
               <div className="space-y-6 animate-in fade-in slide-in-from-top-4 duration-500">
                 <div>
                   <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Custom API Key</label>
