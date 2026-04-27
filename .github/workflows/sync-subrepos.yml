@@ -1,0 +1,80 @@
+name: Sync split deploy repos
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sync-subrepos-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sync:
+    if: ${{ secrets.SYNC_PUSH_TOKEN != '' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout (full history required for subtree split)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Configure git identity
+        run: |
+          git config user.name "wcp-main sync bot"
+          git config user.email "sync-bot@users.noreply.github.com"
+
+      - name: Detect changed paths
+        id: changes
+        shell: bash
+        run: |
+          BEFORE="${{ github.event.before }}"
+          SHA="${{ github.sha }}"
+          ZERO="0000000000000000000000000000000000000000"
+
+          # workflow_dispatch or unusual push cases: sync everything
+          if [ -z "$BEFORE" ] || [ "$BEFORE" = "$ZERO" ]; then
+            echo "admin_changed=true" >> "$GITHUB_OUTPUT"
+            echo "phase2_changed=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          CHANGED="$(git diff --name-only "$BEFORE" "$SHA")"
+          echo "$CHANGED" | sed -e 's/^/changed: /'
+
+          if echo "$CHANGED" | grep -q '^wacommerce/admin-panel/'; then
+            echo "admin_changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "admin_changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          if echo "$CHANGED" | grep -q '^wacommerce/phase-2-app/'; then
+            echo "phase2_changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "phase2_changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Sync admin-panel -> adm-pan
+        if: ${{ steps.changes.outputs.admin_changed == 'true' }}
+        env:
+          TOKEN: ${{ secrets.SYNC_PUSH_TOKEN }}
+        shell: bash
+        run: |
+          git branch -D split-admin 2>/dev/null || true
+          git subtree split --prefix=wacommerce/admin-panel -b split-admin
+          git push --force "https://x-access-token:${TOKEN}@github.com/criminal-killer/adm-pan.git" split-admin:main
+
+      - name: Sync phase-2-app -> Phase-2-app
+        if: ${{ steps.changes.outputs.phase2_changed == 'true' }}
+        env:
+          TOKEN: ${{ secrets.SYNC_PUSH_TOKEN }}
+        shell: bash
+        run: |
+          git branch -D split-phase2 2>/dev/null || true
+          git subtree split --prefix=wacommerce/phase-2-app -b split-phase2
+          git push --force "https://x-access-token:${TOKEN}@github.com/criminal-killer/Phase-2-app.git" split-phase2:main
