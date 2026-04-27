@@ -14,8 +14,9 @@ concurrency:
 
 jobs:
   sync:
-    if: ${{ secrets.SYNC_PUSH_TOKEN != '' }}
     runs-on: ubuntu-latest
+    env:
+      SYNC_PUSH_TOKEN: ${{ secrets.SYNC_PUSH_TOKEN }}
 
     steps:
       - name: Checkout (full history required for subtree split)
@@ -28,6 +29,11 @@ jobs:
         run: |
           git config user.name "wcp-main sync bot"
           git config user.email "sync-bot@users.noreply.github.com"
+
+      - name: Token missing (skip sync)
+        if: ${{ env.SYNC_PUSH_TOKEN == '' }}
+        run: |
+          echo "SYNC_PUSH_TOKEN is not set. Skipping subtree sync."
 
       - name: Detect changed paths
         id: changes
@@ -60,21 +66,17 @@ jobs:
           fi
 
       - name: Sync admin-panel -> adm-pan
-        if: ${{ steps.changes.outputs.admin_changed == 'true' }}
-        env:
-          TOKEN: ${{ secrets.SYNC_PUSH_TOKEN }}
+        if: ${{ env.SYNC_PUSH_TOKEN != '' && steps.changes.outputs.admin_changed == 'true' }}
         shell: bash
         run: |
           git branch -D split-admin 2>/dev/null || true
           git subtree split --prefix=wacommerce/admin-panel -b split-admin
-          git push --force "https://x-access-token:${TOKEN}@github.com/criminal-killer/adm-pan.git" split-admin:main
+          git push --force "https://x-access-token:${SYNC_PUSH_TOKEN}@github.com/criminal-killer/adm-pan.git" split-admin:main
 
       - name: Sync phase-2-app -> Phase-2-app
-        if: ${{ steps.changes.outputs.phase2_changed == 'true' }}
-        env:
-          TOKEN: ${{ secrets.SYNC_PUSH_TOKEN }}
+        if: ${{ env.SYNC_PUSH_TOKEN != '' && steps.changes.outputs.phase2_changed == 'true' }}
         shell: bash
         run: |
           git branch -D split-phase2 2>/dev/null || true
           git subtree split --prefix=wacommerce/phase-2-app -b split-phase2
-          git push --force "https://x-access-token:${TOKEN}@github.com/criminal-killer/Phase-2-app.git" split-phase2:main
+          git push --force "https://x-access-token:${SYNC_PUSH_TOKEN}@github.com/criminal-killer/Phase-2-app.git" split-phase2:main
