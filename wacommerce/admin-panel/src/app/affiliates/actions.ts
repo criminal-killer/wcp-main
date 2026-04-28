@@ -63,7 +63,8 @@ export async function processPayout(id: string, amount: number) {
       where: (aff, { eq }) => eq(aff.id, id)
     })
     
-    if (!affiliate || affiliate.balance < amount) {
+    const balance = affiliate?.balance ?? 0
+    if (!affiliate || balance < amount) {
       return { success: false, error: "Insufficient balance or invalid affiliate" }
     }
 

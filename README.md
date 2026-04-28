@@ -165,6 +165,8 @@ npx drizzle-kit push
 
 ## 📁 Project Structure
 
+> **Note:** The structure below is a simplified overview. For the complete and detailed repository map, please see [`PROJECT_STRUCTURE_TREE.md`](./PROJECT_STRUCTURE_TREE.md).
+
 ```
 .
 ├── admin-panel/              # Legacy admin panel (optional)
