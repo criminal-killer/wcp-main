@@ -480,3 +480,18 @@ export const marketing_posts = sqliteTable('marketing_posts', {
   scheduled_at: integer('scheduled_at'), // timestamp in ms
   created_at: text('created_at').default(sql`(datetime('now'))`),
 })
+
+// ============================================
+// AUDIT LOGS (Admin Activity Tracking)
+// ============================================
+export const audit_logs = sqliteTable('audit_logs', {
+  id: text('id').primaryKey().default(sql`(lower(hex(randomblob(16))))`),
+  admin_id: text('admin_id').notNull().references(() => users.id),
+  admin_name: text('admin_name'),
+  action: text('action').notNull(), // e.g., "APPROVE_USER", "UPDATE_PLAN", "DELETE_STORE"
+  target_type: text('target_type'), // "user", "organization", "subscription"
+  target_id: text('target_id'),
+  details: text('details'), // JSON string for metadata
+  ip_address: text('ip_address'),
+  created_at: text('created_at').default(sql`(datetime('now'))`),
+})
