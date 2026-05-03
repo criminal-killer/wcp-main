@@ -6,9 +6,7 @@ const nextConfig = {
       { protocol: 'https', hostname: '**' },
     ],
   },
-  // Prevent webpack from trying to bundle native Node modules.
-  // @libsql/client and drizzle-orm use Node.js APIs incompatible with
-  // the webpack bundler — they must run in the Node.js runtime, not Edge/browser.
+  // Turso/libsql must run in Node.js runtime, not Edge
   experimental: {
     serverComponentsExternalPackages: [
       '@libsql/client',
@@ -18,12 +16,6 @@ const nextConfig = {
   },
   // Transpile local workspace packages (packages/db, packages/shared)
   transpilePackages: ['@chatevo/db', '@chatevo/shared'],
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
 }
 
 export default nextConfig

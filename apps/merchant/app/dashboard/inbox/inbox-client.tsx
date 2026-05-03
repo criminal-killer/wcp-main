@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Send, Bot, User } from 'lucide-react'
+import { Send, Bot, User, MessageSquare } from 'lucide-react'
 
 interface Conversation {
   id: string

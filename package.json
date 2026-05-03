@@ -12,11 +12,11 @@
     "dev:admin":      "npm run dev   --workspace=apps/admin",
     "build:merchant": "npm run build --workspace=apps/merchant",
     "build:admin":    "npm run build --workspace=apps/admin",
-    "lint":           "npm run lint  --workspaces --if-present",
     "typecheck":      "npm run typecheck --workspaces --if-present",
+    "lint":           "npm run lint --workspaces --if-present",
     "sync-env":       "node scripts/sync-env.mjs",
-    "db:push":        "cd apps/merchant && npx drizzle-kit push",
-    "db:studio":      "cd apps/merchant && npx drizzle-kit studio"
+    "db:push":        "npm run db:push --workspace=apps/merchant",
+    "db:studio":      "npm run db:studio --workspace=apps/merchant"
   },
   "devDependencies": {
     "typescript": "^5",

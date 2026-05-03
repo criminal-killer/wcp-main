@@ -55,7 +55,7 @@ export default async function ProductsPage() {
             />
             <select className="border border-border rounded-xl px-3 py-2 text-sm text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[#25D366]">
               <option value="">All Categories</option>
-              {[...new Set(productList.map(p => p.category).filter(Boolean))].map(cat => (
+              {Array.from(new Set(productList.map(p => p.category).filter(Boolean))).map(cat => (
                 <option key={cat} value={cat || ''}>{cat}</option>
               ))}
             </select>

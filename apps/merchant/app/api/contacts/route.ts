@@ -35,35 +35,3 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json({ data: list, total: list.length })
 }
-
-export async function GET_EXPORT(req: NextRequest) {
-  const { userId } = await auth()
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const user = await db.query.users.findFirst({ where: eq(users.clerk_id, userId) })
-  if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
-
-  const list = await db.select()
-    .from(contacts)
-    .where(eq(contacts.org_id, user.org_id))
-    .orderBy(desc(contacts.created_at))
-
-  const csv = [
-    'Name,Phone,Email,Total Orders,Total Spent,Tags,Created At',
-    ...list.map(c => [
-      c.name || '',
-      c.phone,
-      c.email || '',
-      c.total_orders || 0,
-      c.total_spent || 0,
-      JSON.parse(c.tags || '[]').join(';'),
-      c.created_at || '',
-    ].join(',')),
-  ].join('\n')
-
-  return new Response(csv, {
-    headers: {
-      'Content-Type': 'text/csv',
-      'Content-Disposition': 'attachment; filename="contacts.csv"',
-    },
-  })
-}
