@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
 
   if (!stripeKey) return NextResponse.json({ error: 'Stripe not configured' }, { status: 500 })
 
-  const stripe = new Stripe(stripeKey, { apiVersion: '2023-10-16' })
+  const stripe = new Stripe(stripeKey, { apiVersion: '2024-06-20' })
 
   let event: Stripe.Event
   try {

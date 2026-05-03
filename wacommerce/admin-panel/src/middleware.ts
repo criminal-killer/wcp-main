@@ -48,9 +48,9 @@ async function verifyJwtHS256(token: string, secret: string): Promise<void> {
 }
 
 const isPublicRoute = createRouteMatcher([
-  '/sign-in(.*)', 
-  '/sign-up(.*)', 
-  '/auth/super-login', 
+  '/sign-in(.*)',
+  '/sign-up(.*)',
+  '/auth/super-login',
   '/api/auth/super-login',
   '/waiting-approval(.*)'
 ]);
@@ -78,7 +78,7 @@ export default clerkMiddleware(async (auth, request) => {
   // 2. Standard Clerk Auth for other users
   if (!isPublicRoute(request)) {
     const { userId } = auth();
-    
+
     // Redirect if not signed in via Clerk
     if (!userId) {
       return auth().redirectToSignIn();

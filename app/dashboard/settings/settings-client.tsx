@@ -38,7 +38,7 @@ const TABS = [
 ]
 
 const SecureSection = ({ children, email, onUnlock }: { children: React.ReactNode, email: string, onUnlock: () => void }) => {
-  const [unlocked, setUnlocked] = useState(true) // BYPASSED FOR TESTING
+  const [unlocked, setUnlocked] = useState(false)
   const [codeSent, setCodeSent] = useState(false)
   const [code, setCode] = useState('')
   const [error, setError] = useState('')
@@ -46,20 +46,39 @@ const SecureSection = ({ children, email, onUnlock }: { children: React.ReactNod
 
   const sendCode = async () => {
     setLoading(true)
-    // In production, this calls /api/auth/send-otp
-    await new Promise(r => setTimeout(r, 1000))
-    setCodeSent(true)
+    setError('')
+    try {
+      const res = await fetch('/api/auth/send-otp', { method: 'POST' })
+      const data = await res.json()
+      if (res.ok) {
+        setCodeSent(true)
+      } else {
+        setError(data.error || 'Failed to send code. Please try again.')
+      }
+    } catch {
+      setError('Network error. Please try again.')
+    }
     setLoading(false)
   }
 
   const verifyCode = async () => {
     setLoading(true)
-    // Mock verification for now
-    if (code === '123456') {
-      setUnlocked(true)
-      onUnlock()
-    } else {
-      setError('Invalid security code')
+    setError('')
+    try {
+      const res = await fetch('/api/auth/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code }),
+      })
+      const data = await res.json()
+      if (res.ok && data.success) {
+        setUnlocked(true)
+        onUnlock()
+      } else {
+        setError(data.error || 'Invalid or expired code. Please try again.')
+      }
+    } catch {
+      setError('Network error. Please try again.')
     }
     setLoading(false)
   }
@@ -85,7 +104,7 @@ const SecureSection = ({ children, email, onUnlock }: { children: React.ReactNod
         <div className="space-y-4">
           <input 
             value={code} onChange={e => setCode(e.target.value)}
-            placeholder="6-digit code (Use 123456 for now)" 
+            placeholder="Enter 6-digit code from your email" 
             maxLength={6}
             className="w-full border-2 border-slate-100 rounded-xl px-4 py-4 text-center text-2xl font-mono tracking-[0.5em] focus:border-primary focus:outline-none" 
           />
@@ -139,7 +158,7 @@ function SettingsContent({ org, autoReplies }: { org: Org, autoReplies: AutoRepl
   }
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
-  const [unlockedTabs, setUnlockedTabs] = useState<string[]>(['whatsapp', 'payments']) // AUTO-UNLOCK
+  const [unlockedTabs, setUnlockedTabs] = useState<string[]>([])
   
   const [testPhone, setTestPhone] = useState('')
   const [testingBot, setTestingBot] = useState(false)
@@ -491,11 +510,11 @@ function SettingsContent({ org, autoReplies }: { org: Org, autoReplies: AutoRepl
                       </button>
                       {org.plan !== plan.id && (
                         <button 
-                          onClick={() => handleSubscribe(plan.id, 'paypal')}
+                          onClick={() => handleSubscribe(plan.id, 'stripe')}
                           disabled={!!loadingPlan}
-                          className="w-full bg-blue-600 text-white py-3 rounded-xl font-black text-xs uppercase tracking-widest hover:opacity-95 transition-all disabled:opacity-50"
+                          className="w-full bg-[#635BFF] text-white py-3 rounded-xl font-black text-xs uppercase tracking-widest hover:opacity-95 transition-all disabled:opacity-50"
                         >
-                          {loadingPlan === `${plan.id}-paypal` ? 'Processing...' : 'Pay via PayPal (Global)'}
+                          {loadingPlan === `${plan.id}-stripe` ? 'Processing...' : 'Pay via Stripe (Global)'}
                         </button>
                       )}
                     </div>

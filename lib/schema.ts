@@ -16,10 +16,10 @@ export const organizations = sqliteTable('organizations', {
   wa_webhook_verified: integer('wa_webhook_verified').default(0),
 
   // Business Info
-  country: text('country').default('KE'),
-  currency: text('currency').default('KES'),
+  country: text('country').default('US'),
+  currency: text('currency').default('USD'),
   language: text('language').default('en'),
-  timezone: text('timezone').default('Africa/Nairobi'),
+  timezone: text('timezone').default('UTC'),
   business_type: text('business_type'),
   logo_url: text('logo_url'),
   theme_color: text('theme_color').default('#25D366'),
@@ -52,7 +52,7 @@ export const organizations = sqliteTable('organizations', {
   // Managed Payments (MoR)
   payment_mode: text('payment_mode').default('direct'), // direct, managed
   managed_balance: real('managed_balance').default(0),
-  managed_currency: text('managed_currency').default('KES'),
+  managed_currency: text('managed_currency').default('USD'),
   managed_payout_details: text('managed_payout_details'),
   managed_payout_interval: text('managed_payout_interval').default('weekly'),
 

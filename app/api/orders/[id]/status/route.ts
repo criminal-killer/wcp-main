@@ -1,83 +1,53 @@
 import { auth } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { users, organizations } from '@/lib/schema'
-import { eq } from 'drizzle-orm'
-import { sendWelcomeEmail } from '@/lib/email'
+import { users, orders } from '@/lib/schema'
+import { eq, and } from 'drizzle-orm'
 
-const COUNTRIES_MAP: Record<string, { currency: string; timezone: string }> = {
-  KE: { currency: 'KES', timezone: 'Africa/Nairobi' },
-  NG: { currency: 'NGN', timezone: 'Africa/Lagos' },
-  GH: { currency: 'GHS', timezone: 'Africa/Accra' },
-  ZA: { currency: 'ZAR', timezone: 'Africa/Johannesburg' },
-  UG: { currency: 'UGX', timezone: 'Africa/Kampala' },
-  TZ: { currency: 'TZS', timezone: 'Africa/Dar_es_Salaam' },
-  US: { currency: 'USD', timezone: 'America/New_York' },
-  GB: { currency: 'GBP', timezone: 'Europe/London' },
-  IN: { currency: 'INR', timezone: 'Asia/Kolkata' },
-  OTHER: { currency: 'USD', timezone: 'UTC' },
+const VALID_STATUSES = ['new', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded'] as const
+type OrderStatus = typeof VALID_STATUSES[number]
+
+function isValidStatus(s: string): s is OrderStatus {
+  return VALID_STATUSES.includes(s as OrderStatus)
 }
 
-function slugify(name: string): string {
-  return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + Math.random().toString(36).slice(2, 6)
-}
-
-export async function POST(req: NextRequest) {
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
   const { userId } = await auth()
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  try {
-    // Check if user already onboarded
-    const existing = await db.query.users.findFirst({ where: eq(users.clerk_id, userId) })
-    if (existing) return NextResponse.json({ data: { org_id: existing.org_id }, message: 'Already onboarded' })
+  const user = await db.query.users.findFirst({ where: eq(users.clerk_id, userId) })
+  if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
-    const body = await req.json() as { name: string; country: string; business_type: string }
-    const { name, country = 'KE', business_type } = body
+  const body = await req.json() as { order_status?: string; payment_status?: string; tracking_number?: string; notes?: string }
+  const { order_status, payment_status, tracking_number, notes } = body
 
-    if (!name || !name.trim()) {
-      return NextResponse.json({ error: 'Store name is required' }, { status: 400 })
-    }
-
-    const countryData = COUNTRIES_MAP[country] || COUNTRIES_MAP.OTHER
-
-    // Create org (Drizzle will auto-generate the uuid via default)
-    const slug = slugify(name)
-    const trialEndsAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
-
-    const [org] = await db.insert(organizations).values({
-      name: name.trim(),
-      slug,
-      country,
-      currency: countryData.currency,
-      timezone: countryData.timezone,
-      plan: 'trial',
-      trial_ends_at: trialEndsAt,
-    }).returning()
-
-    // Create user
-    const [user] = await db.insert(users).values({
-      clerk_id: userId,
-      org_id: org.id,
-      email: '', // Will be updated from Clerk webhook
-      role: 'owner',
-    }).returning()
-
-    // Send welcome email (best-effort)
-    try {
-      await sendWelcomeEmail(user.email || '', name.trim(), name.trim())
-    } catch (err) {
-      console.error('Welcome email failed:', err)
-    }
-
-    return NextResponse.json({
-      data: { org_id: org.id, slug: org.slug },
-      message: 'Store created successfully',
-    }, { status: 201 })
-  } catch (error: any) {
-    console.error('Onboarding error:', error)
-    if (error?.status === 401 || error?.message?.includes('Unauthorized')) {
-      return NextResponse.json({ error: 'Database connection failed: Unauthorized. Please check your Turso credentials.' }, { status: 500 })
-    }
-    return NextResponse.json({ error: 'Failed to create store. Please try again later.' }, { status: 500 })
+  if (!order_status && !payment_status && !tracking_number && !notes) {
+    return NextResponse.json({ error: 'At least one field (order_status, payment_status, tracking_number, notes) is required.' }, { status: 400 })
   }
+
+  if (order_status && !isValidStatus(order_status)) {
+    return NextResponse.json({ error: `Invalid order_status. Valid values: ${VALID_STATUSES.join(', ')}` }, { status: 400 })
+  }
+
+  // Ensure the order belongs to the user's org
+  const order = await db.query.orders.findFirst({
+    where: and(eq(orders.id, params.id), eq(orders.org_id, user.org_id)),
+  })
+
+  if (!order) return NextResponse.json({ error: 'Order not found' }, { status: 404 })
+
+  const updatePayload: Record<string, string> = {
+    updated_at: new Date().toISOString(),
+  }
+  if (order_status) updatePayload.order_status = order_status
+  if (payment_status) updatePayload.payment_status = payment_status
+  if (tracking_number) updatePayload.tracking_number = tracking_number
+  if (notes) updatePayload.notes = notes
+
+  await db.update(orders).set(updatePayload).where(and(eq(orders.id, params.id), eq(orders.org_id, user.org_id)))
+
+  return NextResponse.json({ success: true, order_id: params.id, ...updatePayload })
 }

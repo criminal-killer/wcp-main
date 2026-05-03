@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { organizations, subscriptions } from '@/lib/schema'
+import { organizations, subscriptions, referrals } from '@/lib/schema'
 import { eq } from 'drizzle-orm'
 import { verifyPaystackSignature } from '@/lib/payments'
 
@@ -82,7 +82,7 @@ export async function POST(req: NextRequest) {
 
       if (orgRecord?.referred_by) {
         const amount = data.amount / 100
-        const commission = amount * 0.50
+        const commission = amount * 0.40 // 40% first-payment affiliate commission
 
         // Find the referrer
         const referrer = await db.query.organizations.findFirst({

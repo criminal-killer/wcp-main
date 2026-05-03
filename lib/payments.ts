@@ -6,25 +6,85 @@ export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 })
 
 // ============================================
+// Plan Configuration (Single Source of Truth)
+// ============================================
+
+export type PlanId = 'starter' | 'pro' | 'elite'
+
+export const PLAN_CONFIG: Record<PlanId, {
+  name: string
+  price_usd: number // in dollars
+  price_cents: number // in cents for Stripe
+  price_kobo: number // in kobo for Paystack (USD * 100 * 100 for Paystack USD)
+  paystack_plan_code_env: string
+  stripe_price_id_env: string
+  features: string[]
+  product_limit: number
+  ai_custom: boolean
+  white_label: boolean
+}> = {
+  starter: {
+    name: 'Starter',
+    price_usd: 29,
+    price_cents: 2900,
+    price_kobo: 2900 * 100,
+    paystack_plan_code_env: 'PAYSTACK_STARTER_PLAN_CODE',
+    stripe_price_id_env: 'STRIPE_STARTER_PRICE_ID',
+    features: ['100 Products', 'Chatevo AI Default', 'Standard Admin', 'WhatsApp Storefront', '7-Day Free Trial'],
+    product_limit: 100,
+    ai_custom: false,
+    white_label: false,
+  },
+  pro: {
+    name: 'Pro',
+    price_usd: 59,
+    price_cents: 5900,
+    price_kobo: 5900 * 100,
+    paystack_plan_code_env: 'PAYSTACK_PRO_PLAN_CODE',
+    stripe_price_id_env: 'STRIPE_PRO_PRICE_ID',
+    features: ['500 Products', 'Custom AI Agent (Gemini/GPT)', 'Advanced Analytics', 'Bulk Product Upload', 'Abandoned Cart Recovery'],
+    product_limit: 500,
+    ai_custom: true,
+    white_label: false,
+  },
+  elite: {
+    name: 'Elite',
+    price_usd: 99,
+    price_cents: 9900,
+    price_kobo: 9900 * 100,
+    paystack_plan_code_env: 'PAYSTACK_ELITE_PLAN_CODE',
+    stripe_price_id_env: 'STRIPE_ELITE_PRICE_ID',
+    features: ['5,000 Products', 'White-label Storefront', 'Dedicated Account Manager', 'Custom API Integrations', 'Priority AI Processing'],
+    product_limit: 5000,
+    ai_custom: true,
+    white_label: true,
+  },
+}
+
+export function isValidPlan(plan: string): plan is PlanId {
+  return plan === 'starter' || plan === 'pro' || plan === 'elite'
+}
+
+export function normalizePlan(plan: string): PlanId {
+  // Normalize any legacy names
+  if (plan === 'growth') return 'pro'
+  if (plan === 'premium') return 'elite'
+  if (isValidPlan(plan)) return plan
+  return 'starter'
+}
+
+// ============================================
 // SaaS Subscription Payments (Store Owner → Chatevo)
 // ============================================
 
 export async function createPaystackSubscriptionCheckout(
   email: string,
   orgId: string,
-  plan: 'starter' | 'growth' | 'premium'
+  plan: PlanId
 ) {
-  const planCodes: Record<string, string> = {
-    starter: process.env.PAYSTACK_STARTER_PLAN_CODE || 'PLN_starter',
-    growth: process.env.PAYSTACK_GROWTH_PLAN_CODE || 'PLN_growth',
-    premium: process.env.PAYSTACK_PREMIUM_PLAN_CODE || 'PLN_premium',
-  }
-  const amounts: Record<string, number> = {
-    starter: 2900,
-    growth: 5900,
-    premium: 9900,
-  }
-  const callbackUrl = `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/settings/billing?success=true`
+  const config = PLAN_CONFIG[plan]
+  const planCode = process.env[config.paystack_plan_code_env]
+  const callbackUrl = `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/settings?tab=billing&success=paystack&plan=${plan}`
 
   const response = await fetch('https://api.paystack.co/transaction/initialize', {
     method: 'POST',
@@ -34,11 +94,11 @@ export async function createPaystackSubscriptionCheckout(
     },
     body: JSON.stringify({
       email,
-      amount: amounts[plan] * 100, // in kobo
+      amount: config.price_kobo, // Paystack expects smallest unit
       currency: 'USD',
-      plan: planCodes[plan],
+      ...(planCode ? { plan: planCode } : {}), // attach plan code for subscription if configured
       callback_url: callbackUrl,
-      metadata: { org_id: orgId, plan },
+      metadata: { org_id: orgId, plan, saas_subscription: true },
     }),
   })
 
@@ -47,15 +107,44 @@ export async function createPaystackSubscriptionCheckout(
   return dataObj?.authorization_url as string | undefined
 }
 
-export async function createPayPalSubscriptionCheckout(
+export async function createStripeSubscriptionCheckout(
   email: string,
   orgId: string,
-  plan: 'starter' | 'growth' | 'premium'
+  plan: PlanId
 ) {
-  // In production, use @paypal/checkout-server-sdk to create a subscription
-  // return approval_url from PayPal API response
-  const redirectUrl = `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/settings/billing?success=true&provider=paypal&plan=${plan}`
-  return redirectUrl
+  const config = PLAN_CONFIG[plan]
+  const priceId = process.env[config.stripe_price_id_env]
+
+  if (!priceId) {
+    // Fallback: create an ad-hoc price if no Price ID is configured
+    const session = await stripe.checkout.sessions.create({
+      mode: 'subscription',
+      customer_email: email,
+      line_items: [{
+        price_data: {
+          currency: 'usd',
+          product_data: { name: `Chatevo ${config.name} Plan` },
+          unit_amount: config.price_cents,
+          recurring: { interval: 'month' },
+        },
+        quantity: 1,
+      }],
+      metadata: { org_id: orgId, plan },
+      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/settings?tab=billing&success=stripe&plan=${plan}`,
+      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/settings?tab=billing&cancelled=true`,
+    })
+    return session.url ?? undefined
+  }
+
+  const session = await stripe.checkout.sessions.create({
+    mode: 'subscription',
+    customer_email: email,
+    line_items: [{ price: priceId, quantity: 1 }],
+    metadata: { org_id: orgId, plan },
+    success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/settings?tab=billing&success=stripe&plan=${plan}`,
+    cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/settings?tab=billing&cancelled=true`,
+  })
+  return session.url ?? undefined
 }
 
 // ============================================
@@ -168,4 +257,3 @@ export async function initiatePaystackTransfer(transferData: {
   const data = await response.json()
   return data.data as { reference: string; status: string; transfer_code: string } | undefined
 }
-
