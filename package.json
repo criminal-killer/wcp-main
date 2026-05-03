@@ -14,7 +14,9 @@
     "build:admin":    "npm run build --workspace=apps/admin",
     "lint":           "npm run lint  --workspaces --if-present",
     "typecheck":      "npm run typecheck --workspaces --if-present",
-    "sync-env":       "node scripts/sync-env.mjs"
+    "sync-env":       "node scripts/sync-env.mjs",
+    "db:push":        "cd apps/merchant && npx drizzle-kit push",
+    "db:studio":      "cd apps/merchant && npx drizzle-kit studio"
   },
   "devDependencies": {
     "typescript": "^5",

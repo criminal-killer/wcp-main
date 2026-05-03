@@ -9,7 +9,10 @@ const nextConfig = {
   experimental: {
     serverComponentsExternalPackages: ['@libsql/client', 'drizzle-orm'],
   },
+  // Transpile local workspace packages
+  transpilePackages: ['@chatevo/db', '@chatevo/shared'],
   // Allow production builds to succeed even with TS/lint warnings
+  // TODO: Remove once all type errors are fixed
   typescript: {
     ignoreBuildErrors: true,
   },

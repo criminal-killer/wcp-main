@@ -12,13 +12,13 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ],
+    "plugins": [{ "name": "next" }],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*":               ["./src/*"],
+      "@chatevo/db":       ["../../packages/db/src/index.ts"],
+      "@chatevo/db/*":     ["../../packages/db/src/*"],
+      "@chatevo/shared":   ["../../packages/shared/src/index.ts"],
+      "@chatevo/shared/*": ["../../packages/shared/src/*"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],

@@ -4,10 +4,10 @@
   "private": true,
   "description": "Chatevo Merchant App — WhatsApp Commerce Platform",
   "scripts": {
-    "dev":   "next dev --port 3000",
-    "build": "next build",
-    "start": "next start --port 3000",
-    "lint":  "next lint",
+    "dev":       "next dev --port 3000",
+    "build":     "next build",
+    "start":     "next start --port 3000",
+    "lint":      "next lint",
     "typecheck": "tsc --noEmit",
     "db:push":   "drizzle-kit push",
     "db:studio": "drizzle-kit studio"
