@@ -19,6 +19,12 @@ export const metadata: Metadata = {
   description: "Administrative panel for Chatevo WhatsApp Commerce",
 };
 
+// Ensure this layout (and all pages under it) are rendered at request time,
+// not statically pre-rendered during `next build`. Without this, Next.js
+// tries to execute the layout body at build time, which calls the DB before
+// TURSO_DATABASE_URL is available and crashes the build.
+export const dynamic = "force-dynamic";
+
 export default async function RootLayout({
   children,
 }: Readonly<{

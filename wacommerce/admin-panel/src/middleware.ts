@@ -10,6 +10,11 @@ function base64UrlToUint8Array(input: string): Uint8Array {
   return bytes;
 }
 
+// WebCrypto requires a plain ArrayBuffer, not a Uint8Array<ArrayBufferLike>
+function toArrayBuffer(u8: Uint8Array): ArrayBuffer {
+  return u8.buffer.slice(u8.byteOffset, u8.byteOffset + u8.byteLength) as ArrayBuffer;
+}
+
 function decodeJwtJsonPart(part: string): unknown {
   const bytes = base64UrlToUint8Array(part);
   const json = new TextDecoder().decode(bytes);
@@ -43,7 +48,7 @@ async function verifyJwtHS256(token: string, secret: string): Promise<void> {
   const data = new TextEncoder().encode(`${headerB64}.${payloadB64}`);
   const signature = base64UrlToUint8Array(signatureB64);
 
-  const ok = await crypto.subtle.verify("HMAC", key, signature, data);
+  const ok = await crypto.subtle.verify("HMAC", key, toArrayBuffer(signature), toArrayBuffer(data));
   if (!ok) throw new Error("Invalid signature");
 }
 
