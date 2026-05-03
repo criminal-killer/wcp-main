@@ -1,11 +1,49 @@
+/**
+ * lib/email.ts
+ *
+ * Resend email client — lazy initialized.
+ * getResend() returns null when RESEND_API_KEY is not set, which causes
+ * all send functions to no-op with a console.warn instead of crashing.
+ *
+ * This prevents build-time failures during `next build` when env vars
+ * may not be present. In production, missing RESEND_API_KEY will surface
+ * as a warning in the logs rather than a 500 error on the calling route.
+ */
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY!)
 const FROM = process.env.RESEND_FROM_EMAIL || 'Chatevo <onboarding@resend.dev>'
 const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME || 'Chatevo'
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://Chatevo-app.vercel.app'
 
-export async function sendWelcomeEmail(email: string, name: string, orgName: string) {
+// ─── Lazy singleton ──────────────────────────────────────────────────────────
+
+let _resend: Resend | null = null
+
+function getResend(): Resend | null {
+  if (_resend) return _resend
+  const key = process.env.RESEND_API_KEY
+  if (!key) {
+    console.warn('[email] RESEND_API_KEY is not set — all emails will be skipped.')
+    return null
+  }
+  _resend = new Resend(key)
+  return _resend
+}
+
+// ─── Result type ────────────────────────────────────────────────────────────
+
+type SendResult = { sent: true } | { skipped: true; reason: string }
+
+// ─── Email senders ──────────────────────────────────────────────────────────
+
+export async function sendWelcomeEmail(
+  email: string,
+  name: string,
+  orgName: string
+): Promise<SendResult> {
+  const resend = getResend()
+  if (!resend) return { skipped: true, reason: 'RESEND_API_KEY not set' }
+
   await resend.emails.send({
     from: FROM,
     to: email,
@@ -27,8 +65,8 @@ export async function sendWelcomeEmail(email: string, name: string, orgName: str
             <li>Share your store link with customers</li>
           </ol>
           <div style="text-align: center; margin: 30px 0;">
-            <a href="${APP_URL}/dashboard" 
-               style="background: #25D366; color: white; padding: 15px 30px; 
+            <a href="${APP_URL}/dashboard"
+               style="background: #25D366; color: white; padding: 15px 30px;
                       text-decoration: none; border-radius: 8px; font-weight: bold;">
               Go to Dashboard →
             </a>
@@ -38,6 +76,7 @@ export async function sendWelcomeEmail(email: string, name: string, orgName: str
       </div>
     `,
   })
+  return { sent: true }
 }
 
 export async function sendOrderConfirmationEmail(
@@ -46,7 +85,10 @@ export async function sendOrderConfirmationEmail(
   total: string,
   currency: string,
   items: Array<{ name: string; quantity: number; price: number }>
-) {
+): Promise<SendResult> {
+  const resend = getResend()
+  if (!resend) return { skipped: true, reason: 'RESEND_API_KEY not set' }
+
   await resend.emails.send({
     from: FROM,
     to: email,
@@ -71,9 +113,17 @@ export async function sendOrderConfirmationEmail(
       </div>
     `,
   })
+  return { sent: true }
 }
 
-export async function sendTrialEndingEmail(email: string, name: string, daysLeft: number) {
+export async function sendTrialEndingEmail(
+  email: string,
+  name: string,
+  daysLeft: number
+): Promise<SendResult> {
+  const resend = getResend()
+  if (!resend) return { skipped: true, reason: 'RESEND_API_KEY not set' }
+
   await resend.emails.send({
     from: FROM,
     to: email,
@@ -83,8 +133,8 @@ export async function sendTrialEndingEmail(email: string, name: string, daysLeft
         <h2>Your trial ends in ${daysLeft} days, ${name}</h2>
         <p>Don't lose access to your WhatsApp store. Subscribe now for just <strong>$29/month</strong>.</p>
         <div style="text-align: center; margin: 30px 0;">
-          <a href="${APP_URL}/dashboard/settings/billing" 
-             style="background: #25D366; color: white; padding: 15px 30px; 
+          <a href="${APP_URL}/dashboard/settings/billing"
+             style="background: #25D366; color: white; padding: 15px 30px;
                     text-decoration: none; border-radius: 8px; font-weight: bold;">
             Subscribe Now — $29/month →
           </a>
@@ -92,9 +142,17 @@ export async function sendTrialEndingEmail(email: string, name: string, daysLeft
       </div>
     `,
   })
+  return { sent: true }
 }
 
-export async function sendSubscriptionConfirmationEmail(email: string, name: string, plan: string) {
+export async function sendSubscriptionConfirmationEmail(
+  email: string,
+  name: string,
+  plan: string
+): Promise<SendResult> {
+  const resend = getResend()
+  if (!resend) return { skipped: true, reason: 'RESEND_API_KEY not set' }
+
   await resend.emails.send({
     from: FROM,
     to: email,
@@ -105,8 +163,8 @@ export async function sendSubscriptionConfirmationEmail(email: string, name: str
         <p>Hi ${name}, thank you for subscribing to the <strong>${plan}</strong> plan.</p>
         <p>Your store is now fully active with no limits.</p>
         <div style="text-align: center; margin: 30px 0;">
-          <a href="${APP_URL}/dashboard" 
-             style="background: #25D366; color: white; padding: 15px 30px; 
+          <a href="${APP_URL}/dashboard"
+             style="background: #25D366; color: white; padding: 15px 30px;
                     text-decoration: none; border-radius: 8px; font-weight: bold;">
             Go to Dashboard →
           </a>
@@ -114,5 +172,5 @@ export async function sendSubscriptionConfirmationEmail(email: string, name: str
       </div>
     `,
   })
+  return { sent: true }
 }
-
