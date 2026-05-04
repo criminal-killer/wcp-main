@@ -97,3 +97,70 @@ export async function processPayout(id: string, amount: number) {
     return { success: false, error: err.message }
   }
 }
+
+// Mark a payout request as paid. Deducts the amount from affiliate balance.
+export async function markPayoutPaid(payoutId: string) {
+  const admin = await currentUser()
+  if (!admin) return { error: "Unauthorized" }
+
+  try {
+    const payout = await db.query.affiliate_payouts.findFirst({
+      where: (p, { eq }) => eq(p.id, payoutId)
+    })
+    if (!payout) return { success: false, error: "Payout request not found." }
+    if (payout.status !== 'pending') return { success: false, error: "This payout is not in pending state." }
+
+    // Deduct from affiliate balance
+    await db.update(affiliates)
+      .set({ balance: sql`MAX(0, ${affiliates.balance} - ${payout.amount})` })
+      .where(eq(affiliates.id, payout.affiliate_id))
+
+    // Mark payout as paid
+    await db.update(affiliate_payouts)
+      .set({ status: 'paid', processed_at: new Date().toISOString() })
+      .where(eq(affiliate_payouts.id, payoutId))
+
+    await db.insert(audit_logs).values({
+      admin_id: admin.id,
+      admin_name: `${admin.firstName || ''} ${admin.lastName || ''}`.trim(),
+      action: "MARK_PAYOUT_PAID",
+      target_type: "affiliate_payout",
+      target_id: payoutId,
+      details: `Marked payout of $${payout.amount} as paid`,
+    })
+
+    return { success: true }
+  } catch (err: any) {
+    return { success: false, error: err.message }
+  }
+}
+
+// Reject a pending payout request (does NOT deduct balance).
+export async function rejectPayout(payoutId: string) {
+  const admin = await currentUser()
+  if (!admin) return { error: "Unauthorized" }
+
+  try {
+    const payout = await db.query.affiliate_payouts.findFirst({
+      where: (p, { eq }) => eq(p.id, payoutId)
+    })
+    if (!payout) return { success: false, error: "Payout request not found." }
+
+    await db.update(affiliate_payouts)
+      .set({ status: 'rejected', processed_at: new Date().toISOString() })
+      .where(eq(affiliate_payouts.id, payoutId))
+
+    await db.insert(audit_logs).values({
+      admin_id: admin.id,
+      admin_name: `${admin.firstName || ''} ${admin.lastName || ''}`.trim(),
+      action: "REJECT_PAYOUT",
+      target_type: "affiliate_payout",
+      target_id: payoutId,
+      details: `Rejected payout request of $${payout.amount}`,
+    })
+
+    return { success: true }
+  } catch (err: any) {
+    return { success: false, error: err.message }
+  }
+}

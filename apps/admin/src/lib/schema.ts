@@ -48,6 +48,9 @@ export const organizations = sqliteTable('organizations', {
   // Referral
   referral_code: text('referral_code').unique(),
   referred_by: text('referred_by'),
+  paying_referrals_count: integer('paying_referrals_count').default(0),
+  referral_discount_active: integer('referral_discount_active').default(0),
+  referral_discount_expires_at: text('referral_discount_expires_at'),
 
   // Managed Payments (MoR)
   payment_mode: text('payment_mode').default('direct'), // direct, managed
@@ -308,6 +311,7 @@ export const payments_log = sqliteTable('payments_log', {
   currency: text('currency').notNull(),
   status: text('status').default('pending'),
   metadata: text('metadata'),
+  idempotency_key: text('idempotency_key').unique(),
   created_at: text('created_at').default(sql`(datetime('now'))`),
 })
 
@@ -319,9 +323,11 @@ export const referrals = sqliteTable('referrals', {
   referrer_org_id: text('referrer_org_id').notNull().references(() => organizations.id),
   referred_org_id: text('referred_org_id').references(() => organizations.id),
   referral_code: text('referral_code').notNull(),
-  status: text('status').default('clicked'),
-  reward_type: text('reward_type'),
+  status: text('status').default('clicked'), // clicked, paid
+  reward_type: text('reward_type'), // 'affiliate_first', 'affiliate_recurring', 'merchant_referral'
   reward_amount: real('reward_amount'),
+  is_first_payment: integer('is_first_payment').default(1),
+  payment_ref: text('payment_ref'),
   created_at: text('created_at').default(sql`(datetime('now'))`),
 })
 
@@ -408,19 +414,19 @@ export const support_tickets = sqliteTable('support_tickets', {
 // ============================================
 export const affiliates = sqliteTable('affiliates', {
   id: text('id').primaryKey().default(sql`(lower(hex(randomblob(16))))`),
-  clerk_id: text('clerk_id').unique(), // For auth logic
-  referred_by_id: text('referred_by_id'), // The affiliate id who referred this affiliate
+  clerk_id: text('clerk_id').unique(),
+  referred_by_id: text('referred_by_id'),
   name: text('name').notNull(),
-  username: text('username').unique(), // Display name in charts
+  username: text('username').unique(),
   email: text('email').notNull().unique(),
   phone: text('phone'),
   referral_code: text('referral_code').notNull().unique(),
   status: text('status').default('pending'), // pending, approved, rejected
-  total_referred: integer('total_referred').default(0), // Direct invites
-  total_network: integer('total_network').default(0), // Tier 2 invites
+  total_referred: integer('total_referred').default(0),
+  total_network: integer('total_network').default(0),
   total_earned: real('total_earned').default(0),
   balance: real('balance').default(0),
-  payment_details: text('payment_details'), // JSON holding bank/paypal info
+  payment_details: text('payment_details'),
   terms_accepted: integer('terms_accepted').default(1),
   created_at: text('created_at').default(sql`(datetime('now'))`),
   updated_at: text('updated_at').default(sql`(datetime('now'))`),
