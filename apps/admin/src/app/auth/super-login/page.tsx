@@ -47,13 +47,13 @@ export default function SuperLoginPage() {
             <div className="w-20 h-20 bg-emerald-500/10 rounded-3xl flex items-center justify-center mb-6 border border-emerald-500/20 shadow-inner group transition-all">
               <ShieldAlert className="text-emerald-500 group-hover:scale-110 transition-transform" size={40} />
             </div>
-            <h1 className="text-3xl font-black text-white tracking-tight text-center font-serif italic">Alfred's Backdoor</h1>
-            <p className="text-slate-400 text-sm font-bold uppercase tracking-[0.2em] mt-3 opacity-60">System Level Overide</p>
+            <h1 className="text-3xl font-black text-white tracking-tight text-center font-serif">Chatevo Admin</h1>
+            <p className="text-slate-400 text-sm font-medium mt-3 opacity-80">Restricted access. Authorized personnel only.</p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-6">
             <div className="space-y-3">
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Master Email</label>
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Email Address</label>
               <div className="relative group">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-emerald-500 transition-colors" size={18} />
                 <input 
@@ -61,14 +61,14 @@ export default function SuperLoginPage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="alfred.dev8@gmail.com"
+                  placeholder="admin@example.com"
                   className="w-full bg-slate-950/40 border border-slate-800 rounded-2xl py-4 pl-12 pr-4 text-white placeholder-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500/40 transition-all font-bold tracking-tight"
                 />
               </div>
             </div>
 
             <div className="space-y-3">
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Access Token</label>
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Password</label>
               <div className="relative group">
                 <Key className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-emerald-500 transition-colors" size={18} />
                 <input 
@@ -102,7 +102,7 @@ export default function SuperLoginPage() {
 
           <div className="mt-12 flex items-center justify-between opacity-30">
             <div className="h-px flex-1 bg-slate-800"></div>
-            <span className="text-[8px] font-black text-slate-500 mx-4 uppercase tracking-[0.3em]">SECURE ACCESS POINT 7</span>
+            <span className="text-[8px] font-black text-slate-500 mx-4 uppercase tracking-[0.3em]">SECURE PORTAL</span>
             <div className="h-px flex-1 bg-slate-800"></div>
           </div>
         </div>
