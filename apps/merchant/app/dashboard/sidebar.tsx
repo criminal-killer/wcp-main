@@ -5,9 +5,9 @@ import { UserButton } from '@clerk/nextjs'
 import {
   LayoutDashboard, Package, ShoppingCart, MessageSquare,
   Users, Settings, Store, BarChart3, Globe, Shield,
-  CheckCircle2, Plus, Menu, X, Bell, BookOpen
+  CheckCircle2, Plus, Menu, X, Bell, BookOpen, HandCoins, Gift
 } from 'lucide-react'
-import { useState } from 'react'
+import { useState, Fragment } from 'react'
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -17,6 +17,8 @@ const NAV_ITEMS = [
   { href: '/dashboard/contacts', label: 'Contacts', icon: Users },
   { href: '/dashboard/docs', label: 'Help & Docs', icon: BookOpen },
   { href: '/dashboard/settings', label: 'Settings', icon: Settings },
+  { href: '/affiliates/apply', label: 'Become Affiliate', icon: HandCoins },
+  { href: '/dashboard/settings/referrals', label: 'Referrals', icon: Gift },
 ]
 
 interface Org {
@@ -130,16 +132,23 @@ function NavContent({ pathname, org }: { pathname: string; org: Org }) {
     <nav className="space-y-1 px-2">
       {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
         const isActive = pathname === href || (href !== '/dashboard' && pathname.startsWith(href))
+        const isEarnSection = label === 'Become Affiliate'
+        
         return (
-          <Link
-            key={href}
-            href={href}
-            className={`flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold transition-all ${
-              isActive
-                ? 'bg-whatsapp/10 text-whatsapp shadow-sm shadow-whatsapp/5'
-                : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
-            }`}
-          >
+          <Fragment key={href}>
+            {isEarnSection && (
+              <div className="pt-4 mt-4 mb-2 border-t border-border/50">
+                <p className="px-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest">Earn</p>
+              </div>
+            )}
+            <Link
+              href={href}
+              className={`flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold transition-all ${
+                isActive
+                  ? 'bg-whatsapp/10 text-whatsapp shadow-sm shadow-whatsapp/5'
+                  : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
+              }`}
+            >
             <Icon size={20} className={isActive ? 'text-whatsapp' : 'text-muted-foreground/50'} />
             {label}
             {label === 'Inbox' && (
@@ -148,6 +157,7 @@ function NavContent({ pathname, org }: { pathname: string; org: Org }) {
               </span>
             )}
           </Link>
+          </Fragment>
         )
       })}
 
