@@ -19,8 +19,11 @@
     "db:studio":      "npm run db:studio --workspace=apps/merchant"
   },
   "devDependencies": {
-    "typescript": "^5",
+    "typescript": "5.4.5",
     "zod": "^3.23.8"
+  },
+  "overrides": {
+    "typescript": "5.4.5"
   },
   "engines": {
     "node": ">=18.0.0",
