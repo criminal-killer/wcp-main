@@ -3,24 +3,75 @@
 import { db } from "@/lib/db"
 import { affiliates, affiliate_payouts, audit_logs } from "@/lib/schema"
 import { eq, sql } from "drizzle-orm"
-import { currentUser } from "@clerk/nextjs/server"
+import { currentUser, clerkClient } from "@clerk/nextjs/server"
 
-export async function approveAffiliate(id: string) {
+export async function approveAndInviteAffiliate(id: string) {
   const admin = await currentUser()
   if (!admin) return { error: "Unauthorized" }
 
   try {
+    const affiliate = await db.query.affiliates.findFirst({
+      where: eq(affiliates.id, id)
+    })
+
+    if (!affiliate) return { success: false, error: "Affiliate not found" }
+
     await db.update(affiliates)
       .set({ status: 'approved' })
       .where(eq(affiliates.id, id))
 
+    const client = typeof clerkClient === 'function' ? await (clerkClient as any)() : clerkClient
+    const redirectUrl = `${process.env.MERCHANT_APP_URL || 'https://app.chatevo.io'}/affiliates/dashboard`
+
+    const invitation = await client.invitations.createInvitation({
+      emailAddress: affiliate.email,
+      redirectUrl,
+      ignoreExisting: true,
+    })
+
     await db.insert(audit_logs).values({
       admin_id: admin.id,
       admin_name: `${admin.firstName || ''} ${admin.lastName || ''}`.trim(),
-      action: "APPROVE_AFFILIATE",
+      action: "APPROVE_AND_INVITE_AFFILIATE",
       target_type: "affiliate",
       target_id: id,
-      details: "Approved affiliate account",
+      details: `Approved affiliate and sent invite (${invitation.id}) to ${affiliate.email}`,
+    })
+
+    return { success: true }
+  } catch (err: any) {
+    return { success: false, error: err.message }
+  }
+}
+
+export async function resendAffiliateInvite(id: string) {
+  const admin = await currentUser()
+  if (!admin) return { error: "Unauthorized" }
+
+  try {
+    const affiliate = await db.query.affiliates.findFirst({
+      where: eq(affiliates.id, id)
+    })
+
+    if (!affiliate) return { success: false, error: "Affiliate not found" }
+    if (affiliate.status !== 'approved') return { success: false, error: "Affiliate must be approved first" }
+
+    const client = typeof clerkClient === 'function' ? await (clerkClient as any)() : clerkClient
+    const redirectUrl = `${process.env.MERCHANT_APP_URL || 'https://app.chatevo.io'}/affiliates/dashboard`
+
+    const invitation = await client.invitations.createInvitation({
+      emailAddress: affiliate.email,
+      redirectUrl,
+      ignoreExisting: true,
+    })
+
+    await db.insert(audit_logs).values({
+      admin_id: admin.id,
+      admin_name: `${admin.firstName || ''} ${admin.lastName || ''}`.trim(),
+      action: "RESEND_AFFILIATE_INVITE",
+      target_type: "affiliate",
+      target_id: id,
+      details: `Resent Clerk invite (${invitation.id}) to ${affiliate.email}`,
     })
 
     return { success: true }

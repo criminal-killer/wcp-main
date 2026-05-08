@@ -20,6 +20,7 @@ Follow these exact steps when migrating to your custom domain (e.g., `chatevo.io
 Update the following environment variables in both Vercel projects (and your local `.env`):
 - `NEXT_PUBLIC_APP_URL` -> e.g., `https://app.chatevo.io`
 - `NEXT_PUBLIC_ADMIN_URL` -> e.g., `https://admin.chatevo.io`
+- `MERCHANT_APP_URL` -> e.g., `https://app.chatevo.io` (used for Affiliate invite redirects)
 
 ### 3. Clerk Authentication
 - Log into the Clerk Dashboard.
@@ -27,6 +28,7 @@ Update the following environment variables in both Vercel projects (and your loc
 - Update **Allowed Origins** (CORS) to include your new domain(s).
 - Update the **Redirect URLs** (sign-in, sign-up, post-auth redirects) to point to the new domain.
 - Update the **Clerk Webhook Endpoint** URL to point to `https://<YOUR_NEW_MERCHANT_DOMAIN>/api/webhooks/clerk`.
+- **Affiliates:** Affiliate invitations are generated via the Admin panel. The invitation redirect URL points to `${MERCHANT_APP_URL}/affiliates/dashboard`. Ensure `MERCHANT_APP_URL` exactly matches the new domain.
 
 ### 4. Payment & Platform Webhooks
 Update all external services to send webhooks to your new domain:

@@ -1,27 +1,43 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { auth, clerkClient } from '@clerk/nextjs/server'
 import { db } from '@/lib/db'
 import { affiliates } from '@/lib/schema'
 import { eq } from 'drizzle-orm'
 
-// GET /api/affiliates/me?email=jane@example.com
-// Looks up an affiliate by email (provided as query param).
-// The affiliate dashboard is not behind Clerk — affiliates sign up
-// externally and receive approval emails. We auth by email.
-// In future this can be upgraded to clerk_id once affiliates have accounts.
 export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url)
-  const email = searchParams.get('email')?.toLowerCase().trim()
-
-  if (!email) {
-    return NextResponse.json({ error: 'email query parameter is required.' }, { status: 400 })
+  const { userId } = await auth()
+  if (!userId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const affiliate = await db.query.affiliates.findFirst({
-    where: eq(affiliates.email, email),
+  // Get user details from Clerk
+  const client = typeof clerkClient === 'function' ? await (clerkClient as any)() : clerkClient
+  const clerkUser = await client.users.getUser(userId)
+  const primaryEmailId = clerkUser.primaryEmailAddressId
+  const primaryEmail = clerkUser.emailAddresses.find((e: any) => e.id === primaryEmailId)
+  const clerkEmailLower = (primaryEmail?.emailAddress || clerkUser.emailAddresses[0]?.emailAddress || '').toLowerCase()
+
+  // Find affiliate by clerk_id first, then fallback to email
+  let affiliate = await db.query.affiliates.findFirst({
+    where: eq(affiliates.clerk_id, userId),
   })
 
+  if (!affiliate && clerkEmailLower) {
+    affiliate = await db.query.affiliates.findFirst({
+      where: eq(affiliates.email, clerkEmailLower),
+    })
+
+    // Backfill clerk_id if matched by email
+    if (affiliate) {
+      await db.update(affiliates)
+        .set({ clerk_id: userId })
+        .where(eq(affiliates.id, affiliate.id))
+      affiliate.clerk_id = userId
+    }
+  }
+
   if (!affiliate) {
-    return NextResponse.json({ error: 'No affiliate account found for this email.' }, { status: 404 })
+    return NextResponse.json({ error: 'No affiliate account found.' }, { status: 404 })
   }
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://chatevo.app'

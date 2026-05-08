@@ -50,8 +50,6 @@ export default function AffiliateDashboardClient({
     try {
       const res = await fetch('/api/affiliates/payout-request', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: affiliate.email }),
       })
       const data = await res.json() as { success?: boolean; message?: string; error?: string }
       if (res.ok && data.success) {
@@ -79,7 +77,7 @@ export default function AffiliateDashboardClient({
           </Link>
         </div>
         <nav className="flex-1 p-4 space-y-2">
-          <Link href={`/affiliates/dashboard?email=${encodeURIComponent(affiliate.email)}`}
+          <Link href={`/affiliates/dashboard`}
             className="flex items-center gap-3 px-4 py-3 text-sm font-bold bg-green-50 text-[#25D366] rounded-xl">
             <TrendingUp size={18} /> Overview
           </Link>

@@ -1,25 +1,43 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { auth, clerkClient } from '@clerk/nextjs/server'
 import { db } from '@/lib/db'
 import { affiliates, affiliate_payouts } from '@/lib/schema'
 import { eq, and } from 'drizzle-orm'
 
 const MIN_PAYOUT_USD = 100
 
-// POST /api/affiliates/payout-request
-// Affiliate requests a payout of their full balance.
-// Admin must then review and mark it as paid via the admin panel.
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json() as { email?: string }
-    const email = body.email?.toLowerCase().trim()
-
-    if (!email) {
-      return NextResponse.json({ error: 'email is required.' }, { status: 400 })
+    const { userId } = await auth()
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const affiliate = await db.query.affiliates.findFirst({
-      where: eq(affiliates.email, email),
+    // Get user details from Clerk
+    const client = typeof clerkClient === 'function' ? await (clerkClient as any)() : clerkClient
+    const clerkUser = await client.users.getUser(userId)
+    const primaryEmailId = clerkUser.primaryEmailAddressId
+    const primaryEmail = clerkUser.emailAddresses.find((e: any) => e.id === primaryEmailId)
+    const clerkEmailLower = (primaryEmail?.emailAddress || clerkUser.emailAddresses[0]?.emailAddress || '').toLowerCase()
+
+    // Find affiliate by clerk_id first, then fallback to email
+    let affiliate = await db.query.affiliates.findFirst({
+      where: eq(affiliates.clerk_id, userId),
     })
+
+    if (!affiliate && clerkEmailLower) {
+      affiliate = await db.query.affiliates.findFirst({
+        where: eq(affiliates.email, clerkEmailLower),
+      })
+
+      // Backfill clerk_id if matched by email
+      if (affiliate) {
+        await db.update(affiliates)
+          .set({ clerk_id: userId })
+          .where(eq(affiliates.id, affiliate.id))
+        affiliate.clerk_id = userId
+      }
+    }
 
     if (!affiliate) {
       return NextResponse.json({ error: 'Affiliate not found.' }, { status: 404 })

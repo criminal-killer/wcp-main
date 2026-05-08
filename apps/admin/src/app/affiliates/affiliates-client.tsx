@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
-import { CheckCircle2, XCircle, Search, Wallet, AlertTriangle, ShieldCheck } from 'lucide-react'
-import { approveAffiliate, rejectAffiliate, processPayout } from './actions'
+import { CheckCircle2, XCircle, Search, Wallet, AlertTriangle, ShieldCheck, Mail } from 'lucide-react'
+import { approveAndInviteAffiliate, rejectAffiliate, processPayout, resendAffiliateInvite } from './actions'
 
 type Affiliate = {
   id: string;
@@ -20,9 +20,23 @@ export function AffiliatesClient({ initialData }: { initialData: Affiliate[] }) 
 
   const handleApprove = async (id: string) => {
     setLoadingId(id)
-    const res = await approveAffiliate(id)
+    const res = await approveAndInviteAffiliate(id)
     if (res.success) {
       setAffiliates(affiliates.map(a => a.id === id ? { ...a, status: 'approved' } : a))
+      alert('Affiliate approved and invitation sent.')
+    } else {
+      alert(`Error approving affiliate: ${res.error}`)
+    }
+    setLoadingId(null)
+  }
+
+  const handleResendInvite = async (id: string) => {
+    setLoadingId(id)
+    const res = await resendAffiliateInvite(id)
+    if (res.success) {
+      alert('Invitation resent successfully.')
+    } else {
+      alert(`Error resending invitation: ${res.error}`)
     }
     setLoadingId(null)
   }
@@ -114,7 +128,7 @@ export function AffiliatesClient({ initialData }: { initialData: Affiliate[] }) 
                 <td className="px-6 py-4 text-right space-x-2">
                   {a.status === 'pending' && (
                     <>
-                      <button onClick={() => handleApprove(a.id)} disabled={loadingId === a.id} className="bg-emerald-50 text-emerald-600 hover:bg-emerald-100 p-2 rounded-lg font-bold transition-colors disabled:opacity-50">
+                      <button onClick={() => handleApprove(a.id)} disabled={loadingId === a.id} title="Approve & Send Invite" className="bg-emerald-50 text-emerald-600 hover:bg-emerald-100 p-2 rounded-lg font-bold transition-colors disabled:opacity-50">
                         <CheckCircle2 size={18} />
                       </button>
                       <button onClick={() => handleReject(a.id)} disabled={loadingId === a.id} className="bg-red-50 text-red-600 hover:bg-red-100 p-2 rounded-lg font-bold transition-colors disabled:opacity-50">
@@ -122,13 +136,18 @@ export function AffiliatesClient({ initialData }: { initialData: Affiliate[] }) 
                       </button>
                     </>
                   )}
+                  {a.status === 'approved' && (
+                    <button onClick={() => handleResendInvite(a.id)} disabled={loadingId === a.id} title="Resend Invite" className="bg-blue-50 text-blue-600 hover:bg-blue-100 p-2 rounded-lg font-bold transition-colors disabled:opacity-50">
+                      <Mail size={18} />
+                    </button>
+                  )}
                   {a.status === 'approved' && (a.balance || 0) >= 100 && (
-                    <button onClick={() => handlePayout(a.id, a.balance || 0)} disabled={loadingId === a.id} className="bg-primary text-white hover:opacity-90 px-4 py-2 text-sm rounded-lg font-bold transition-colors shadow-sm shadow-primary/20 flex items-center gap-2 float-right disabled:opacity-50">
+                    <button onClick={() => handlePayout(a.id, a.balance || 0)} disabled={loadingId === a.id} className="bg-primary text-white hover:opacity-90 px-4 py-2 text-sm rounded-lg font-bold transition-colors shadow-sm shadow-primary/20 inline-flex items-center gap-2 ml-2 disabled:opacity-50">
                       <Wallet size={16} /> Pay ${(a.balance || 0).toFixed(2)}
                     </button>
                   )}
                   {a.status === 'approved' && (a.balance || 0) < 100 && (
-                    <span className="text-xs text-slate-400 font-medium">Below Min.</span>
+                    <span className="text-xs text-slate-400 font-medium inline-block ml-2">Below Min.</span>
                   )}
                 </td>
               </tr>
