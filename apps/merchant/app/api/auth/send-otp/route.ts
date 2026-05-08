@@ -21,9 +21,17 @@ async function sendOtpEmail(to: string, otp: string, name: string) {
     return { ok: true }
   }
 
-  const fromEmail = process.env.RESEND_FROM_EMAIL || 'Chatevo Security <onboarding@resend.dev>'
+  let fromEmail = process.env.RESEND_FROM_EMAIL || 'Chatevo Security <onboarding@resend.dev>'
+  
   if (!process.env.RESEND_FROM_EMAIL) {
     console.warn('[OTP] RESEND_FROM_EMAIL not set; using onboarding@resend.dev fallback. Set a verified domain sender when you buy a domain.')
+  } else {
+    // Validate format: must contain an @ and a . to prevent "noreply@chatevo" causing 422
+    const isValidFormat = /.+@.+\..+/.test(fromEmail)
+    if (!isValidFormat) {
+      console.warn('[OTP] Invalid RESEND_FROM_EMAIL format, falling back to onboarding@resend.dev', { from: fromEmail })
+      fromEmail = 'Chatevo Security <onboarding@resend.dev>'
+    }
   }
 
   const res = await fetch('https://api.resend.com/emails', {
