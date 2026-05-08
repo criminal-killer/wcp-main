@@ -21,7 +21,7 @@ export async function approveAndInviteAffiliate(id: string) {
       .where(eq(affiliates.id, id))
 
     const client = typeof clerkClient === 'function' ? await (clerkClient as any)() : clerkClient
-    const redirectUrl = `${process.env.MERCHANT_APP_URL || 'https://app.chatevo.io'}/affiliates/dashboard`
+    const redirectUrl = `${process.env.MERCHANT_APP_URL || 'https://app.chatevo.io'}/affiliates/invite`
 
     const invitation = await client.invitations.createInvitation({
       emailAddress: affiliate.email,
@@ -35,10 +35,10 @@ export async function approveAndInviteAffiliate(id: string) {
       action: "APPROVE_AND_INVITE_AFFILIATE",
       target_type: "affiliate",
       target_id: id,
-      details: `Approved affiliate and sent invite (${invitation.id}) to ${affiliate.email}`,
+      details: `Approved affiliate and sent invite (${invitation.id}) to ${affiliate.email}. Link: ${invitation.url}`,
     })
 
-    return { success: true }
+    return { success: true, url: invitation.url }
   } catch (err: any) {
     return { success: false, error: err.message }
   }
@@ -57,7 +57,7 @@ export async function resendAffiliateInvite(id: string) {
     if (affiliate.status !== 'approved') return { success: false, error: "Affiliate must be approved first" }
 
     const client = typeof clerkClient === 'function' ? await (clerkClient as any)() : clerkClient
-    const redirectUrl = `${process.env.MERCHANT_APP_URL || 'https://app.chatevo.io'}/affiliates/dashboard`
+    const redirectUrl = `${process.env.MERCHANT_APP_URL || 'https://app.chatevo.io'}/affiliates/invite`
 
     const invitation = await client.invitations.createInvitation({
       emailAddress: affiliate.email,
@@ -71,10 +71,10 @@ export async function resendAffiliateInvite(id: string) {
       action: "RESEND_AFFILIATE_INVITE",
       target_type: "affiliate",
       target_id: id,
-      details: `Resent Clerk invite (${invitation.id}) to ${affiliate.email}`,
+      details: `Resent Clerk invite (${invitation.id}) to ${affiliate.email}. Link: ${invitation.url}`,
     })
 
-    return { success: true }
+    return { success: true, url: invitation.url }
   } catch (err: any) {
     return { success: false, error: err.message }
   }

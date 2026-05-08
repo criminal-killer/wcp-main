@@ -28,7 +28,7 @@ Update the following environment variables in both Vercel projects (and your loc
 - Update **Allowed Origins** (CORS) to include your new domain(s).
 - Update the **Redirect URLs** (sign-in, sign-up, post-auth redirects) to point to the new domain.
 - Update the **Clerk Webhook Endpoint** URL to point to `https://<YOUR_NEW_MERCHANT_DOMAIN>/api/webhooks/clerk`.
-- **Affiliates:** Affiliate invitations are generated via the Admin panel. The invitation redirect URL points to `${MERCHANT_APP_URL}/affiliates/dashboard`. Ensure `MERCHANT_APP_URL` exactly matches the new domain.
+- **Affiliates:** Affiliate invitations are generated via the Admin panel. The invitation redirect URL points to `${MERCHANT_APP_URL}/affiliates/invite` which handles sign-ups smoothly. Ensure `MERCHANT_APP_URL` exactly matches the new domain.
 
 ### 4. Payment & Platform Webhooks
 Update all external services to send webhooks to your new domain:

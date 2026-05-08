@@ -218,6 +218,7 @@ export default function HomePage() {
               <Link href="#features" className="hover:text-primary transition-colors">Features</Link>
               <Link href="#pricing" className="hover:text-primary transition-colors">Pricing</Link>
               <Link href="#themes" className="hover:text-primary transition-colors">Themes</Link>
+              <Link href="/affiliates/apply" className="hover:text-primary transition-colors text-primary">Affiliates</Link>
               <Link href="/docs" className="hover:text-primary transition-colors">Docs</Link>
             </nav>
           </div>
@@ -260,6 +261,9 @@ export default function HomePage() {
                 {item}
               </a>
             ))}
+            <Link href="/affiliates/apply" className="text-sm font-bold text-primary hover:text-primary/80 transition-colors tracking-tight">
+              Affiliates
+            </Link>
           </div>
 
           <div className="flex items-center gap-6">
@@ -461,6 +465,26 @@ export default function HomePage() {
                   </div>
                </div>
              </div>
+          </div>
+        </section>
+
+        <section className="max-w-7xl mx-auto px-6 py-20">
+          <div className="bg-[#075E54] rounded-[50px] p-12 md:p-20 text-center relative overflow-hidden">
+            <div className="absolute inset-0 bg-noise opacity-[0.05] mix-blend-overlay" />
+            <div className="absolute top-[-50%] left-[-20%] w-[100%] h-[200%] bg-white/5 blur-[120px] rounded-full pointer-events-none" />
+            
+            <h2 className="text-4xl md:text-6xl font-serif font-black text-white mb-6 relative z-10">
+              Earn with Chatevo
+            </h2>
+            <p className="text-white/80 text-lg font-medium max-w-2xl mx-auto mb-10 relative z-10">
+              Refer merchants to Chatevo and earn a 40% commission on their first payment, plus 10% recurring for life. Turn your audience into an income stream.
+            </p>
+            <Link
+              href="/affiliates/apply"
+              className="inline-flex items-center gap-3 bg-white text-[#075E54] px-10 py-5 rounded-full font-black text-lg hover:bg-slate-50 transition-transform hover:scale-105 active:scale-95 shadow-xl relative z-10"
+            >
+              Apply as an Affiliate <ArrowRight className="w-5 h-5" />
+            </Link>
           </div>
         </section>
       </main>

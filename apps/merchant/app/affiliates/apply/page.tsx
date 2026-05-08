@@ -58,9 +58,11 @@ export default function AffiliateApplyPage() {
           </div>
           <h1 className="text-3xl font-black font-serif mb-2">Application Received!</h1>
           <p className="text-muted-foreground font-medium mb-2">
-            {apiMessage || 'Our team will review your application and email you once approved.'}
+            If approved, you'll receive an invite link via email to create your account.
           </p>
-          <p className="text-sm text-slate-400 mb-8">Average review time: 2 business days.</p>
+          <p className="text-sm text-slate-400 mb-8">
+            You can also sign in later at <Link href="/affiliates/dashboard" className="text-primary hover:underline">/affiliates/dashboard</Link> to track your status.
+          </p>
           <Link href="/" className="inline-block bg-[#25D366] text-white font-bold px-8 py-3 rounded-xl hover:opacity-90 transition-opacity">
             Return Home
           </Link>
@@ -100,9 +102,18 @@ export default function AffiliateApplyPage() {
           <h1 className="text-4xl md:text-5xl font-black font-serif tracking-tight text-slate-900 mb-4">
             Become a Chatevo Partner
           </h1>
-          <p className="text-lg text-slate-600 font-medium max-w-2xl mx-auto">
+          <p className="text-lg text-slate-600 font-medium max-w-2xl mx-auto mb-8">
             Earn <strong>40%</strong> on the first payment and <strong>10% recurring</strong> commissions for every merchant you refer.
           </p>
+          
+          <div className="flex items-center justify-center gap-4 flex-wrap">
+            <button onClick={() => window.scrollTo({ top: 500, behavior: 'smooth' })} className="bg-slate-900 text-white font-bold px-8 py-3 rounded-xl hover:bg-slate-800 transition-colors">
+              Apply Now
+            </button>
+            <Link href="/affiliates/invite" className="bg-primary/10 text-primary font-bold px-8 py-3 rounded-xl hover:bg-primary/20 transition-colors">
+              Already invited? Create account / Sign in
+            </Link>
+          </div>
         </div>
 
         <div className="grid md:grid-cols-5 gap-8">

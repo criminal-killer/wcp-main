@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import { CheckCircle2, XCircle, Search, Wallet, AlertTriangle, ShieldCheck, Mail } from 'lucide-react'
+import { CheckCircle2, XCircle, Search, Wallet, AlertTriangle, ShieldCheck, Mail, Copy } from 'lucide-react'
 import { approveAndInviteAffiliate, rejectAffiliate, processPayout, resendAffiliateInvite } from './actions'
 
 type Affiliate = {
@@ -17,13 +17,14 @@ export function AffiliatesClient({ initialData }: { initialData: Affiliate[] }) 
   const [affiliates, setAffiliates] = useState<Affiliate[]>(initialData)
   const [searchTerm, setSearchTerm] = useState('')
   const [loadingId, setLoadingId] = useState<string | null>(null)
+  const [inviteLink, setInviteLink] = useState<{ id: string; url: string; time: Date } | null>(null)
 
   const handleApprove = async (id: string) => {
     setLoadingId(id)
     const res = await approveAndInviteAffiliate(id)
-    if (res.success) {
+    if (res.success && res.url) {
       setAffiliates(affiliates.map(a => a.id === id ? { ...a, status: 'approved' } : a))
-      alert('Affiliate approved and invitation sent.')
+      setInviteLink({ id, url: res.url, time: new Date() })
     } else {
       alert(`Error approving affiliate: ${res.error}`)
     }
@@ -33,8 +34,8 @@ export function AffiliatesClient({ initialData }: { initialData: Affiliate[] }) 
   const handleResendInvite = async (id: string) => {
     setLoadingId(id)
     const res = await resendAffiliateInvite(id)
-    if (res.success) {
-      alert('Invitation resent successfully.')
+    if (res.success && res.url) {
+      setInviteLink({ id, url: res.url, time: new Date() })
     } else {
       alert(`Error resending invitation: ${res.error}`)
     }
@@ -125,30 +126,41 @@ export function AffiliatesClient({ initialData }: { initialData: Affiliate[] }) 
                     {(a.balance || 0) >= 100 && <AlertTriangle size={16} className="text-amber-500" />}
                   </div>
                 </td>
-                <td className="px-6 py-4 text-right space-x-2">
-                  {a.status === 'pending' && (
-                    <>
-                      <button onClick={() => handleApprove(a.id)} disabled={loadingId === a.id} title="Approve & Send Invite" className="bg-emerald-50 text-emerald-600 hover:bg-emerald-100 p-2 rounded-lg font-bold transition-colors disabled:opacity-50">
-                        <CheckCircle2 size={18} />
+                <td className="px-6 py-4 text-right">
+                  {inviteLink?.id === a.id && (
+                    <div className="mb-2 bg-slate-50 border border-slate-200 p-2 rounded-lg text-left inline-block float-right clear-both ml-2 min-w-[150px]">
+                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Invite Created</p>
+                      <button onClick={() => { navigator.clipboard.writeText(inviteLink.url); alert('Invite link copied!') }} className="text-xs font-bold text-primary hover:underline flex items-center gap-1">
+                        <Copy size={12} /> Copy Invite Link
                       </button>
-                      <button onClick={() => handleReject(a.id)} disabled={loadingId === a.id} className="bg-red-50 text-red-600 hover:bg-red-100 p-2 rounded-lg font-bold transition-colors disabled:opacity-50">
-                        <XCircle size={18} />
+                      <p className="text-[9px] text-slate-400 mt-1">Sent: {inviteLink.time.toLocaleTimeString()}</p>
+                    </div>
+                  )}
+                  <div className="clear-both space-x-2">
+                    {a.status === 'pending' && (
+                      <>
+                        <button onClick={() => handleApprove(a.id)} disabled={loadingId === a.id} title="Approve & Send Invite" className="bg-emerald-50 text-emerald-600 hover:bg-emerald-100 p-2 rounded-lg font-bold transition-colors disabled:opacity-50">
+                          <CheckCircle2 size={18} />
+                        </button>
+                        <button onClick={() => handleReject(a.id)} disabled={loadingId === a.id} className="bg-red-50 text-red-600 hover:bg-red-100 p-2 rounded-lg font-bold transition-colors disabled:opacity-50">
+                          <XCircle size={18} />
+                        </button>
+                      </>
+                    )}
+                    {a.status === 'approved' && (
+                      <button onClick={() => handleResendInvite(a.id)} disabled={loadingId === a.id} title="Resend Invite" className="bg-blue-50 text-blue-600 hover:bg-blue-100 p-2 rounded-lg font-bold transition-colors disabled:opacity-50">
+                        <Mail size={18} />
                       </button>
-                    </>
-                  )}
-                  {a.status === 'approved' && (
-                    <button onClick={() => handleResendInvite(a.id)} disabled={loadingId === a.id} title="Resend Invite" className="bg-blue-50 text-blue-600 hover:bg-blue-100 p-2 rounded-lg font-bold transition-colors disabled:opacity-50">
-                      <Mail size={18} />
-                    </button>
-                  )}
-                  {a.status === 'approved' && (a.balance || 0) >= 100 && (
-                    <button onClick={() => handlePayout(a.id, a.balance || 0)} disabled={loadingId === a.id} className="bg-primary text-white hover:opacity-90 px-4 py-2 text-sm rounded-lg font-bold transition-colors shadow-sm shadow-primary/20 inline-flex items-center gap-2 ml-2 disabled:opacity-50">
-                      <Wallet size={16} /> Pay ${(a.balance || 0).toFixed(2)}
-                    </button>
-                  )}
-                  {a.status === 'approved' && (a.balance || 0) < 100 && (
-                    <span className="text-xs text-slate-400 font-medium inline-block ml-2">Below Min.</span>
-                  )}
+                    )}
+                    {a.status === 'approved' && (a.balance || 0) >= 100 && (
+                      <button onClick={() => handlePayout(a.id, a.balance || 0)} disabled={loadingId === a.id} className="bg-primary text-white hover:opacity-90 px-4 py-2 text-sm rounded-lg font-bold transition-colors shadow-sm shadow-primary/20 inline-flex items-center gap-2 ml-2 disabled:opacity-50">
+                        <Wallet size={16} /> Pay ${(a.balance || 0).toFixed(2)}
+                      </button>
+                    )}
+                    {a.status === 'approved' && (a.balance || 0) < 100 && (
+                      <span className="text-xs text-slate-400 font-medium inline-block ml-2">Below Min.</span>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
