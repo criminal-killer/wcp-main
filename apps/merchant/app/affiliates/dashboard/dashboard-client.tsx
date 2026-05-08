@@ -21,6 +21,7 @@ interface ReferralRow {
   org_name: string
   plan: string | null
   is_paying: boolean
+  trial_days_remaining?: number
   total_commission: number
   recurring_payments: number
 }
@@ -30,9 +31,11 @@ const MIN_PAYOUT = 100
 export default function AffiliateDashboardClient({
   affiliate,
   referrals,
+  totals,
 }: {
   affiliate: AffiliateData
   referrals: ReferralRow[]
+  totals: { signups: number; paying: number }
 }) {
   const [copied, setCopied] = useState(false)
   const [payoutState, setPayoutState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
@@ -65,7 +68,7 @@ export default function AffiliateDashboardClient({
     }
   }
 
-  const activeReferrals = referrals.filter(r => r.is_paying).length
+  // totals passed from parent
 
   return (
     <div className="min-h-screen bg-slate-50 font-outfit flex">
@@ -118,9 +121,9 @@ export default function AffiliateDashboardClient({
         </header>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {/* Balance + Payout */}
-          <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm relative overflow-hidden">
+          <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm relative overflow-hidden lg:col-span-1">
             <div className="absolute top-0 right-0 w-32 h-32 bg-green-50 rounded-full translate-x-1/3 -translate-y-1/3 blur-2xl" />
             <div className="relative z-10">
               <div className="flex items-center justify-between mb-4">
@@ -152,7 +155,7 @@ export default function AffiliateDashboardClient({
                     ? 'Request Submitted ✓'
                     : affiliate.balance >= MIN_PAYOUT
                       ? `Request Payout ($${affiliate.balance.toFixed(2)})`
-                      : `$${MIN_PAYOUT} Minimum Required`}
+                      : `$${MIN_PAYOUT} Min Required`}
               </button>
               {affiliate.balance < MIN_PAYOUT && (
                 <p className="text-xs text-slate-400 text-center mt-2">
@@ -163,7 +166,7 @@ export default function AffiliateDashboardClient({
           </div>
 
           {/* Total Earned */}
-          <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm relative overflow-hidden">
+          <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm relative overflow-hidden lg:col-span-1">
             <div className="relative z-10">
               <div className="flex items-center justify-between mb-4">
                 <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">Total Earned</p>
@@ -174,14 +177,26 @@ export default function AffiliateDashboardClient({
             </div>
           </div>
 
+          {/* Total Signups */}
+          <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm relative overflow-hidden lg:col-span-1">
+            <div className="relative z-10">
+              <div className="flex items-center justify-between mb-4">
+                <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">Total Signups</p>
+                <Target className="text-pink-500" size={24} />
+              </div>
+              <p className="text-4xl font-black text-slate-900">{totals.signups}</p>
+              <p className="text-sm text-slate-500 font-medium mt-2">All merchants joined via your link.</p>
+            </div>
+          </div>
+
           {/* Active Referrals */}
-          <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm relative overflow-hidden">
+          <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm relative overflow-hidden lg:col-span-1">
             <div className="relative z-10">
               <div className="flex items-center justify-between mb-4">
                 <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">Active Referrals</p>
                 <Users className="text-purple-500" size={24} />
               </div>
-              <p className="text-4xl font-black text-slate-900">{activeReferrals}</p>
+              <p className="text-4xl font-black text-slate-900">{totals.paying}</p>
               <p className="text-sm text-slate-500 font-medium mt-2">Paying merchants · 10% recurring.</p>
             </div>
           </div>
@@ -216,9 +231,13 @@ export default function AffiliateDashboardClient({
                     <td className="px-6 py-3 text-sm font-semibold text-slate-800">{r.org_name}</td>
                     <td className="px-6 py-3 text-sm text-slate-500 capitalize">{r.plan || 'trial'}</td>
                     <td className="px-6 py-3">
-                      <span className={`text-xs px-2 py-1 rounded-full font-bold ${r.is_paying ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
-                        {r.is_paying ? 'Paying' : 'Trial'}
-                      </span>
+                      {r.is_paying ? (
+                        <span className="text-xs px-2 py-1 rounded-full font-bold bg-green-100 text-green-700">Paying</span>
+                      ) : r.plan === 'trial' && r.trial_days_remaining === 0 ? (
+                        <span className="text-xs px-2 py-1 rounded-full font-bold bg-red-100 text-red-700">Expired Trial</span>
+                      ) : (
+                        <span className="text-xs px-2 py-1 rounded-full font-bold bg-amber-100 text-amber-700">Trial ({r.trial_days_remaining}d left)</span>
+                      )}
                     </td>
                     <td className="px-6 py-3 text-sm font-bold text-slate-800 text-right">
                       ${r.total_commission.toFixed(2)}

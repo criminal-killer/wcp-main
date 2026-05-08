@@ -1,7 +1,7 @@
 import { auth, clerkClient } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { users, organizations } from '@/lib/schema'
+import { users, organizations, affiliates } from '@/lib/schema'
 import { eq } from 'drizzle-orm'
 import { sendWelcomeEmail } from '@/lib/email'
 
@@ -40,6 +40,19 @@ export async function POST(req: NextRequest) {
 
     const countryData = COUNTRIES_MAP[country] || COUNTRIES_MAP.OTHER
 
+    // Check for affiliate referral
+    const refCode = req.cookies.get('affiliate_ref')?.value
+    let validReferralCode = null
+
+    if (refCode) {
+      const affiliate = await db.query.affiliates.findFirst({
+        where: eq(affiliates.referral_code, refCode)
+      })
+      if (affiliate) {
+        validReferralCode = affiliate.referral_code
+      }
+    }
+
     // Create org (Drizzle will auto-generate the uuid via default)
     const slug = slugify(name)
     const trialEndsAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
@@ -52,6 +65,7 @@ export async function POST(req: NextRequest) {
       timezone: countryData.timezone,
       plan: 'trial',
       trial_ends_at: trialEndsAt,
+      referred_by: validReferralCode,
     }).returning()
 
     let email = ''
@@ -84,10 +98,16 @@ export async function POST(req: NextRequest) {
       console.error('Welcome email failed:', err)
     }
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       data: { org_id: org.id, slug: org.slug },
       message: 'Store created successfully',
     }, { status: 201 })
+
+    if (validReferralCode) {
+      response.cookies.delete('affiliate_ref')
+    }
+
+    return response
   } catch (error: any) {
     console.error('Onboarding error:', error)
     if (error?.status === 401 || error?.message?.includes('Unauthorized')) {

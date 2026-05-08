@@ -50,6 +50,7 @@ export async function GET(req: NextRequest) {
     name: organizations.name,
     plan: organizations.plan,
     created_at: organizations.created_at,
+    trial_ends_at: organizations.trial_ends_at,
   })
     .from(organizations)
     .where(eq(organizations.referred_by, affiliate.referral_code))
@@ -62,6 +63,9 @@ export async function GET(req: NextRequest) {
       eq(referrals.status, 'paid'),
     ))
 
+  const nowMs = Date.now()
+  let payingCount = 0
+
   // Join: build enriched list
   const data = referred_orgs.map(org => {
     const orgCommissions = commissions.filter(r => r.referred_org_id === org.id)
@@ -69,17 +73,31 @@ export async function GET(req: NextRequest) {
     const firstPayment = orgCommissions.find(r => r.is_first_payment === 1)
     const recurringCount = orgCommissions.filter(r => r.is_first_payment === 0).length
 
+    let trial_days_remaining = 0
+    if (org.plan === 'trial' && org.trial_ends_at) {
+      const endsAtMs = new Date(org.trial_ends_at).getTime()
+      trial_days_remaining = Math.max(0, Math.ceil((endsAtMs - nowMs) / 86400000))
+    }
+
+    const is_paying = org.plan !== 'trial' && org.plan !== 'free'
+    if (is_paying) payingCount++
+
     return {
       org_id: org.id,
       org_name: org.name,
       plan: org.plan,
-      signed_up: org.created_at,
-      is_paying: org.plan !== 'trial' && org.plan !== 'free',
+      created_at: org.created_at,
+      signed_up: org.created_at, // keep for backwards compatibility if needed
+      is_paying,
+      trial_days_remaining,
       total_commission: Math.round(totalCommission * 100) / 100,
       first_payment_commission: firstPayment ? firstPayment.reward_amount : null,
       recurring_payments: recurringCount,
     }
   })
 
-  return NextResponse.json({ data, total: data.length })
+  return NextResponse.json({
+    totals: { signups: data.length, paying: payingCount },
+    referrals: data
+  })
 }
