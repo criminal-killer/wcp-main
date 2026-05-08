@@ -1,4 +1,4 @@
-import { auth } from '@clerk/nextjs/server'
+import { auth, clerkClient } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { users, organizations } from '@/lib/schema'
@@ -54,11 +54,26 @@ export async function POST(req: NextRequest) {
       trial_ends_at: trialEndsAt,
     }).returning()
 
+    let email = ''
+    let userName = ''
+    try {
+      // @ts-ignore - Handle both Clerk v4 and v5 exports
+      const client = typeof clerkClient === 'function' ? await clerkClient() : clerkClient
+      const clerkUser = await client.users.getUser(userId)
+      const primaryEmailId = clerkUser.primaryEmailAddressId
+      const primaryEmail = clerkUser.emailAddresses.find((e: any) => e.id === primaryEmailId)
+      email = primaryEmail?.emailAddress || clerkUser.emailAddresses[0]?.emailAddress || ''
+      userName = `${clerkUser.firstName || ''} ${clerkUser.lastName || ''}`.trim()
+    } catch (e) {
+      console.error('[Onboarding] Failed to fetch Clerk user details:', e)
+    }
+
     // Create user
     const [user] = await db.insert(users).values({
       clerk_id: userId,
       org_id: org.id,
-      email: '', // Will be updated from Clerk webhook
+      email: email, // Pulled from Clerk synchronously
+      name: userName,
       role: 'owner',
     }).returning()
 

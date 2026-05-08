@@ -62,13 +62,38 @@ export async function POST() {
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const user = await db.query.users.findFirst({ where: eq(users.clerk_id, userId) })
-  if (!user?.email) return NextResponse.json({ error: 'User email not found' }, { status: 404 })
+  if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
+
+  let email = user.email
+  let name = user.name
+
+  if (!email) {
+    try {
+      const client = typeof clerkClient === 'function' ? await (clerkClient as any)() : clerkClient
+      const clerkUser = await client.users.getUser(userId)
+      const primaryEmailId = clerkUser.primaryEmailAddressId
+      const primaryEmail = clerkUser.emailAddresses.find((e: any) => e.id === primaryEmailId)
+      email = primaryEmail?.emailAddress || clerkUser.emailAddresses[0]?.emailAddress || ''
+      
+      if (!name) {
+        name = `${clerkUser.firstName || ''} ${clerkUser.lastName || ''}`.trim()
+      }
+
+      if (email) {
+        await db.update(users).set({ email, name }).where(eq(users.clerk_id, userId))
+      }
+    } catch (e) {
+      console.error('[OTP] Failed to fetch Clerk user:', e)
+    }
+  }
+
+  if (!email) return NextResponse.json({ error: 'User email not found' }, { status: 404 })
 
   const otp = generateOtp()
   const expiresAt = Date.now() + 10 * 60 * 1000 // 10 minutes
   const token = signOtp(otp, userId, expiresAt)
 
-  const sent = await sendOtpEmail(user.email, otp, user.name || '')
+  const sent = await sendOtpEmail(email, otp, name || '')
   if (!sent) return NextResponse.json({ error: 'Failed to send OTP email. Please try again.' }, { status: 500 })
 
   const response = NextResponse.json({ success: true, message: 'Code sent to your registered email.' })
