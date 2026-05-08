@@ -167,7 +167,7 @@ export default function DocsPage() {
           ))}
           
           <div className="pt-8 mt-8 border-t border-slate-100">
-             <a href="mailto:support@Chatevo.app" className="flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black text-slate-400 hover:text-primary transition-colors">
+             <a href="mailto:mazaoedu@gmail.com" className="flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black text-slate-400 hover:text-primary transition-colors">
                 <HelpCircle size={16} />
                 Need Human Help?
              </a>
