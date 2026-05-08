@@ -1,15 +1,18 @@
 import { db } from "@/lib/db"
 import { audit_logs } from "@/lib/schema"
 import { desc } from "drizzle-orm"
-import { Activity, Shield, User, Globe, Clock, ChevronRight } from "lucide-react"
+import { Activity, Shield, User, Globe, Clock, ChevronRight, AlertCircle } from "lucide-react"
 
 export default async function AuditLogsPage() {
   let logs: any[] = []
+  let tableMissing = false
   try {
     logs = await db.select().from(audit_logs).orderBy(desc(audit_logs.created_at)).limit(100)
-  } catch (err) {
+  } catch (err: any) {
     console.error("Error fetching logs:", err)
-    // Silently fallback to empty if the table isn't migrated
+    if (err.message?.includes('no such table: audit_logs')) {
+      tableMissing = true
+    }
   }
 
   return (
@@ -68,7 +71,16 @@ export default async function AuditLogsPage() {
                   </td>
                 </tr>
               ))}
-              {logs.length === 0 && (
+              {tableMissing && (
+                <tr>
+                  <td colSpan={5} className="p-20 text-center text-slate-400">
+                     <AlertCircle size={48} className="mx-auto mb-4 text-amber-500 opacity-50" />
+                     <p className="font-bold text-sm text-amber-700">Audit logs table not initialized.</p>
+                     <p className="text-xs mt-2 text-slate-500">Run <code className="bg-amber-50 text-amber-800 px-1.5 py-0.5 rounded font-mono border border-amber-200">scripts/migrate-audit-logs.sql</code> to create it.</p>
+                  </td>
+                </tr>
+              )}
+              {!tableMissing && logs.length === 0 && (
                 <tr>
                   <td colSpan={5} className="p-20 text-center text-slate-300">
                      <Activity size={48} className="mx-auto mb-4 opacity-10" />

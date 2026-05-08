@@ -97,6 +97,7 @@ Production schema updates are handled safely using the idempotent apply script w
 1. **Run Migrations:** Execute the migration script locally (or in CI) targeting production:
    ```bash
    node --env-file=.env.production scripts/apply-sql.mjs scripts/migrate-referrals.sql
+   node --env-file=.env.production scripts/apply-sql.mjs scripts/migrate-audit-logs.sql
    ```
 2. **Idempotency:** The script parses the SQL, strips comments, and executes statements sequentially. It automatically skips statements that throw safe duplication errors (e.g., "duplicate column name", "already exists"), ensuring it can be rerun safely.
 3. **Verification:** Run `node scripts/verify-schema.mjs` to ensure your production Turso database matches the expected codebase schema.
