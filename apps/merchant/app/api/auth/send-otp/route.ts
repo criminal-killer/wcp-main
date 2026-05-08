@@ -18,7 +18,12 @@ async function sendOtpEmail(to: string, otp: string, name: string) {
   const resendKey = process.env.RESEND_API_KEY
   if (!resendKey) {
     console.warn(`[OTP] No RESEND_API_KEY configured. OTP for ${to}: ${otp}`)
-    return true
+    return { ok: true }
+  }
+
+  const fromEmail = process.env.RESEND_FROM_EMAIL || 'Chatevo Security <onboarding@resend.dev>'
+  if (!process.env.RESEND_FROM_EMAIL) {
+    console.warn('[OTP] RESEND_FROM_EMAIL not set; using onboarding@resend.dev fallback. Set a verified domain sender when you buy a domain.')
   }
 
   const res = await fetch('https://api.resend.com/emails', {
@@ -26,9 +31,10 @@ async function sendOtpEmail(to: string, otp: string, name: string) {
     headers: {
       Authorization: `Bearer ${resendKey}`,
       'Content-Type': 'application/json',
+      'User-Agent': 'Chatevo/1.0',
     },
     body: JSON.stringify({
-      from: `Chatevo Security <security@${process.env.EMAIL_FROM_DOMAIN || 'chatevo.io'}>`,
+      from: fromEmail,
       to,
       subject: 'Your Chatevo Security Code',
       html: `
@@ -46,7 +52,27 @@ async function sendOtpEmail(to: string, otp: string, name: string) {
     }),
   })
 
-  return res.ok
+  if (!res.ok) {
+    let resendBody: any
+    try {
+      const text = await res.text()
+      try { resendBody = JSON.parse(text) } catch { resendBody = text }
+    } catch {
+      resendBody = 'Could not read response body'
+    }
+
+    console.error({
+      where: 'send-otp',
+      resendStatus: res.status,
+      resendBody,
+      to,
+      from: fromEmail,
+      vercelRequestId: res.headers.get('x-vercel-id') || 'unknown',
+    })
+    return { ok: false, error: 'Email provider rejected the request. Check Resend configuration.' }
+  }
+
+  return { ok: true }
 }
 
 const OTP_SECRET = process.env.OTP_HMAC_SECRET || 'chatevo-otp-secret-change-in-production'
@@ -93,8 +119,10 @@ export async function POST() {
   const expiresAt = Date.now() + 10 * 60 * 1000 // 10 minutes
   const token = signOtp(otp, userId, expiresAt)
 
-  const sent = await sendOtpEmail(email, otp, name || '')
-  if (!sent) return NextResponse.json({ error: 'Failed to send OTP email. Please try again.' }, { status: 500 })
+  const sentResult = await sendOtpEmail(email, otp, name || '')
+  if (!sentResult.ok) {
+    return NextResponse.json({ error: sentResult.error || 'Failed to send OTP email. Please try again.' }, { status: 500 })
+  }
 
   const response = NextResponse.json({ success: true, message: 'Code sent to your registered email.' })
   // Store signed token in httpOnly cookie (10 min TTL)
