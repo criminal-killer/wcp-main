@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth, clerkClient } from '@clerk/nextjs/server'
 import { db } from '@/lib/db'
 import { affiliates } from '@/lib/schema'
-import { eq } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
 
 export async function GET(req: NextRequest) {
   const { userId } = await auth()
@@ -14,17 +14,19 @@ export async function GET(req: NextRequest) {
   const client = typeof clerkClient === 'function' ? await (clerkClient as any)() : clerkClient
   const clerkUser = await client.users.getUser(userId)
   const primaryEmailId = clerkUser.primaryEmailAddressId
-  const primaryEmail = clerkUser.emailAddresses.find((e: any) => e.id === primaryEmailId)
-  const clerkEmailLower = (primaryEmail?.emailAddress || clerkUser.emailAddresses[0]?.emailAddress || '').toLowerCase()
+  const primaryEmailObj = clerkUser.emailAddresses.find((e: any) => e.id === primaryEmailId)
+  const rawEmail = primaryEmailObj?.emailAddress || clerkUser.emailAddresses[0]?.emailAddress || ''
+  const emailNorm = rawEmail.trim().toLowerCase()
 
-  // Find affiliate by clerk_id first, then fallback to email
+  // Find affiliate by clerk_id first
   let affiliate = await db.query.affiliates.findFirst({
     where: eq(affiliates.clerk_id, userId),
   })
 
-  if (!affiliate && clerkEmailLower) {
+  // Fallback to email match
+  if (!affiliate && emailNorm) {
     affiliate = await db.query.affiliates.findFirst({
-      where: eq(affiliates.email, clerkEmailLower),
+      where: sql`lower(trim(${affiliates.email})) = ${emailNorm}`,
     })
 
     // Backfill clerk_id if matched by email
@@ -37,22 +39,26 @@ export async function GET(req: NextRequest) {
   }
 
   if (!affiliate) {
-    return NextResponse.json({ error: 'No affiliate account found.' }, { status: 404 })
+    const emailDomain = emailNorm.split('@')[1] || 'unknown'
+    console.warn({ where: "affiliates-me", userId, emailDomain })
+    return NextResponse.json({ error: 'No affiliate application found for this account' }, { status: 404 })
   }
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://chatevo.app'
 
   return NextResponse.json({
-    id: affiliate.id,
-    name: affiliate.name,
-    email: affiliate.email,
-    status: affiliate.status,
-    referral_code: affiliate.referral_code,
-    referral_link: `${appUrl}/?ref=${affiliate.referral_code}`,
-    total_referred: affiliate.total_referred ?? 0,
-    total_earned: affiliate.total_earned ?? 0,
-    balance: affiliate.balance ?? 0,
-    payment_details: affiliate.payment_details,
-    created_at: affiliate.created_at,
+    affiliate: {
+      id: affiliate.id,
+      name: affiliate.name,
+      email: affiliate.email,
+      status: affiliate.status,
+      referral_code: affiliate.referral_code,
+      referral_link: `${appUrl}/?ref=${affiliate.referral_code}`,
+      total_referred: affiliate.total_referred ?? 0,
+      total_earned: affiliate.total_earned ?? 0,
+      balance: affiliate.balance ?? 0,
+      payment_details: affiliate.payment_details,
+      created_at: affiliate.created_at,
+    }
   })
 }
