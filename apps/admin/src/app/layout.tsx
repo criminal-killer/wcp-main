@@ -132,7 +132,7 @@ export default async function RootLayout({
               <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center font-black text-slate-950 text-xs shadow-lg shadow-emerald-500/20">A</div>
               <div className="min-w-0">
                 <p className="text-xs font-black text-white truncate">Alfred</p>
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">Backdoor Active</p>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">Admin Session Active</p>
               </div>
             </div>
           ) : <UserButton afterSignOutUrl="/" />}
