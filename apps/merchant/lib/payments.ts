@@ -86,6 +86,11 @@ export async function createPaystackSubscriptionCheckout(
   const planCode = process.env[config.paystack_plan_code_env]
   const callbackUrl = `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/settings?tab=billing&success=paystack&plan=${plan}`
 
+  const amountSent = config.price_cents
+  const currency = 'USD'
+  
+  console.log('[paystack_checkout]', { plan, currency, amountSent })
+
   const response = await fetch('https://api.paystack.co/transaction/initialize', {
     method: 'POST',
     headers: {
@@ -94,8 +99,8 @@ export async function createPaystackSubscriptionCheckout(
     },
     body: JSON.stringify({
       email,
-      amount: config.price_kobo, // Paystack expects smallest unit
-      currency: 'USD',
+      amount: amountSent, // Paystack expects smallest unit (cents for USD)
+      currency,
       ...(planCode ? { plan: planCode } : {}), // attach plan code for subscription if configured
       callback_url: callbackUrl,
       metadata: { org_id: orgId, plan, saas_subscription: true },
