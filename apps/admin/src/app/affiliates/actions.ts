@@ -4,6 +4,42 @@ import { db } from "@/lib/db"
 import { affiliates, affiliate_payouts, audit_logs } from "@/lib/schema"
 import { eq, sql } from "drizzle-orm"
 import { currentUser, clerkClient } from "@clerk/nextjs/server"
+import { Resend } from 'resend'
+
+async function sendApprovalEmail(affiliateEmail: string, inviteUrl: string) {
+  const resendApiKey = process.env.RESEND_API_KEY
+  const resendFrom = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
+  const merchantAppUrl = process.env.MERCHANT_APP_URL || 'https://app.chatevo.io'
+  
+  if (!resendApiKey) {
+    console.error("[Affiliates] RESEND_API_KEY is not set. Skipping approval email.")
+    return
+  }
+
+  try {
+    const resend = new Resend(resendApiKey)
+    await resend.emails.send({
+      from: resendFrom,
+      to: affiliateEmail,
+      subject: 'Your Chatevo Affiliate Application was Approved',
+      html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2>Congratulations!</h2>
+          <p>Your Chatevo affiliate application has been approved.</p>
+          <p>To get started, please create your account or sign in to access your dashboard:</p>
+          <ul>
+            <li><strong>Create account:</strong> <a href="${merchantAppUrl}/sign-up?redirect_url=/affiliates/dashboard">${merchantAppUrl}/sign-up</a></li>
+            <li><strong>Sign in:</strong> <a href="${merchantAppUrl}/sign-in?redirect_url=/affiliates/dashboard">${merchantAppUrl}/sign-in</a></li>
+          </ul>
+          <p>Backup direct invite link: <a href="${inviteUrl}">${inviteUrl}</a></p>
+          <p>If you need help, contact us at <a href="mailto:mazaoedu@gmail.com?subject=Affiliate%20Help">mazaoedu@gmail.com</a>.</p>
+        </div>
+      `
+    })
+  } catch (error) {
+    console.error("[Affiliates] Failed to send approval email:", error)
+  }
+}
 
 export async function approveAndInviteAffiliate(id: string) {
   const admin = await currentUser()
@@ -28,6 +64,8 @@ export async function approveAndInviteAffiliate(id: string) {
       redirectUrl,
       ignoreExisting: true,
     })
+
+    await sendApprovalEmail(affiliate.email, invitation.url)
 
     await db.insert(audit_logs).values({
       admin_id: admin.id,
@@ -64,6 +102,8 @@ export async function resendAffiliateInvite(id: string) {
       redirectUrl,
       ignoreExisting: true,
     })
+
+    await sendApprovalEmail(affiliate.email, invitation.url)
 
     await db.insert(audit_logs).values({
       admin_id: admin.id,

@@ -63,9 +63,19 @@ export default function AffiliateApplyPage() {
           <p className="text-sm text-slate-400 mb-8">
             You can also sign in later at <Link href="/affiliates/dashboard" className="text-primary hover:underline">/affiliates/dashboard</Link> to track your status.
           </p>
-          <Link href="/" className="inline-block bg-[#25D366] text-white font-bold px-8 py-3 rounded-xl hover:opacity-90 transition-opacity">
-            Return Home
-          </Link>
+          <div className="flex flex-col gap-3 mt-8 w-full">
+            <Link href="/sign-in?redirect_url=/affiliates/dashboard" className="w-full bg-slate-900 text-white font-bold py-3 rounded-xl hover:bg-slate-800 transition-colors">
+              Sign in to Affiliate Dashboard
+            </Link>
+            <Link href="/sign-up?redirect_url=/affiliates/dashboard" className="w-full bg-slate-100 text-slate-700 font-bold py-3 rounded-xl hover:bg-slate-200 transition-colors">
+              Create account
+            </Link>
+          </div>
+          <div className="mt-6 text-sm text-slate-500">
+            Need help? <a href="mailto:mazaoedu@gmail.com?subject=Affiliate%20Help" className="text-primary hover:underline">Contact Support</a>
+            <p className="text-xs mt-1">(Please include your email and phone number)</p>
+          </div>
+          <Link href="/" className="block mt-6 text-sm text-slate-500 hover:text-slate-800">← Back to Home</Link>
         </div>
       </div>
     )
@@ -88,7 +98,25 @@ export default function AffiliateApplyPage() {
           {isPending && (
             <p className="text-xs text-slate-400 mt-4">Hang tight — we review applications within 2 business days.</p>
           )}
-          <Link href="/" className="block mt-8 text-sm text-slate-500 hover:text-slate-800">← Back to Home</Link>
+          {existingStatus === 'approved' && (
+            <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4 text-emerald-800 text-sm font-medium mt-4">
+              You're approved. Create your account or sign in to access your dashboard.
+            </div>
+          )}
+          
+          <div className="flex flex-col gap-3 mt-8 w-full">
+            <Link href="/sign-in?redirect_url=/affiliates/dashboard" className="w-full bg-slate-900 text-white font-bold py-3 rounded-xl hover:bg-slate-800 transition-colors">
+              Sign in to Affiliate Dashboard
+            </Link>
+            <Link href="/sign-up?redirect_url=/affiliates/dashboard" className="w-full bg-slate-100 text-slate-700 font-bold py-3 rounded-xl hover:bg-slate-200 transition-colors">
+              Create account
+            </Link>
+          </div>
+          <div className="mt-6 text-sm text-slate-500">
+            Need help? <a href="mailto:mazaoedu@gmail.com?subject=Affiliate%20Help" className="text-primary hover:underline">Contact Support</a>
+            <p className="text-xs mt-1">(Please include your email and phone number)</p>
+          </div>
+          <Link href="/" className="block mt-6 text-sm text-slate-500 hover:text-slate-800">← Back to Home</Link>
         </div>
       </div>
     )
