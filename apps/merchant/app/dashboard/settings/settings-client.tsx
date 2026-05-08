@@ -1,7 +1,8 @@
 'use client'
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Settings, MessageSquare, CreditCard, Zap, Globe, Palette, Lock, ShieldCheck, AlertCircle, CheckCircle2, SendHorizonal } from 'lucide-react'
+import { useUser } from '@clerk/nextjs'
+import { Settings, MessageSquare, CreditCard, Zap, Globe, Palette, Lock, ShieldCheck, AlertCircle, CheckCircle2, SendHorizonal, Loader2 } from 'lucide-react'
 import ThemePicker from '@/components/dashboard/ThemePicker'
 
 interface Org {
@@ -39,10 +40,25 @@ const TABS = [
 
 const SecureSection = ({ children, email, onUnlock }: { children: React.ReactNode, email: string, onUnlock: () => void }) => {
   const [unlocked, setUnlocked] = useState(false)
+  const [checking, setChecking] = useState(true) // checking cookie status on mount
   const [codeSent, setCodeSent] = useState(false)
   const [code, setCode] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+
+  // On mount, ask the server if the unlock cookie is still valid
+  useEffect(() => {
+    fetch('/api/auth/otp-status')
+      .then(r => r.json())
+      .then(data => {
+        if (data.unlocked) {
+          setUnlocked(true)
+          onUnlock()
+        }
+      })
+      .catch(() => { /* ignore — will just show locked state */ })
+      .finally(() => setChecking(false))
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const sendCode = async () => {
     setLoading(true)
@@ -62,6 +78,10 @@ const SecureSection = ({ children, email, onUnlock }: { children: React.ReactNod
   }
 
   const verifyCode = async () => {
+    if (code.length !== 6) {
+      setError('Please enter the full 6-digit code.')
+      return
+    }
     setLoading(true)
     setError('')
     try {
@@ -83,6 +103,14 @@ const SecureSection = ({ children, email, onUnlock }: { children: React.ReactNod
     setLoading(false)
   }
 
+  if (checking) {
+    return (
+      <div className="bg-card rounded-2xl border border-border p-12 text-center flex items-center justify-center">
+        <Loader2 className="animate-spin text-muted-foreground" size={24} />
+      </div>
+    )
+  }
+
   if (unlocked) return <>{children}</>
 
   return (
@@ -92,35 +120,45 @@ const SecureSection = ({ children, email, onUnlock }: { children: React.ReactNod
       </div>
       <div>
         <h2 className="text-xl font-black text-foreground">Secure Access Required</h2>
-        <p className="text-sm text-muted-foreground mt-2 font-medium">To protect your API keys, we need to verify your identity.</p>
+        <p className="text-sm text-muted-foreground mt-2 font-medium">
+          To protect your sensitive settings (WhatsApp, Payments, AI), verify your identity.
+        </p>
+        {email && (
+          <p className="text-xs text-muted-foreground/70 mt-3 font-bold">
+            We&#39;ll send a code to: <span className="text-primary font-mono">{email}</span>
+          </p>
+        )}
       </div>
 
       {!codeSent ? (
-        <button onClick={sendCode} disabled={loading}
-          className="w-full bg-[#075E54] text-white py-4 rounded-xl font-bold hover:opacity-90 transition-all flex items-center justify-center gap-2">
-          {loading ? 'Sending...' : 'Send Access Code to Email'}
-        </button>
+        <>
+          {error && <p className="text-xs text-red-500 font-bold">{error}</p>}
+          <button onClick={sendCode} disabled={loading}
+            className="w-full bg-[#075E54] text-white py-4 rounded-xl font-bold hover:opacity-90 transition-all flex items-center justify-center gap-2 disabled:opacity-60">
+            {loading ? <><Loader2 size={16} className="animate-spin" /> Sending...</> : 'Send Access Code to Email'}
+          </button>
+        </>
       ) : (
         <div className="space-y-4">
           <input 
-            value={code} onChange={e => setCode(e.target.value)}
-            placeholder="Enter 6-digit code from your email" 
+            value={code} onChange={e => setCode(e.target.value.replace(/\D/g, ''))}
+            placeholder="Enter 6-digit code" 
             maxLength={6}
+            autoFocus
             className="w-full border-2 border-slate-100 rounded-xl px-4 py-4 text-center text-2xl font-mono tracking-[0.5em] focus:border-primary focus:outline-none" 
           />
           {error && <p className="text-xs text-red-500 font-bold">{error}</p>}
           <button onClick={verifyCode} disabled={loading}
-            className="w-full bg-primary text-white py-4 rounded-xl font-bold hover:opacity-90 transition-all">
-            {loading ? 'Verifying...' : 'Unlock Section'}
+            className="w-full bg-primary text-white py-4 rounded-xl font-bold hover:opacity-90 transition-all flex items-center justify-center gap-2 disabled:opacity-60">
+            {loading ? <><Loader2 size={16} className="animate-spin" /> Verifying...</> : 'Unlock Section'}
           </button>
-          <button onClick={() => setCodeSent(false)} className="text-xs text-slate-400 font-bold hover:text-slate-600">
+          <button onClick={() => { setCodeSent(false); setError(''); setCode('') }} className="text-xs text-slate-400 font-bold hover:text-slate-600">
             Resend Code
           </button>
         </div>
       )}
       <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest leading-loose">
-        Security code will be sent to your registered email address. <br />
-        Unauthorized access attempts are logged.
+        Unlock lasts 20 minutes. Unauthorized access attempts are logged.
       </p>
     </div>
   )
@@ -137,6 +175,8 @@ export default function SettingsClient({ org, autoReplies }: { org: Org, autoRep
 function SettingsContent({ org, autoReplies }: { org: Org, autoReplies: AutoReply[] }) {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { user } = useUser()
+  const userEmail = user?.primaryEmailAddress?.emailAddress ?? ''
   const [mounted, setMounted] = useState(false)
   const [tab, setTab] = useState('store')
   
@@ -297,7 +337,7 @@ function SettingsContent({ org, autoReplies }: { org: Org, autoReplies: AutoRepl
 
       {/* WhatsApp Tab */}
       {tab === 'whatsapp' && (
-        <SecureSection email="owner@email.com" onUnlock={() => setUnlockedTabs([...unlockedTabs, 'whatsapp'])}>
+        <SecureSection email={userEmail} onUnlock={() => setUnlockedTabs([...unlockedTabs, 'whatsapp'])}>
           <div className="bg-card rounded-2xl border border-border p-8 space-y-6 max-w-xl shadow-sm">
             <h2 className="font-bold text-foreground italic font-serif text-lg text-primary text-center">Engine Connectivity</h2>
             <div className={`flex items-center justify-center gap-3 px-4 py-4 rounded-xl text-[10px] font-black uppercase tracking-widest border-2 ${org.wa_webhook_verified ? 'bg-green-50 text-green-700 border-green-100' : 'bg-amber-50 text-amber-700 border-amber-100'}`}>
@@ -326,11 +366,15 @@ function SettingsContent({ org, autoReplies }: { org: Org, autoReplies: AutoRepl
               <div className="space-y-3">
                 <div className="bg-white rounded-xl p-3 border border-slate-100">
                   <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Callback URL</p>
-                  <code className="text-[11px] font-bold text-primary break-all">https://Chatevo-app.vercel.app/api/webhook</code>
+                  <code className="text-[11px] font-bold text-primary break-all">
+                    {process.env.NEXT_PUBLIC_APP_URL}/api/webhook
+                  </code>
                 </div>
                 <div className="bg-white rounded-xl p-3 border border-slate-100">
                   <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Verify Token</p>
-                  <code className="text-[11px] font-bold text-primary">Chatevo-webhook-verification-2024</code>
+                  <code className="text-[11px] font-bold text-primary">
+                    {process.env.NEXT_PUBLIC_WA_WEBHOOK_VERIFY_TOKEN ?? '(set NEXT_PUBLIC_WA_WEBHOOK_VERIFY_TOKEN in env)'}
+                  </code>
                 </div>
               </div>
               <ul className="text-[10px] font-bold text-slate-500 space-y-2 list-disc pl-4">
@@ -404,7 +448,7 @@ function SettingsContent({ org, autoReplies }: { org: Org, autoReplies: AutoRepl
 
       {/* Payments Tab */}
       {tab === 'payments' && (
-        <SecureSection email="owner@email.com" onUnlock={() => setUnlockedTabs([...unlockedTabs, 'payments'])}>
+        <SecureSection email={userEmail} onUnlock={() => setUnlockedTabs([...unlockedTabs, 'payments'])}>
           <div className="bg-card rounded-2xl border border-border p-8 space-y-6 max-w-xl shadow-sm">
             <h2 className="font-bold text-foreground italic font-serif text-lg text-primary text-center">Revenue Gateway</h2>
             <div className="space-y-4">
@@ -589,7 +633,7 @@ function SettingsContent({ org, autoReplies }: { org: Org, autoReplies: AutoRepl
 
       {/* AI Agent Tab */}
       {tab === 'ai' && (
-        <SecureSection email="owner@email.com" onUnlock={() => setUnlockedTabs([...unlockedTabs, 'ai'])}>
+        <SecureSection email={userEmail} onUnlock={() => setUnlockedTabs([...unlockedTabs, 'ai'])}>
           <div className="bg-card rounded-2xl border border-border p-8 space-y-8 max-w-2xl shadow-sm">
             <div className="flex items-center gap-4">
                <div className="w-14 h-14 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-100">

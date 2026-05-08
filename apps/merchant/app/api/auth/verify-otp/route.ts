@@ -4,6 +4,15 @@ import crypto from 'crypto'
 
 const OTP_SECRET = process.env.OTP_HMAC_SECRET || 'chatevo-otp-secret-change-in-production'
 
+// How long the "unlocked" state persists after a successful OTP verification (20 minutes)
+const UNLOCK_TTL_MS = 20 * 60 * 1000
+const UNLOCK_TTL_SECONDS = UNLOCK_TTL_MS / 1000
+
+function signPayload(payload: string): string {
+  const sig = crypto.createHmac('sha256', OTP_SECRET).update(payload).digest('hex')
+  return Buffer.from(JSON.stringify({ payload, sig })).toString('base64url')
+}
+
 function verifyToken(token: string, userId: string, submittedCode: string): { valid: boolean; reason?: string } {
   try {
     const decoded = JSON.parse(Buffer.from(token, 'base64url').toString('utf-8'))
@@ -60,8 +69,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: result.reason || 'Verification failed.' }, { status: 400 })
   }
 
-  // Clear the OTP cookie after successful verification
-  const response = NextResponse.json({ success: true })
+  // Clear the OTP challenge cookie and set a longer-lived "unlocked" session cookie
+  const unlockPayload = `UNLOCKED:${userId}:${Date.now() + UNLOCK_TTL_MS}`
+  const unlockToken = signPayload(unlockPayload)
+
+  const response = NextResponse.json({ ok: true, success: true })
   response.cookies.delete('__otp_token')
+  response.cookies.set('__otp_unlocked', unlockToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    maxAge: UNLOCK_TTL_SECONDS,
+    path: '/',
+  })
   return response
 }
+
