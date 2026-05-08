@@ -186,6 +186,12 @@ function SettingsContent({ org, autoReplies }: { org: Org, autoReplies: AutoRepl
     const initialTab = searchParams.get('tab')
     if (initialTab && TABS.some(t => t.id === initialTab)) {
       setTab(initialTab)
+    } else if (searchParams.get('plan')) {
+      setTab('billing') // auto open billing if plan is in URL
+    }
+    
+    if (searchParams.get('plan')) {
+      setShowAllPlans(true)
     }
   }, [searchParams])
 
@@ -515,8 +521,10 @@ function SettingsContent({ org, autoReplies }: { org: Org, autoReplies: AutoRepl
 
           {((org.plan === 'trial' || !org.plan) || showAllPlans) && (
             <div className="grid md:grid-cols-3 gap-6 animate-in zoom-in-95 duration-300">
-              {PLANS.map(plan => (
-                <div key={plan.id} className={`bg-card rounded-3xl p-8 border-2 transition-all flex flex-col ${org.plan === plan.id ? 'border-primary shadow-xl shadow-primary/10' : 'border-border opacity-90'}`}>
+              {PLANS.map(plan => {
+                const isHighlighted = org.plan === plan.id || searchParams.get('plan') === plan.id
+                return (
+                <div key={plan.id} className={`bg-card rounded-3xl p-8 border-2 transition-all flex flex-col ${isHighlighted ? 'border-primary shadow-xl shadow-primary/10 ring-2 ring-primary/20 scale-105 bg-primary/5' : 'border-border opacity-90'}`}>
                   <div className="flex justify-between items-start mb-6">
                     <div>
                       <h4 className="text-xl font-black text-[#075E54] font-serif italic">{plan.name}</h4>
@@ -564,7 +572,7 @@ function SettingsContent({ org, autoReplies }: { org: Org, autoReplies: AutoRepl
                     </div>
                   )}
                 </div>
-              ))}
+              )})}
             </div>
           )}
 

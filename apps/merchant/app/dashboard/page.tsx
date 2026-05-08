@@ -68,7 +68,23 @@ export default async function DashboardPage() {
       <div className="space-y-8 max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-black text-foreground tracking-tight">Dashboard</h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl font-black text-foreground tracking-tight">Dashboard</h1>
+              {org?.plan === 'trial' || !org?.plan ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-black uppercase tracking-widest bg-amber-100 text-amber-700 px-2 py-1 rounded-full">
+                    Trial: {org?.trial_ends_at ? Math.max(0, Math.ceil((new Date(org.trial_ends_at).getTime() - Date.now()) / 86400000)) : 0} days left
+                  </span>
+                  <a href="/dashboard/settings?tab=billing&plan=pro" className="text-[10px] font-black uppercase tracking-widest text-primary hover:underline">
+                    Upgrade Now
+                  </a>
+                </div>
+              ) : (
+                <span className="text-[10px] font-black uppercase tracking-widest bg-primary/10 text-primary px-2 py-1 rounded-full">
+                  {org?.plan} Plan
+                </span>
+              )}
+            </div>
             <p className="text-muted-foreground mt-1 font-medium text-sm">Overview of your WhatsApp commerce performance.</p>
           </div>
           <div className="flex items-center gap-3">
