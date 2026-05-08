@@ -29,7 +29,7 @@ interface ReferralRow {
   recurring_payments: number
 }
 
-async function getAffiliateData(): Promise<{ affiliate: AffiliateData | null; referrals: ReferralRow[]; error?: string; status?: number }> {
+async function getAffiliateData(): Promise<{ affiliate: AffiliateData | null; referrals: ReferralRow[]; totals: { signups: number; paying: number }; error?: string; status?: number }> {
   const h = headers()
   const proto = h.get('x-forwarded-proto') ?? 'https'
   const host = h.get('x-forwarded-host') ?? h.get('host')
@@ -43,22 +43,24 @@ async function getAffiliateData(): Promise<{ affiliate: AffiliateData | null; re
     const meRes = await fetch(`${appUrl}/api/affiliates/me`, { headers: forwarded, cache: 'no-store' })
     if (!meRes.ok) {
       const errorData = await meRes.json().catch(() => ({}))
-      return { affiliate: null, referrals: [], error: errorData.error || 'Failed to load affiliate data.', status: meRes.status }
+      return { affiliate: null, referrals: [], totals: { signups: 0, paying: 0 }, error: errorData.error || 'Failed to load affiliate data.', status: meRes.status }
     }
     const meData = await meRes.json() as { affiliate: AffiliateData }
     
     let referrals: ReferralRow[] = []
+    let totals = { signups: 0, paying: 0 }
     if (meData.affiliate.status === 'approved') {
       const refRes = await fetch(`${appUrl}/api/affiliates/referrals`, { headers: forwarded, cache: 'no-store' })
       if (refRes.ok) {
-        const refData = await refRes.json() as { data: ReferralRow[] }
-        referrals = refData.data || []
+        const refData = await refRes.json() as { totals: { signups: number; paying: number }, referrals: ReferralRow[] }
+        referrals = refData.referrals || []
+        totals = refData.totals || totals
       }
     }
     
-    return { affiliate: meData.affiliate, referrals, status: 200 }
+    return { affiliate: meData.affiliate, referrals, totals, status: 200 }
   } catch (err: any) {
-    return { affiliate: null, referrals: [], error: err.message || 'Failed to load affiliate data.', status: 500 }
+    return { affiliate: null, referrals: [], totals: { signups: 0, paying: 0 }, error: err.message || 'Failed to load affiliate data.', status: 500 }
   }
 }
 
@@ -69,7 +71,7 @@ export default async function AffiliateDashboard() {
     redirect('/sign-in?redirect_url=/affiliates/dashboard')
   }
 
-  const { affiliate, referrals, error, status } = await getAffiliateData()
+  const { affiliate, referrals, totals, error, status } = await getAffiliateData()
 
   if (status === 401 || error === 'Not signed in') {
     return (
@@ -145,5 +147,5 @@ export default async function AffiliateDashboard() {
   }
 
   // Approved affiliate — show full dashboard
-  return <AffiliateDashboardClient affiliate={affiliate} referrals={referrals} />
+  return <AffiliateDashboardClient affiliate={affiliate} referrals={referrals} totals={totals} />
 }
