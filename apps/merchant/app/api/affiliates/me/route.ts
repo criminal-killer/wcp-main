@@ -44,7 +44,9 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'No affiliate application found for this account' }, { status: 404 })
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://chatevo.app'
+  const proto = req.headers.get('x-forwarded-proto') ?? 'https'
+  const host = req.headers.get('x-forwarded-host') ?? req.headers.get('host')
+  const baseUrl = host ? `${proto}://${host}` : (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000')
 
   return NextResponse.json({
     affiliate: {
@@ -53,7 +55,7 @@ export async function GET(req: NextRequest) {
       email: affiliate.email,
       status: affiliate.status,
       referral_code: affiliate.referral_code,
-      referral_link: `${appUrl}/?ref=${affiliate.referral_code}`,
+      referral_link: `${baseUrl}/?ref=${affiliate.referral_code}`,
       total_referred: affiliate.total_referred ?? 0,
       total_earned: affiliate.total_earned ?? 0,
       balance: affiliate.balance ?? 0,

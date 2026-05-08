@@ -30,9 +30,17 @@ interface ReferralRow {
 }
 
 async function getAffiliateData(): Promise<{ affiliate: AffiliateData | null; referrals: ReferralRow[]; error?: string; status?: number }> {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+  const h = headers()
+  const proto = h.get('x-forwarded-proto') ?? 'https'
+  const host = h.get('x-forwarded-host') ?? h.get('host')
+  const appUrl = host ? `${proto}://${host}` : (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000')
+
+  const cookie = h.get('cookie') ?? ''
+  const forwarded = new Headers()
+  if (cookie) forwarded.set('cookie', cookie)
+
   try {
-    const meRes = await fetch(`${appUrl}/api/affiliates/me`, { headers: headers(), cache: 'no-store' })
+    const meRes = await fetch(`${appUrl}/api/affiliates/me`, { headers: forwarded, cache: 'no-store' })
     if (!meRes.ok) {
       const errorData = await meRes.json().catch(() => ({}))
       return { affiliate: null, referrals: [], error: errorData.error || 'Failed to load affiliate data.', status: meRes.status }
@@ -41,7 +49,7 @@ async function getAffiliateData(): Promise<{ affiliate: AffiliateData | null; re
     
     let referrals: ReferralRow[] = []
     if (meData.affiliate.status === 'approved') {
-      const refRes = await fetch(`${appUrl}/api/affiliates/referrals`, { headers: headers(), cache: 'no-store' })
+      const refRes = await fetch(`${appUrl}/api/affiliates/referrals`, { headers: forwarded, cache: 'no-store' })
       if (refRes.ok) {
         const refData = await refRes.json() as { data: ReferralRow[] }
         referrals = refData.data || []
