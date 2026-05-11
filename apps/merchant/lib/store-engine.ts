@@ -38,14 +38,15 @@ interface CartItem {
 
 interface FlowState {
   step: string
+  store_id?: string
   category?: string
   product_id?: string
   delivery?: string
   [key: string]: string | number | undefined
 }
 
-const waConfig = (org: RunnerOrg, accessToken: string) => ({
-  phoneNumberId: org.wa_phone_number_id!,
+const waConfig = (org: RunnerOrg, accessToken: string, store: RunnerStore | null = null) => ({
+  phoneNumberId: store?.wa_phone_number_id || org.wa_phone_number_id || '',
   accessToken,
 })
 
@@ -59,12 +60,13 @@ function parseInput(msg: InboundMessage): string {
 }
 
 export async function processIncomingMessage(ctx: EngineContext) {
-  const { org, contact, conversation, message, accessToken } = ctx
-  const waConfigObj = waConfig(org, accessToken)
+  const { org, store, contact, conversation, message, accessToken } = ctx
+  const waConfigObj = waConfig(org, accessToken, store)
   const phone = contact.phone
   const orgId = org.id
   const convId = conversation.id
   const input = parseInput(message).toLowerCase().trim()
+  const storeId = store?.id
 
   const flow = await getFlowState(orgId, phone) as FlowState | null
 
@@ -72,11 +74,11 @@ export async function processIncomingMessage(ctx: EngineContext) {
   if (['hi', 'hello', 'hey', 'start', 'menu', '0', '00'].includes(input) || !flow) {
     await clearCart(orgId, phone)
     await deleteFlowState(orgId, phone)
-    return await showMainMenu(waConfigObj, org, phone, orgId)
+    return await showMainMenu(waConfigObj, org, store, phone, orgId)
   }
 
   if (['cart', 'view cart', '#cart'].includes(input)) {
-    return await showCart(waConfigObj, org, phone, orgId)
+    return await showCart(waConfigObj, org, store, phone, orgId)
   }
 
   if (['cancel', 'stop', 'exit'].includes(input)) {
@@ -128,25 +130,25 @@ export async function processIncomingMessage(ctx: EngineContext) {
 
   switch (step) {
     case 'browsing_categories':
-      return await handleCategorySelected(waConfigObj, org, phone, orgId, input)
+      return await handleCategorySelected(waConfigObj, org, store, phone, orgId, input)
 
     case 'browsing_products':
-      return await handleProductSelected(waConfigObj, org, phone, orgId, input, flow)
+      return await handleProductSelected(waConfigObj, org, store, phone, orgId, input, flow)
 
     case 'product_detail':
-      return await handleProductAction(waConfigObj, org, phone, orgId, input, flow)
+      return await handleProductAction(waConfigObj, org, store, phone, orgId, input, flow)
 
     case 'variant_select':
-      return await handleVariantSelected(waConfigObj, org, phone, orgId, input, flow)
+      return await handleVariantSelected(waConfigObj, org, store, phone, orgId, input, flow)
 
     case 'cart_review':
-      return await handleCartAction(waConfigObj, org, phone, orgId, input, flow)
+      return await handleCartAction(waConfigObj, org, store, phone, orgId, input, flow)
 
     case 'delivery_info':
-      return await handleDeliveryInfo(waConfigObj, org, phone, orgId, convId, input, flow, contact)
+      return await handleDeliveryInfo(waConfigObj, org, store, phone, orgId, convId, input, flow, contact)
 
     case 'payment_select':
-      return await handlePaymentSelected(waConfigObj, org, phone, orgId, convId, input, flow, contact)
+      return await handlePaymentSelected(waConfigObj, org, store, phone, orgId, convId, input, flow, contact)
 
     default:
       // Try AI Fallback if not a recognized command
@@ -164,13 +166,14 @@ async function handleAiFallback(waConfig: { phoneNumberId: string; accessToken: 
     const data = await response.json()
     return await sendTextMessage(waConfig, { to: phone, body: data.reply || 'Sorry, I didn\'t catch that. Type *Hi* for the menu.' })
   } catch (err) {
-    return await showMainMenu(waConfig, org, phone, org.id)
+    return await showMainMenu(waConfig, org, null, phone, org.id)
   }
 }
 
-async function showMainMenu(waConfig: { phoneNumberId: string; accessToken: string }, org: RunnerOrg, phone: string, orgId: string) {
-  const productCount = await db.select().from(products).where(and(eq(products.org_id, orgId), eq(products.is_active, 1)))
-  await setFlowState(orgId, phone, { step: 'main_menu' })
+async function showMainMenu(waConfig: { phoneNumberId: string; accessToken: string }, org: RunnerOrg, store: RunnerStore | null, phone: string, orgId: string) {
+  const storeCondition = store ? and(eq(products.org_id, orgId), eq(products.store_id, store.id), eq(products.is_active, 1)) : and(eq(products.org_id, orgId), eq(products.is_active, 1))
+  const productList = await db.select().from(products).where(storeCondition)
+  await setFlowState(orgId, phone, { step: 'main_menu', store_id: store?.id })
 
   // --- Custom Greeting from AI Settings or Default ---
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
@@ -186,7 +189,7 @@ async function showMainMenu(waConfig: { phoneNumberId: string; accessToken: stri
     }
   } else {
     // Default greeting
-    greeting = `Hey there!    Hope your *${dayName}* is going wonderfully well!\n\nI'm your personal shopping assistant here at *${org.name}*. We have *${productCount.length}* specially selected items waiting for you today.\n\nHow can I help you find exactly what you're looking for?`
+    greeting = `Hey there!    Hope your *${dayName}* is going wonderfully well!\n\nI'm your personal shopping assistant here at *${org.name}*. We have *${productList.length}* specially selected items waiting for you today.\n\nHow can I help you find exactly what you're looking for?`
   }
 
   return await sendInteractiveButtonMessage(waConfig, {
@@ -202,10 +205,11 @@ async function showMainMenu(waConfig: { phoneNumberId: string; accessToken: stri
   })
 }
 
-async function showCategories(waConfig: { phoneNumberId: string; accessToken: string }, org: RunnerOrg, phone: string, orgId: string) {
+async function showCategories(waConfig: { phoneNumberId: string; accessToken: string }, org: RunnerOrg, store: RunnerStore | null, phone: string, orgId: string) {
+  const storeCondition = store ? and(eq(products.org_id, orgId), eq(products.store_id, store.id), eq(products.is_active, 1)) : and(eq(products.org_id, orgId), eq(products.is_active, 1))
   const productList = await db.select({ category: products.category })
     .from(products)
-    .where(and(eq(products.org_id, orgId), eq(products.is_active, 1)))
+    .where(storeCondition)
 
   const cats = Array.from(new Set(productList.map(p => p.category).filter(Boolean))) as string[]
 
@@ -231,31 +235,28 @@ async function showCategories(waConfig: { phoneNumberId: string; accessToken: st
   })
 }
 
-async function handleCategorySelected(waConfig: { phoneNumberId: string; accessToken: string }, org: RunnerOrg, phone: string, orgId: string, input: string) {
+async function handleCategorySelected(waConfig: { phoneNumberId: string; accessToken: string }, org: RunnerOrg, store: RunnerStore | null, phone: string, orgId: string, input: string) {
   let category: string | undefined
 
   if (input.startsWith('cat_')) {
     category = input.replace('cat_', '').replace(/_/g, ' ')
   } else if (input === 'browse' || input === '    browse products') {
-    return await showCategories(waConfig, org, phone, orgId)
+    return await showCategories(waConfig, org, store, phone, orgId)
   } else {
-    return await showCategories(waConfig, org, phone, orgId)
+    return await showCategories(waConfig, org, store, phone, orgId)
   }
 
+  const storeCondition = store ? and(eq(products.org_id, orgId), eq(products.store_id, store.id), eq(products.is_active, 1), category ? eq(products.category, category) : undefined) : and(eq(products.org_id, orgId), eq(products.is_active, 1), category ? eq(products.category, category) : undefined)
   const productList = await db.select()
     .from(products)
-    .where(and(
-      eq(products.org_id, orgId),
-      eq(products.is_active, 1),
-      category ? eq(products.category, category) : undefined,
-    ))
+    .where(storeCondition)
     .limit(10)
 
   if (productList.length === 0) {
     return await sendTextMessage(waConfig, { to: phone, body: '   No products in this category right now.' })
   }
 
-  await setFlowState(orgId, phone, { step: 'browsing_products', category })
+  await setFlowState(orgId, phone, { step: 'browsing_products', category, store_id: store?.id })
 
   const rows = productList.map(p => ({
     id: `prod_${p.id}`,
@@ -274,16 +275,17 @@ async function handleCategorySelected(waConfig: { phoneNumberId: string; accessT
 }
 
 async function handleProductSelected(
-  waConfig: { phoneNumberId: string; accessToken: string }, org: RunnerOrg, phone: string,
+  waConfig: { phoneNumberId: string; accessToken: string }, org: RunnerOrg, store: RunnerStore | null, phone: string,
   orgId: string, input: string, flow: FlowState
 ) {
   if (!input.startsWith('prod_')) {
-    return await showMainMenu(waConfig, org, phone, orgId)
+    return await showMainMenu(waConfig, org, store, phone, orgId)
   }
 
   const productId = input.replace('prod_', '')
+  const storeCondition = store ? and(eq(products.id, productId), eq(products.org_id, orgId), eq(products.store_id, store.id)) : and(eq(products.id, productId), eq(products.org_id, orgId))
   const product = await db.query.products.findFirst({
-    where: and(eq(products.id, productId), eq(products.org_id, orgId)),
+    where: storeCondition,
   })
 
   if (!product) return await sendTextMessage(waConfig, { to: phone, body: '  Product not found.' })
@@ -337,23 +339,23 @@ async function handleProductSelected(
 }
 
 async function handleProductAction(
-  waConfig: { phoneNumberId: string; accessToken: string }, org: RunnerOrg, phone: string,
+  waConfig: { phoneNumberId: string; accessToken: string }, org: RunnerOrg, store: RunnerStore | null, phone: string,
   orgId: string, input: string, flow: FlowState
 ) {
   if (input === 'back_category' || input === '  back') {
-    return await handleCategorySelected(waConfig, org, phone, orgId, `cat_${(flow.category || '').replace(/\s+/g, '_')}`)
+    return await handleCategorySelected(waConfig, org, store, phone, orgId, `cat_${(flow.category || '').replace(/\s+/g, '_')}`)
   }
 
   if (input.startsWith('add_')) {
     const productId = flow.product_id || input.replace('add_', '')
+    const storeCondition = store ? and(eq(products.id, productId), eq(products.org_id, orgId), eq(products.store_id, store.id)) : and(eq(products.id, productId), eq(products.org_id, orgId))
     const product = await db.query.products.findFirst({
-      where: and(eq(products.id, productId), eq(products.org_id, orgId)),
+      where: storeCondition,
     })
     if (!product) return await sendTextMessage(waConfig, { to: phone, body: '  Product not found.' })
 
     const variants = JSON.parse(product.variants || '[]') as Array<{ type: string; options: string[] }>
     if (variants.length > 0) {
-      // Ask for variant selection
       await setFlowState(orgId, phone, { ...flow, step: 'variant_select', product_id: productId })
       const rows = variants[0].options.map(opt => ({
         id: `var_${opt.replace(/\s+/g, '_')}`,
@@ -370,25 +372,25 @@ async function handleProductAction(
       })
     }
 
-    // No variants   add directly
     await addToCart(orgId, phone, { product_id: productId, product_name: product.name, price: product.price, qty: 1 })
     await setFlowState(orgId, phone, { step: 'cart_review' })
-    return await showCart(waConfig, org, phone, orgId)
+    return await showCart(waConfig, org, store, phone, orgId)
   }
 
-  return await showMainMenu(waConfig, org, phone, orgId)
+  return await showMainMenu(waConfig, org, store, phone, orgId)
 }
 
 async function handleVariantSelected(
   waConfig: { phoneNameId: string; accessToken: string } | { phoneNumberId: string; accessToken: string },
-  org: RunnerOrg, phone: string, orgId: string, input: string, flow: FlowState
+  org: RunnerOrg, store: RunnerStore | null, phone: string, orgId: string, input: string, flow: FlowState
 ) {
   const variant = input.startsWith('var_') ? input.replace('var_', '').replace(/_/g, ' ') : input
   const productId = flow.product_id
-  if (!productId) return await showMainMenu(waConfig as { phoneNumberId: string; accessToken: string }, org, phone, orgId)
+  if (!productId) return await showMainMenu(waConfig as { phoneNumberId: string; accessToken: string }, org, store, phone, orgId)
 
+  const storeCondition = store ? and(eq(products.id, productId), eq(products.org_id, orgId), eq(products.store_id, store.id)) : and(eq(products.id, productId), eq(products.org_id, orgId))
   const product = await db.query.products.findFirst({
-    where: and(eq(products.id, productId), eq(products.org_id, orgId)),
+    where: storeCondition,
   })
   if (!product) return await sendTextMessage(waConfig as { phoneNumberId: string; accessToken: string }, { to: phone, body: '  Product not found.' })
 
@@ -401,10 +403,10 @@ async function handleVariantSelected(
   })
 
   await setFlowState(orgId, phone, { step: 'cart_review' })
-  return await showCart(waConfig as { phoneNumberId: string; accessToken: string }, org, phone, orgId)
+  return await showCart(waConfig as { phoneNumberId: string; accessToken: string }, org, store, phone, orgId)
 }
 
-async function showCart(waConfig: { phoneNumberId: string; accessToken: string }, org: RunnerOrg, phone: string, orgId: string) {
+async function showCart(waConfig: { phoneNumberId: string; accessToken: string }, org: RunnerOrg, store: RunnerStore | null, phone: string, orgId: string) {
   const cart = await getCart(orgId, phone) as CartItem[] | null
   await setFlowState(orgId, phone, { step: 'cart_review' })
 
@@ -436,7 +438,7 @@ async function showCart(waConfig: { phoneNumberId: string; accessToken: string }
 }
 
 async function handleCartAction(
-  waConfig: { phoneNumberId: string; accessToken: string }, org: RunnerOrg, phone: string,
+  waConfig: { phoneNumberId: string; accessToken: string }, org: RunnerOrg, store: RunnerStore | null, phone: string,
   orgId: string, input: string, flow: FlowState
 ) {
   if (input === 'clear_cart') {
@@ -445,7 +447,7 @@ async function handleCartAction(
     return await sendTextMessage(waConfig, { to: phone, body: '    Cart cleared. Type *Hi* to start again.' })
   }
   if (input === 'browse') {
-    return await showCategories(waConfig, org, phone, orgId)
+    return await showCategories(waConfig, org, store, phone, orgId)
   }
   if (input === 'checkout') {
     await setFlowState(orgId, phone, { step: 'delivery_info' })
@@ -454,11 +456,11 @@ async function handleCartAction(
       body: '   *Delivery Details*\n\nPlease send your delivery address:\n\n_(e.g. "123 Main Street, Nairobi")_',
     })
   }
-  return await showCart(waConfig, org, phone, orgId)
+  return await showCart(waConfig, org, store, phone, orgId)
 }
 
 async function handleDeliveryInfo(
-  waConfig: { phoneNumberId: string; accessToken: string }, org: RunnerOrg, phone: string,
+  waConfig: { phoneNumberId: string; accessToken: string }, org: RunnerOrg, store: RunnerStore | null, phone: string,
   orgId: string, convId: string, input: string, flow: FlowState, contact: RunnerContact
 ) {
   const address = input
@@ -491,12 +493,12 @@ async function handleDeliveryInfo(
 }
 
 async function handlePaymentSelected(
-  waConfig: { phoneNumberId: string; accessToken: string }, org: RunnerOrg, phone: string,
+  waConfig: { phoneNumberId: string; accessToken: string }, org: RunnerOrg, store: RunnerStore | null, phone: string,
   orgId: string, convId: string, input: string, flow: FlowState, contact: RunnerContact
 ) {
   const cart = await getCart(orgId, phone) as CartItem[] | null
   if (!cart || cart.length === 0) {
-    return await showMainMenu(waConfig, org, phone, orgId)
+    return await showMainMenu(waConfig, org, store, phone, orgId)
   }
 
   const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0)

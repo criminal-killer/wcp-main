@@ -97,6 +97,8 @@ export const stores = sqliteTable('stores', {
   delivery_fee: real('delivery_fee').default(0),
   is_active: integer('is_active').default(1),
   is_default: integer('is_default').default(0),
+  // Pre-configured categories for AI guidance (JSON)
+  default_categories: text('default_categories').default('[]'),
   created_at: text('created_at').default(sql`(datetime('now'))`),
   updated_at: text('updated_at').default(sql`(datetime('now'))`),
 })

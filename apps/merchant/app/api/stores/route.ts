@@ -50,6 +50,7 @@ export async function POST(req: NextRequest) {
     description?: string
     currency?: string
     delivery_fee?: number
+    default_categories?: string
   }
 
   if (!body.name?.trim()) {
@@ -69,6 +70,7 @@ export async function POST(req: NextRequest) {
     currency: body.currency || 'USD',
     delivery_fee: body.delivery_fee || 0,
     is_default: 0,
+    default_categories: body.default_categories || '[]',
   }).returning()
 
   return NextResponse.json({ data: store })
@@ -90,6 +92,7 @@ export async function PATCH(req: NextRequest) {
     delivery_fee?: number
     theme_color?: string
     is_default?: boolean
+    default_categories?: string
   }
 
   if (!body.store_id) {
@@ -108,6 +111,7 @@ export async function PATCH(req: NextRequest) {
   if (body.currency) updateData.currency = body.currency
   if (body.delivery_fee !== undefined) updateData.delivery_fee = body.delivery_fee
   if (body.theme_color) updateData.theme_color = body.theme_color
+  if (body.default_categories !== undefined) updateData.default_categories = body.default_categories
 
   // If setting as default, unset other defaults first
   if (body.is_default) {

@@ -1,212 +1,385 @@
 'use client'
 import { useState } from 'react'
-import { 
-  BookOpen, Rocket, MessageSquare, Zap, CreditCard, 
-  ChevronRight, ExternalLink, ShieldCheck, Mail, Terminal,
-  Lightbulb, HelpCircle, CheckCircle
+import {
+  BookOpen, Terminal, Zap, CreditCard, MessageSquare, ShoppingCart,
+  Users, Globe, Settings, ChevronRight, ChevronDown, Copy, Check,
+  ExternalLink, ArrowRight, Search, HelpCircle, Mail
 } from 'lucide-react'
 
-const SECTIONS = [
-  { 
-    id: 'getting-started', 
-    title: 'Getting Started', 
-    icon: Rocket,
-    content: (
-      <div className="space-y-6">
-        <p className="text-slate-600 leading-relaxed font-medium">Welcome to Chatevo! 🚀 This guide will help you launch your automated WhatsApp store in minutes. Our platform is designed to turn your WhatsApp number into a 24/7 sales machine.</p>
-        
-        <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-6">
-           <h4 className="flex items-center gap-2 text-emerald-800 font-black uppercase tracking-widest text-xs mb-3">
-             <CheckCircle size={16} /> Quick Checklist
-           </h4>
-           <ul className="space-y-3 text-sm text-emerald-900/80 font-bold">
-             <li className="flex items-start gap-2"><span>1.</span> Register your Meta Business Account</li>
-             <li className="flex items-start gap-2"><span>2.</span> Connect your WhatsApp Phone ID</li>
-             <li className="flex items-start gap-2"><span>3.</span> Add your first 5 products</li>
-             <li className="flex items-start gap-2"><span>4.</span> Configure your AI Sales Agent</li>
-           </ul>
-        </div>
+type DocPage = {
+  id: string
+  title: string
+  icon: React.ElementType
+  description: string
+  sections: DocSection[]
+}
 
-        <h3 className="text-xl font-bold italic font-serif text-primary mt-8">The Onboarding Flow</h3>
-        <p className="text-sm text-slate-500 font-medium">Once you sign up, your account enters a "Pending Approval" state. Our team verified every merchant to maintain platform quality. Once approved, you gain full access to the dashboard.</p>
-      </div>
-    )
+type DocSection = {
+  id: string
+  title: string
+  content: React.ReactNode
+}
+
+const DOCS: Record<string, DocPage> = {
+  'getting-started': {
+    id: 'getting-started',
+    title: 'Getting Started',
+    icon: BookOpen,
+    description: 'Set up your WhatsApp store in minutes.',
+    sections: [
+      {
+        id: 'overview',
+        title: 'Overview',
+        content: (
+          <div className="space-y-4">
+            <p className="text-[13px] text-slate-600 leading-relaxed">
+              Chatevo turns your WhatsApp number into a 24/7 AI-powered sales store. Customers browse products, add to cart, and pay — all through WhatsApp messages. No app download required.
+            </p>
+            <div className="grid grid-cols-3 gap-3">
+              {[
+                { label: 'Connect WA', desc: 'Link your WhatsApp Business number' },
+                { label: 'Add Products', desc: 'Upload products with prices' },
+                { label: 'Go Live', desc: 'AI handles the rest automatically' },
+              ].map((step, i) => (
+                <div key={i} className="bg-slate-50 border border-slate-100 rounded-xl p-4">
+                  <span className="text-[10px] font-black text-primary uppercase tracking-widest">{step.label}</span>
+                  <p className="text-[11px] text-slate-500 font-medium mt-1">{step.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        ),
+      },
+      {
+        id: 'quick-setup',
+        title: 'Quick Setup Checklist',
+        content: (
+          <div className="space-y-3">
+            <p className="text-[13px] text-slate-500 font-medium">Complete these steps to launch your store:</p>
+            <div className="space-y-2">
+              {[
+                { step: '01', title: 'Connect WhatsApp', desc: 'Link your Business number via Meta' },
+                { step: '02', title: 'Add Products', desc: 'Create at least 5 products with categories' },
+                { step: '03', title: 'Configure Payments', desc: 'Set up Paystack or PayPal integration' },
+                { step: '04', title: 'Customize AI', desc: 'Set your store greeting and persona' },
+                { step: '05', title: 'Test & Launch', desc: 'Test your store with a friend' },
+              ].map(item => (
+                <div key={item.step} className="flex items-start gap-4 p-3 bg-white border border-slate-100 rounded-xl hover:border-primary/20 transition-all">
+                  <span className="w-8 h-8 bg-primary text-white rounded-lg flex items-center justify-center text-[10px] font-black shrink-0">{item.step}</span>
+                  <div>
+                    <p className="text-sm font-bold text-slate-800">{item.title}</p>
+                    <p className="text-[11px] text-slate-400 font-medium">{item.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ),
+      },
+    ],
   },
-  { 
-    id: 'whatsapp-setup', 
-    title: 'WhatsApp Cloud API', 
+  'whatsapp-setup': {
+    id: 'whatsapp-setup',
+    title: 'WhatsApp Setup',
     icon: MessageSquare,
-    content: (
-      <div className="space-y-6">
-        <p className="text-slate-600 leading-relaxed font-medium">Chatevo uses the official WhatsApp Cloud API to handle messages. This ensures your number is never banned and your messages are delivered instantly.</p>
-        
-        <div className="space-y-8">
-          <div className="relative pl-8 border-l-2 border-slate-100">
-            <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-primary border-4 border-white shadow-sm" />
-            <h4 className="font-black text-slate-900 text-sm italic">Step 1: Meta Developers Console</h4>
-            <p className="text-xs text-slate-500 mt-1 font-medium">Go to <a href="https://developers.facebook.com" target="_blank" className="text-primary underline">developers.facebook.com</a>, create a "Business" app, and add the "WhatsApp" product to your app.</p>
-          </div>
-
-          <div className="relative pl-8 border-l-2 border-slate-100">
-            <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-slate-200 border-4 border-white shadow-sm" />
-            <h4 className="font-black text-slate-900 text-sm italic">Step 2: Get Credentials</h4>
-            <p className="text-xs text-slate-500 mt-1 font-medium">In the API Setup tab, you will find your **Phone Number ID**. You also need to generate a **Permanent System Access Token** in your Meta Business Settings.</p>
-          </div>
-
-          <div className="relative pl-8 border-l-2 border-slate-100">
-            <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-slate-200 border-4 border-white shadow-sm" />
-            <h4 className="font-black text-slate-900 text-sm italic">Step 3: Webhook Configuration</h4>
-            <p className="text-xs text-slate-500 mt-1 font-medium">Enter your Chatevo Webhook URL in Meta. Ensure you subscribe to the **"messages"** field in the Webhook fields management section.</p>
-          </div>
-        </div>
-
-        <div className="bg-amber-50 border border-amber-100 rounded-2xl p-6 mt-8">
-           <div className="flex items-center gap-2 text-amber-800 mb-2">
-             <Terminal size={18} />
-             <h4 className="font-black uppercase tracking-widest text-[10px]">Technical Note</h4>
-           </div>
-           <p className="text-xs text-amber-900/70 font-bold leading-relaxed">WhatsApp Cloud API requires a clean phone number that is NOT currently used on a standard WhatsApp phone app. If your number is on a phone, you must delete the account from the phone first.</p>
-        </div>
-      </div>
-    )
-  },
-  { 
-    id: 'ai-config', 
-    title: 'AI Intelligence', 
-    icon: Zap,
-    content: (
-      <div className="space-y-6">
-        <p className="text-slate-600 leading-relaxed font-medium">Chatevo is powered by an advanced AI engine that understands customer intent and handles sales autonomously.</p>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-white border-2 border-slate-50 rounded-2xl p-6 shadow-sm">
-            <h4 className="font-black text-primary text-sm mb-2">Chatevo Default AI</h4>
-            <p className="text-xs text-slate-500 font-bold">Standard on all plans. Powered by **Groq (Llama-3)** for lightning-fast responses. No configuration required.</p>
-          </div>
-          <div className="bg-white border-2 border-primary/10 rounded-2xl p-6 shadow-sm">
-            <h4 className="font-black text-primary text-sm mb-2">Bring Your Own LLM</h4>
-            <p className="text-xs text-slate-500 font-bold">Connect Gemini, Claude, or GPT models. Provides deeper reasoning and custom personality control.</p>
-          </div>
-        </div>
-
-        <h3 className="text-xl font-bold italic font-serif text-primary mt-8">Choosing a Persona</h3>
-        <div className="space-y-4">
-          {[
-            { tag: 'Educator', desc: 'Default mode. Best for onboarding and complex product explanations.' },
-            { tag: 'Sales', desc: 'Aggressive conversion mode. Direct, persuasive, and closes deals fast.' },
-            { tag: 'Support', desc: 'Patient and empathetic. Best for handling complaints and policies.' }
-          ].map(p => (
-            <div key={p.tag} className="flex items-center gap-4 p-4 border border-slate-100 rounded-xl hover:bg-slate-50 transition-colors">
-              <span className="bg-primary text-white text-[10px] font-black px-2 py-1 rounded uppercase tracking-tighter min-w-[70px] text-center">{p.tag}</span>
-              <p className="text-xs text-slate-600 font-bold">{p.desc}</p>
+    description: 'Connect your WhatsApp Business number to the platform.',
+    sections: [
+      {
+        id: 'meta-setup',
+        title: 'Step 1: Meta Business Account',
+        content: (
+          <div className="space-y-4">
+            <p className="text-[13px] text-slate-600 leading-relaxed">
+              You need a Meta Business account to access the WhatsApp Cloud API. This is free and takes about 10 minutes.
+            </p>
+            <div className="bg-slate-900 text-slate-100 rounded-xl p-4 font-mono text-[11px] leading-relaxed overflow-x-auto">
+              <div className="text-slate-400 mb-2">{`// What you need from Meta:`}</div>
+              <div><span className="text-emerald-400">1.</span> Phone Number ID</div>
+              <div><span className="text-emerald-400">2.</span> WhatsApp Business Account ID (WABA ID)</div>
+              <div><span className="text-emerald-400">3.</span> System User Access Token</div>
             </div>
-          ))}
-        </div>
-      </div>
-    )
+            <a href="https://business.facebook.com" target="_blank" rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-[12px] font-bold text-primary hover:underline">
+              Open Meta Business <ExternalLink size={12} />
+            </a>
+          </div>
+        ),
+      },
+      {
+        id: 'webhook',
+        title: 'Step 2: Configure Webhook',
+        content: (
+          <div className="space-y-4">
+            <p className="text-[13px] text-slate-600 leading-relaxed">
+              Add this webhook URL in your Meta WhatsApp API settings:
+            </p>
+            <div className="bg-slate-900 rounded-xl p-4 flex items-center justify-between gap-2">
+              <code className="text-[11px] text-emerald-400 font-mono truncate">
+                https://app.chatevo.io/api/webhook
+              </code>
+              <button onClick={() => navigator.clipboard.writeText('https://app.chatevo.io/api/webhook')}
+                className="text-slate-400 hover:text-white shrink-0">
+                <Copy size={14} />
+              </button>
+            </div>
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
+              <p className="text-[11px] text-amber-800 font-bold">
+                Important: Subscribe to the <code className="bg-amber-100 px-1 rounded">messages</code> field in your webhook configuration.
+              </p>
+            </div>
+          </div>
+        ),
+      },
+    ],
   },
-  { 
-    id: 'payments', 
-    title: 'Payments & Revenue', 
+  'products': {
+    id: 'products',
+    title: 'Products & Catalog',
+    icon: ShoppingCart,
+    description: 'Manage your product catalog and categories.',
+    sections: [
+      {
+        id: 'add-products',
+        title: 'Adding Products',
+        content: (
+          <div className="space-y-4">
+            <p className="text-[13px] text-slate-600 leading-relaxed">
+              Products are grouped by categories. When you add products, the AI uses your categories to guide customers through browsing.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {[
+                { type: 'Physical', desc: 'Tangible goods — clothes, electronics, food', icon: '1' },
+                { type: 'Digital', desc: 'Files delivered instantly — ebooks, courses', icon: '2' },
+                { type: 'Services', desc: 'Bookings and appointments', icon: '3' },
+              ].map(p => (
+                <div key={p.type} className="border border-slate-100 rounded-xl p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="w-6 h-6 bg-primary/10 text-primary rounded flex items-center justify-center text-[10px] font-black">{p.icon}</span>
+                    <span className="text-sm font-bold text-slate-800">{p.type}</span>
+                  </div>
+                  <p className="text-[11px] text-slate-400 font-medium">{p.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        ),
+      },
+    ],
+  },
+  'payments': {
+    id: 'payments',
+    title: 'Payments',
     icon: CreditCard,
-    content: (
-      <div className="space-y-6">
-        <p className="text-slate-600 leading-relaxed font-medium">Collect payments directly via WhatsApp. Chatevo automatically generates checkout links and tracks order status.</p>
-        
-        <div className="space-y-4">
-          <div className="flex gap-4 p-5 bg-slate-50 border border-slate-100 rounded-2xl">
-            <div className="w-10 h-10 bg-black text-white rounded-xl flex items-center justify-center font-black italic">P.</div>
-            <div>
-              <h4 className="font-bold text-slate-900 text-sm">Paystack Integration</h4>
-              <p className="text-xs text-slate-500 font-medium mt-1">Best for African markets (Nigeria, Kenya, Ghana, SA). Supports M-Pesa, Card, and Bank Transfer.</p>
+    description: 'Collect payments via M-Pesa, Card, or PayPal.',
+    sections: [
+      {
+        id: 'paystack',
+        title: 'Paystack (Recommended for Africa)',
+        content: (
+          <div className="space-y-4">
+            <p className="text-[13px] text-slate-600 leading-relaxed">
+              Paystack supports M-Pesa, bank transfers, and card payments across Nigeria, Kenya, Ghana, and South Africa.
+            </p>
+            <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 space-y-2">
+              <div className="flex items-center justify-between text-[11px]">
+                <span className="text-slate-500 font-medium">Setup Location</span>
+                <span className="font-bold text-slate-700">Dashboard &gt; Settings &gt; Payments</span>
+              </div>
+              <div className="flex items-center justify-between text-[11px]">
+                <span className="text-slate-500 font-medium">Integration</span>
+                <span className="font-bold text-slate-700">Automatic (Chatevo handles everything)</span>
+              </div>
+              <div className="flex items-center justify-between text-[11px]">
+                <span className="text-slate-500 font-medium">Settlement</span>
+                <span className="font-bold text-slate-700">Direct to your bank account</span>
+              </div>
             </div>
           </div>
-          
-          <div className="flex gap-4 p-5 bg-slate-50 border border-slate-100 rounded-2xl">
-            <div className="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center font-black">PP</div>
-            <div>
-              <h4 className="font-bold text-slate-900 text-sm">PayPal Business</h4>
-              <p className="text-xs text-slate-500 font-medium mt-1">Best for global customers. Requires a verified PayPal Business email.</p>
+        ),
+      },
+      {
+        id: 'mpesa',
+        title: 'M-Pesa (Kenya)',
+        content: (
+          <div className="space-y-4">
+            <p className="text-[13px] text-slate-600 leading-relaxed">
+              Customers send payment via M-Pesa to your number, then type "paid" in WhatsApp. The AI auto-confirms the order.
+            </p>
+            <div className="bg-green-50 border border-green-100 rounded-xl p-4">
+              <p className="text-[11px] text-green-800 font-bold mb-2">How it works:</p>
+              <ol className="text-[11px] text-green-700 font-medium space-y-1 list-decimal list-inside">
+                <li>Customer checks out and gets payment instructions</li>
+                <li>Customer sends M-Pesa to your business number</li>
+                <li>Customer replies "paid" in WhatsApp</li>
+                <li>AI confirms the order instantly</li>
+              </ol>
             </div>
           </div>
-        </div>
-      </div>
-    )
-  }
-]
+        ),
+      },
+    ],
+  },
+  'ai-config': {
+    id: 'ai-config',
+    title: 'AI Settings',
+    icon: Zap,
+    description: 'Customize your AI sales agent personality and behavior.',
+    sections: [
+      {
+        id: 'greeting',
+        title: 'Custom Greeting',
+        content: (
+          <div className="space-y-4">
+            <p className="text-[13px] text-slate-600 leading-relaxed">
+              Set a custom greeting that appears when customers message your store. Keep it short and friendly.
+            </p>
+            <div className="bg-slate-50 border border-slate-100 rounded-xl p-4">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Example Greeting</p>
+              <p className="text-sm text-slate-700 font-medium italic">
+                "Hey there! Welcome to Sarah's Boutique. What are you looking for today?"
+              </p>
+            </div>
+            <p className="text-[11px] text-slate-400 font-medium">
+              Setting location: Dashboard &gt; Settings &gt; AI Sales Agent &gt; Custom Greeting
+            </p>
+          </div>
+        ),
+      },
+      {
+        id: 'persona',
+        title: 'AI Persona',
+        content: (
+          <div className="space-y-3">
+            {[
+              { name: 'Educator', desc: 'Great for onboarding and explaining complex products', tag: 'Default' },
+              { name: 'Sales', desc: 'Aggressive, persuasive, and focused on closing deals', tag: 'Conversion' },
+              { name: 'Friendly', desc: 'Casual, warm, and conversational style', tag: 'Casual' },
+            ].map(p => (
+              <div key={p.name} className="flex items-center gap-4 p-3 border border-slate-100 rounded-xl">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold text-slate-800">{p.name}</span>
+                    <span className="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded font-black uppercase">{p.tag}</span>
+                  </div>
+                  <p className="text-[11px] text-slate-400 font-medium mt-0.5">{p.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        ),
+      },
+    ],
+  },
+}
 
 export default function DocsPage() {
-  const [activeTab, setActiveTab] = useState('getting-started')
+  const [activePage, setActivePage] = useState('getting-started')
+  const [openSections, setOpenSections] = useState<string[]>(['overview'])
 
-  const activeSection = SECTIONS.find(s => s.id === activeTab)
+  const page = DOCS[activePage] || DOCS['getting-started']
+
+  function toggleSection(id: string) {
+    setOpenSections(prev =>
+      prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]
+    )
+  }
 
   return (
-    <div className="max-w-6xl mx-auto py-8">
-      <div className="flex flex-col md:flex-row gap-12">
-        {/* Sidebar Nav */}
-        <div className="w-full md:w-64 space-y-2 sticky top-8 h-fit">
-          <div className="px-4 mb-6">
-            <h1 className="text-2xl font-black text-primary italic font-serif">Chatevo Nexus</h1>
-            <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] mt-1">Platform Documentation</p>
-          </div>
-          
-          {SECTIONS.map(s => (
-            <button
-              key={s.id}
-              onClick={() => setActiveTab(s.id)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold transition-all ${
-                activeTab === s.id 
-                  ? 'bg-primary text-white shadow-lg shadow-primary/20' 
-                  : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
-              }`}
-            >
-              <s.icon size={18} />
-              {s.title}
-              <ChevronRight size={14} className={`ml-auto transition-transform ${activeTab === s.id ? 'rotate-90' : ''}`} />
-            </button>
-          ))}
-          
-          <div className="pt-8 mt-8 border-t border-slate-100">
-             <a href="mailto:mazaoedu@gmail.com" className="flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black text-slate-400 hover:text-primary transition-colors">
-                <HelpCircle size={16} />
-                Need Human Help?
-             </a>
-          </div>
+    <div className="flex min-h-[calc(100vh-64px)] bg-slate-50">
+      {/* Left Sidebar */}
+      <aside className="w-64 shrink-0 bg-white border-r border-slate-100 p-6 overflow-y-auto">
+        <div className="mb-6">
+          <h1 className="text-lg font-black text-slate-900 italic font-serif">Docs</h1>
+          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Chatevo v2.0</p>
         </div>
 
-        {/* Content Area */}
-        <div className="flex-1 min-w-0">
-          <div className="bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden min-h-[600px] flex flex-col">
-             <div className="p-8 md:p-12 border-b border-slate-50 bg-slate-50/30 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                   <div className="w-16 h-16 bg-primary/5 text-primary rounded-[1.5rem] flex items-center justify-center">
-                     {activeSection && <activeSection.icon size={32} />}
-                   </div>
-                   <div>
-                     <h2 className="text-2xl font-black text-slate-900 italic font-serif">{activeSection?.title}</h2>
-                     <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">Official Guide · Version 2.0</p>
-                   </div>
-                </div>
-                <button className="hidden md:flex items-center gap-2 text-[10px] font-black text-slate-300 uppercase tracking-widest hover:text-primary transition-colors">
-                  <ExternalLink size={14} /> View External Docs
+        <div className="relative mb-4">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Search docs..."
+            className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-100 rounded-lg text-[12px] font-medium focus:outline-none focus:ring-1 focus:ring-primary/20"
+          />
+        </div>
+
+        <nav className="space-y-1">
+          {Object.values(DOCS).map(doc => (
+            <button
+              key={doc.id}
+              onClick={() => { setActivePage(doc.id); setOpenSections([doc.sections[0]?.id || '']) }}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-[12px] font-bold transition-all ${
+                activePage === doc.id
+                  ? 'bg-primary/5 text-primary'
+                  : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
+              }`}
+            >
+              <doc.icon size={14} className="shrink-0" />
+              {doc.title}
+            </button>
+          ))}
+        </nav>
+
+        <div className="mt-8 pt-6 border-t border-slate-100">
+          <a href="mailto:mazaoedu@gmail.com"
+            className="flex items-center gap-2 px-3 py-2 text-[11px] font-bold text-slate-400 hover:text-primary transition-colors">
+            <HelpCircle size={12} />
+            Get Help
+          </a>
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-3xl mx-auto p-8">
+          {/* Page Header */}
+          <div className="mb-8">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 bg-primary/10 text-primary rounded-xl flex items-center justify-center">
+                <page.icon size={20} />
+              </div>
+              <div>
+                <h2 className="text-xl font-black text-slate-900">{page.title}</h2>
+                <p className="text-[12px] text-slate-400 font-medium">{page.description}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Sections */}
+          <div className="space-y-3">
+            {page.sections.map(section => (
+              <div key={section.id} className="bg-white border border-slate-100 rounded-2xl overflow-hidden">
+                <button
+                  onClick={() => toggleSection(section.id)}
+                  className="w-full flex items-center justify-between px-6 py-4 text-left hover:bg-slate-50 transition-colors"
+                >
+                  <span className="text-sm font-bold text-slate-800">{section.title}</span>
+                  {openSections.includes(section.id) ? (
+                    <ChevronDown size={16} className="text-slate-400" />
+                  ) : (
+                    <ChevronRight size={16} className="text-slate-400" />
+                  )}
                 </button>
-             </div>
+                {openSections.includes(section.id) && (
+                  <div className="px-6 pb-6 pt-2 border-t border-slate-50">
+                    {section.content}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
 
-             <div className="p-8 md:p-12 prose prose-slate max-w-none">
-                {activeSection?.content}
-             </div>
-
-             <div className="mt-auto p-8 border-t border-slate-50 bg-slate-50/20 flex items-center justify-between">
-                <div className="flex items-center gap-2 text-[10px] font-black text-slate-300 uppercase tracking-widest">
-                   <ShieldCheck size={14} className="text-emerald-500" />
-                   Verified Production Guide
-                </div>
-                <p className="text-[10px] font-bold text-slate-400 italic">Last updated: March 2026</p>
-             </div>
+          {/* Footer nav */}
+          <div className="mt-12 pt-8 border-t border-slate-100 flex items-center justify-between">
+            <a href="/dashboard/docs" className="text-[11px] font-bold text-slate-400 hover:text-primary transition-colors flex items-center gap-2">
+              <ArrowRight size={12} className="rotate-180" /> Back to start
+            </a>
+            <a href="mailto:mazaoedu@gmail.com"
+              className="text-[11px] font-bold text-primary hover:underline flex items-center gap-2">
+              Need help? <Mail size={12} />
+            </a>
           </div>
         </div>
       </div>
     </div>
   )
 }
-
