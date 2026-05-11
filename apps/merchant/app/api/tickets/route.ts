@@ -1,8 +1,9 @@
 import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { support_tickets, users, organizations } from '@/lib/schema'
+import { support_tickets, users, organizations, notifications } from '@/lib/schema'
 import { eq } from 'drizzle-orm'
+import { sendEmail } from '@/lib/email'
 
 export async function POST(req: Request) {
   try {
@@ -17,6 +18,10 @@ export async function POST(req: Request) {
     })
     if (!user) return new NextResponse('User not found', { status: 404 })
 
+    const org = await db.query.organizations.findFirst({
+      where: eq(organizations.id, user.org_id!),
+    })
+
     // 1. Save to database
     const [ticket] = await db.insert(support_tickets).values({
       org_id: user.org_id,
@@ -28,30 +33,50 @@ export async function POST(req: Request) {
       status: 'open',
     }).returning()
 
-    // 2. Notification Logic (Mocked for now, but ready for WhatsApp/Email)
-    console.log('--- NEW SUPPORT TICKET ---')
-    console.log('Ticket ID:', ticket.id)
-    console.log('Type:', type)
-    console.log('Details:', description)
-    console.log('Metadata:', metadata)
-    console.log('-------------------------')
+    // 2. Create in-app notification for the merchant
+    await db.insert(notifications).values({
+      org_id: user.org_id,
+      title: 'Support Ticket Submitted',
+      message: `Your "${subject}" ticket has been submitted. We'll respond shortly.`,
+      type: 'info',
+      action_url: '/dashboard/notifications',
+    })
 
-    // 3. WhatsApp Notification to Admin (254762667048)
-    // In a real scenario, we'd use the Meta WhatsApp API here.
-    // Since this is a setup booking, we notify the platform owner.
-    
+    // 3. Send email notification to merchant
+    if (org && user.email) {
+      try {
+        await sendEmail({
+          to: user.email,
+          subject: `Ticket Received: ${subject}`,
+          html: `
+            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #25D366;">Ticket Received</h2>
+              <p>Hi ${user.name || 'there'},</p>
+              <p>We've received your support ticket and will get back to you shortly.</p>
+              <div style="background: #f5f5f5; padding: 16px; border-radius: 8px; margin: 16px 0;">
+                <strong>Subject:</strong> ${subject}<br/>
+                <strong>Status:</strong> Open
+              </div>
+              <p>Our team is here to help. You can also reach us directly:</p>
+              <p>📞 +254762667048 (Kenya/Africa)<br/>📞 +16416712105 (USA/International)</p>
+            </div>
+          `,
+        })
+      } catch (emailErr) {
+        console.error('Email send error:', emailErr)
+      }
+    }
+
+    // 4. Log for admin WhatsApp notification
     const adminWhatsApp = '254762667048'
-    const message = `ðŸš€ *New Setup Booking*\n\n` +
+    const message = `🎫 *New Support Ticket*\n\n` +
       `*From:* ${user.email}\n` +
-      `*WhatsApp:* ${metadata?.whatsapp}\n` +
-      `*Details:* ${description}\n` +
-      `*Preferred Time:* ${metadata?.preferred_time}\n\n` +
-      `View in Admin Panel: ${process.env.NEXT_PUBLIC_APP_URL}/admin`
+      `*Subject:* ${subject}\n` +
+      `*Type:* ${type}\n` +
+      `*Details:* ${description}\n\n` +
+      `View in Admin Panel: ${process.env.NEXT_PUBLIC_APP_URL}/admin/tickets`
 
-    console.log(`[WhatsApp Notification] Would send to ${adminWhatsApp}: ${message}`)
-
-    // TODO: Implement actual WhatsApp sending if credentials are valid
-    // For now, it's logged. You can add your WhatsApp API call here.
+    console.log(`[Ticket Notification] To admin ${adminWhatsApp}: ${message}`)
 
     return NextResponse.json(ticket)
   } catch (error: any) {

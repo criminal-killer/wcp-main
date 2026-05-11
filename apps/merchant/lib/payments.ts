@@ -20,6 +20,7 @@ export const PLAN_CONFIG: Record<PlanId, {
   stripe_price_id_env: string
   features: string[]
   product_limit: number
+  store_limit: number
   ai_custom: boolean
   white_label: boolean
 }> = {
@@ -32,6 +33,7 @@ export const PLAN_CONFIG: Record<PlanId, {
     stripe_price_id_env: 'STRIPE_STARTER_PRICE_ID',
     features: ['100 Products', 'Chatevo AI Default', 'Standard Admin', 'WhatsApp Storefront', '7-Day Free Trial'],
     product_limit: 100,
+    store_limit: 3,
     ai_custom: false,
     white_label: false,
   },
@@ -44,6 +46,7 @@ export const PLAN_CONFIG: Record<PlanId, {
     stripe_price_id_env: 'STRIPE_PRO_PRICE_ID',
     features: ['500 Products', 'Custom AI Agent (Gemini/GPT)', 'Advanced Analytics', 'Bulk Product Upload', 'Abandoned Cart Recovery'],
     product_limit: 500,
+    store_limit: 10,
     ai_custom: true,
     white_label: false,
   },
@@ -56,6 +59,7 @@ export const PLAN_CONFIG: Record<PlanId, {
     stripe_price_id_env: 'STRIPE_ELITE_PRICE_ID',
     features: ['5,000 Products', 'White-label Storefront', 'Dedicated Account Manager', 'Custom API Integrations', 'Priority AI Processing'],
     product_limit: 5000,
+    store_limit: 20,
     ai_custom: true,
     white_label: true,
   },

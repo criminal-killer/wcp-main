@@ -73,6 +73,34 @@ export const organizations = sqliteTable('organizations', {
   is_active: integer('is_active').default(1),
 })
 
+// ============================================
+// MULTI-STORE (physical, digital, services)
+// Each org can have multiple stores with own WhatsApp
+// ============================================
+export const stores = sqliteTable('stores', {
+  id: text('id').primaryKey().default(sql`(lower(hex(randomblob(16))))`),
+  org_id: text('org_id').notNull().references(() => organizations.id),
+  name: text('name').notNull(),
+  slug: text('slug').notNull().unique(),
+  store_type: text('store_type').default('physical'), // physical, digital, services
+  description: text('description'),
+  logo_url: text('logo_url'),
+  theme_color: text('theme_color').default('#25D366'),
+
+  // WhatsApp per store (optional override)
+  wa_phone_number_id: text('wa_phone_number_id'),
+  wa_business_account_id: text('wa_business_account_id'),
+  wa_access_token_encrypted: text('wa_access_token_encrypted'),
+
+  // Settings
+  currency: text('currency').default('USD'),
+  delivery_fee: real('delivery_fee').default(0),
+  is_active: integer('is_active').default(1),
+  is_default: integer('is_default').default(0),
+  created_at: text('created_at').default(sql`(datetime('now'))`),
+  updated_at: text('updated_at').default(sql`(datetime('now'))`),
+})
+
 export const payouts = sqliteTable('payouts', {
   id: text('id').primaryKey().default(sql`(lower(hex(randomblob(16))))`),
   org_id: text('org_id').notNull().references(() => organizations.id),
@@ -104,12 +132,16 @@ export const users = sqliteTable('users', {
 export const products = sqliteTable('products', {
   id: text('id').primaryKey().default(sql`(lower(hex(randomblob(16))))`),
   org_id: text('org_id').notNull().references(() => organizations.id),
+  store_id: text('store_id').references(() => stores.id), // links product to a specific store
   name: text('name').notNull(),
   description: text('description'),
   price: real('price').notNull(),
   compare_at_price: real('compare_at_price'),
   currency: text('currency').default('KES'),
   category: text('category').default('General'),
+  product_type: text('product_type').default('physical'), // physical, digital, service
+  digital_content: text('digital_content'), // link/code for digital products
+  service_duration: text('service_duration'), // e.g. "60 minutes" for services
   images: text('images').default('[]'),
   variants: text('variants').default('[]'),
   inventory_count: integer('inventory_count').default(0),

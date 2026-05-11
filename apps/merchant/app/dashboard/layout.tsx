@@ -2,8 +2,8 @@ import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { db } from '@/lib/db'
-import { users, organizations } from '@/lib/schema'
-import { eq } from 'drizzle-orm'
+import { users, organizations, notifications } from '@/lib/schema'
+import { eq, and } from 'drizzle-orm'
 import DashboardSidebar from './sidebar'
 import { Clock } from 'lucide-react'
 import AiAssist from '@/components/dashboard/AiAssist'
@@ -21,6 +21,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
   })
   if (!org) redirect('/onboarding')
 
+  // Unread notification count
+  const unreadRows = await db.select({ id: notifications.id })
+    .from(notifications)
+    .where(and(eq(notifications.org_id, user.org_id!), eq(notifications.is_read, 0)))
+  const unreadCount = unreadRows.length
+
   // Check trial
   const trialDaysLeft = org.trial_ends_at
     ? Math.max(0, Math.ceil((new Date(org.trial_ends_at).getTime() - Date.now()) / 86400000))
@@ -29,7 +35,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <div className="flex h-screen bg-secondary overflow-hidden">
-      <DashboardSidebar org={org} />
+      <DashboardSidebar org={org} unreadCount={unreadCount} />
       <div className="flex-1 flex flex-col min-w-0 pt-14 lg:pt-0">
         {/* Trial Banner */}
         {isOnTrial && (

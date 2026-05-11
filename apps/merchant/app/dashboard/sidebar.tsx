@@ -7,7 +7,7 @@ import {
   Users, Settings, Store, BarChart3, Globe, Shield,
   CheckCircle2, Plus, Menu, X, Bell, BookOpen, HandCoins, Gift
 } from 'lucide-react'
-import { useState, Fragment } from 'react'
+import { useState, Fragment, useEffect } from 'react'
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -28,7 +28,7 @@ interface Org {
   logo_url?: string | null
 }
 
-export default function DashboardSidebar({ org }: { org: Org }) {
+export default function DashboardSidebar({ org, unreadCount = 0 }: { org: Org; unreadCount?: number }) {
   const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
 
@@ -45,7 +45,11 @@ export default function DashboardSidebar({ org }: { org: Org }) {
         <div className="flex items-center gap-3">
           <Link href="/dashboard/notifications" className="relative p-2 text-muted-foreground hover:text-foreground transition-colors">
             <Bell size={20} />
-            <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-red-500 ring-2 ring-card"></span>
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-black flex items-center justify-center rounded-full px-1 shadow-lg">
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </span>
+            )}
           </Link>
           <button 
             onClick={() => setIsOpen(true)}

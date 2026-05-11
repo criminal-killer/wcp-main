@@ -7,8 +7,8 @@ import Link from "next/link";
 import { cookies, headers } from "next/headers";
 import { jwtVerify } from "jose";
 import { db } from "@/lib/db";
-import { users } from "@/lib/schema";
-import { eq } from "drizzle-orm";
+import { users, support_tickets } from "@/lib/schema";
+import { eq, count } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { currentUser } from "@clerk/nextjs/server";
 
@@ -46,10 +46,10 @@ export default async function RootLayout({
   const user = await currentUser();
   const path = headers().get("x-url") || ""; // Need a way to get path
   // Since we can't easily get path in RSC without help, we'll check status
-  
+
   if (user && !isSuperAdmin) {
     const adminId = process.env.ADMIN_USER_ID;
-    
+
     // 1. If it's the official SuperAdmin ID, bypass
     if (user.id === adminId) {
       isSuperAdmin = true;
@@ -78,18 +78,30 @@ export default async function RootLayout({
     }
   }
 
+  // Fetch open ticket count for admin overview bell
+  const [openTicketCount] = await db.select({ value: count() }).from(support_tickets)
+    .where(eq(support_tickets.status, 'open'))
+
   const DashboardShell = ({ isSuper }: { isSuper: boolean }) => (
     <div className={`flex min-h-screen ${isSuper ? 'bg-[#020617]' : 'bg-slate-50'}`}>
       {/* Sidebar */}
       <aside className={`${isSuper ? 'bg-slate-900 border-white/5' : 'bg-white border-slate-200'} w-64 border-r flex flex-col fixed h-full z-20`}>
-        <div className={`p-6 border-b ${isSuper ? 'border-white/5' : 'border-slate-100'} flex flex-col gap-1`}>
-          <div className="italic font-serif font-black text-2xl text-primary tracking-tighter text-nowrap">
-            Chatevo <span className={`${isSuper ? 'text-slate-500' : 'text-slate-400'} not-italic font-sans text-[10px] uppercase tracking-widest align-middle ml-1`}>Admin</span>
+        <div className={`p-6 border-b ${isSuper ? 'border-white/5' : 'border-slate-100'} flex items-center justify-between`}>
+          <div className={`italic font-serif font-black text-2xl text-primary tracking-tighter text-nowrap flex items-center gap-2`}>
+            <div>
+              Chatevo <span className={`${isSuper ? 'text-slate-500' : 'text-slate-400'} not-italic font-sans text-[10px] uppercase tracking-widest align-middle ml-1`}>Admin</span>
+            </div>
+            {/* Open ticket badge */}
+            {openTicketCount.value > 0 && (
+              <span className="w-5 h-5 bg-red-500 text-white text-[10px] font-black flex items-center justify-center rounded-full shadow-lg animate-pulse">
+                {openTicketCount.value > 9 ? '9+' : openTicketCount.value}
+              </span>
+            )}
           </div>
           {isSuper && (
-            <div className="inline-flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full w-fit mt-2">
+            <div className="inline-flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full w-fit">
               <ShieldCheck size={10} className="text-emerald-500" />
-              <span className="text-[9px] font-black text-emerald-500 uppercase tracking-wider">Super Admin</span>
+              <span className="text-[9px] font-black text-emerald-500 uppercase tracking-wider">Super</span>
             </div>
           )}
         </div>

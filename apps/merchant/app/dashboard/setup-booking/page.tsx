@@ -2,22 +2,41 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { 
-  Users, Mail, Phone, Info, CheckCircle2, 
-  ArrowLeft, Send, Calendar, Clock, ShieldCheck 
+import {
+  Users, Mail, Phone, Info, CheckCircle2,
+  ArrowLeft, Send, Calendar, Clock, ShieldCheck,
+  MessageCircle, ChevronDown, ExternalLink
 } from 'lucide-react'
 import Link from 'next/link'
+
+const SUPPORT_CONTACTS = [
+  { label: '🇺🇸 USA / International', number: '+16416712105' },
+  { label: '🇰🇪 Kenya / Africa', number: '+254762667048' },
+]
 
 export default function SetupBookingPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [showChat, setShowChat] = useState(false)
+  const [selectedContact, setSelectedContact] = useState('')
+  const [chatForm, setChatForm] = useState({
+    name: '',
+    location: '',
+    message: '',
+  })
   const [formData, setFormData] = useState({
     email: '',
     whatsapp: '',
     businessInfo: '',
     preferredTime: '',
   })
+
+  function openWhatsApp(number: string, name: string, location: string, message: string) {
+    const text = `Hi, my name is ${name || '[Your name]'} from ${location || '[Your location]'}${message ? `. ${message}` : ''}`
+    const encoded = encodeURIComponent(text)
+    window.open(`https://wa.me/${number.replace('+', '')}?text=${encoded}`, '_blank')
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -49,6 +68,14 @@ export default function SetupBookingPage() {
     }
   }
 
+  async function handleChatSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!selectedContact) return
+    const contact = SUPPORT_CONTACTS.find(c => c.number === selectedContact)
+    if (!contact) return
+    openWhatsApp(contact.number, chatForm.name, chatForm.location, chatForm.message)
+  }
+
   if (submitted) {
     return (
       <div className="max-w-2xl mx-auto py-20 px-6 text-center">
@@ -66,13 +93,6 @@ export default function SetupBookingPage() {
           >
             Return to Dashboard
           </Link>
-          <a
-            href="https://wa.me/254762667048"
-            target="_blank"
-            className="bg-card border-2 border-border text-muted-foreground px-8 py-4 rounded-2xl font-black hover:border-[#25D366] transition-all"
-          >
-            Chat with Support
-          </a>
         </div>
       </div>
     )
@@ -80,14 +100,101 @@ export default function SetupBookingPage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
-      <Link 
-        href="/dashboard" 
+      <Link
+        href="/dashboard"
         className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground font-bold text-sm transition-colors group"
       >
         <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
         Back to Dashboard
       </Link>
 
+      {/* Chat with Support - Toggle */}
+      <div className="bg-card rounded-3xl border border-border p-6 shadow-lg">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
+              <MessageCircle size={20} className="text-blue-500" />
+            </div>
+            <div>
+              <h2 className="font-black text-foreground text-sm uppercase tracking-tight">Chat with Support Team</h2>
+              <p className="text-xs text-muted-foreground">Get instant help via WhatsApp</p>
+            </div>
+          </div>
+          <button
+            onClick={() => setShowChat(!showChat)}
+            className={`p-2 rounded-xl transition-all ${showChat ? 'bg-secondary rotate-180' : 'bg-whatsapp/10 text-whatsapp hover:bg-whatsapp/20'}`}
+          >
+            <ChevronDown size={18} className={showChat ? '' : 'text-whatsapp'} />
+          </button>
+        </div>
+
+        {showChat && (
+          <form onSubmit={handleChatSubmit} className="space-y-4 mt-4 border-t border-border pt-4">
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-black text-foreground mb-1.5 uppercase tracking-tight">Your Name *</label>
+                <input
+                  required
+                  type="text"
+                  value={chatForm.name}
+                  onChange={e => setChatForm({ ...chatForm, name: e.target.value })}
+                  className="w-full px-4 py-3 bg-secondary border-0 rounded-xl text-sm font-medium focus:ring-2 focus:ring-whatsapp"
+                  placeholder="e.g. John Smith"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-black text-foreground mb-1.5 uppercase tracking-tight">Location *</label>
+                <input
+                  required
+                  type="text"
+                  value={chatForm.location}
+                  onChange={e => setChatForm({ ...chatForm, location: e.target.value })}
+                  className="w-full px-4 py-3 bg-secondary border-0 rounded-xl text-sm font-medium focus:ring-2 focus:ring-whatsapp"
+                  placeholder="e.g. USA, Florida"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-black text-foreground mb-1.5 uppercase tracking-tight">Message (Optional)</label>
+              <textarea
+                value={chatForm.message}
+                onChange={e => setChatForm({ ...chatForm, message: e.target.value })}
+                rows={2}
+                className="w-full px-4 py-3 bg-secondary border-0 rounded-xl text-sm font-medium focus:ring-2 focus:ring-whatsapp resize-none"
+                placeholder="Describe any issue or question you have..."
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-black text-foreground mb-1.5 uppercase tracking-tight">Support Number *</label>
+              <div className="relative">
+                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground/70" size={16} />
+                <select
+                  required
+                  value={selectedContact}
+                  onChange={e => setSelectedContact(e.target.value)}
+                  className="w-full pl-11 pr-4 py-3 bg-secondary border-0 rounded-xl text-sm font-medium focus:ring-2 focus:ring-whatsapp appearance-none"
+                >
+                  <option value="">Select a support number...</option>
+                  {SUPPORT_CONTACTS.map(c => (
+                    <option key={c.number} value={c.number}>{c.label} — {c.number}</option>
+                  ))}
+                </select>
+                <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground/70 pointer-events-none" />
+              </div>
+            </div>
+            <button
+              type="submit"
+              disabled={!selectedContact}
+              className="w-full bg-whatsapp text-white py-3 rounded-xl font-black text-sm hover:bg-green-600 transition-all shadow-lg shadow-whatsapp/20 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <ExternalLink size={16} />
+              Open WhatsApp Chat
+            </button>
+          </form>
+        )}
+      </div>
+
+      {/* Existing setup booking form */}
       <div className="grid lg:grid-cols-5 gap-12">
         <div className="lg:col-span-2 space-y-6">
           <div className="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-100">
@@ -100,7 +207,7 @@ export default function SetupBookingPage() {
           <p className="text-muted-foreground font-medium leading-relaxed">
             Our experts will help you connect your Meta Business account, setup your first 50 products, and configure your payment gateways.
           </p>
-          
+
           <div className="space-y-4 pt-6">
             {[
               { icon: ShieldCheck, text: 'Secure configuration', sub: 'Verified Meta integration' },

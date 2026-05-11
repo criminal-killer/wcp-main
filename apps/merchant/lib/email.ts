@@ -1,40 +1,40 @@
 /**
  * lib/email.ts
  *
- * Resend email client — lazy initialized.
- * getResend() returns null when RESEND_API_KEY is not set, which causes
- * all send functions to no-op with a console.warn instead of crashing.
- *
- * This prevents build-time failures during `next build` when env vars
- * may not be present. In production, missing RESEND_API_KEY will surface
- * as a warning in the logs rather than a 500 error on the calling route.
+ * Resend email client -- lazy initialized.
  */
 import { Resend } from 'resend'
 
 const FROM = process.env.RESEND_FROM_EMAIL || 'Chatevo <onboarding@resend.dev>'
 const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME || 'Chatevo'
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://Chatevo-app.vercel.app'
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://chatevo-app.vercel.app'
 
-// ─── Lazy singleton ──────────────────────────────────────────────────────────
-
+// Lazy singleton
 let _resend: Resend | null = null
 
 function getResend(): Resend | null {
   if (_resend) return _resend
   const key = process.env.RESEND_API_KEY
   if (!key) {
-    console.warn('[email] RESEND_API_KEY is not set — all emails will be skipped.')
+    console.warn('[email] RESEND_API_KEY is not set -- all emails will be skipped.')
     return null
   }
   _resend = new Resend(key)
   return _resend
 }
 
-// ─── Result type ────────────────────────────────────────────────────────────
-
 type SendResult = { sent: true } | { skipped: true; reason: string }
 
-// ─── Email senders ──────────────────────────────────────────────────────────
+export async function sendEmail(opts: {
+  to: string
+  subject: string
+  html: string
+}): Promise<SendResult> {
+  const resend = getResend()
+  if (!resend) return { skipped: true, reason: 'RESEND_API_KEY not set' }
+  await resend.emails.send({ from: FROM, to: opts.to, subject: opts.subject, html: opts.html })
+  return { sent: true }
+}
 
 export async function sendWelcomeEmail(
   email: string,
@@ -43,11 +43,10 @@ export async function sendWelcomeEmail(
 ): Promise<SendResult> {
   const resend = getResend()
   if (!resend) return { skipped: true, reason: 'RESEND_API_KEY not set' }
-
   await resend.emails.send({
     from: FROM,
     to: email,
-    subject: `Welcome to ${APP_NAME} — Your 14-day trial has started`,
+    subject: `Welcome to ${APP_NAME} -- Your 14-day trial has started`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <div style="background: #25D366; padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
@@ -68,10 +67,9 @@ export async function sendWelcomeEmail(
             <a href="${APP_URL}/dashboard"
                style="background: #25D366; color: white; padding: 15px 30px;
                       text-decoration: none; border-radius: 8px; font-weight: bold;">
-              Go to Dashboard →
+              Go to Dashboard
             </a>
           </div>
-          <p style="color: #666; font-size: 14px;">Questions? Reply to this email or chat with us.</p>
         </div>
       </div>
     `,
@@ -88,14 +86,13 @@ export async function sendOrderConfirmationEmail(
 ): Promise<SendResult> {
   const resend = getResend()
   if (!resend) return { skipped: true, reason: 'RESEND_API_KEY not set' }
-
   await resend.emails.send({
     from: FROM,
     to: email,
     subject: `Order ${orderNumber} Confirmed`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2>Order Confirmed! ✅</h2>
+        <h2>Order Confirmed</h2>
         <p>Order Number: <strong>${orderNumber}</strong></p>
         <table style="width: 100%; border-collapse: collapse;">
           ${items.map(item => `
@@ -123,7 +120,6 @@ export async function sendTrialEndingEmail(
 ): Promise<SendResult> {
   const resend = getResend()
   if (!resend) return { skipped: true, reason: 'RESEND_API_KEY not set' }
-
   await resend.emails.send({
     from: FROM,
     to: email,
@@ -136,7 +132,7 @@ export async function sendTrialEndingEmail(
           <a href="${APP_URL}/dashboard/settings/billing"
              style="background: #25D366; color: white; padding: 15px 30px;
                     text-decoration: none; border-radius: 8px; font-weight: bold;">
-            Subscribe Now — $29/month →
+            Subscribe Now -- $29/month
           </a>
         </div>
       </div>
@@ -152,21 +148,20 @@ export async function sendSubscriptionConfirmationEmail(
 ): Promise<SendResult> {
   const resend = getResend()
   if (!resend) return { skipped: true, reason: 'RESEND_API_KEY not set' }
-
   await resend.emails.send({
     from: FROM,
     to: email,
     subject: `Subscribed to ${APP_NAME} ${plan} Plan`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2>You are officially subscribed! 🎉</h2>
+        <h2>You are officially subscribed!</h2>
         <p>Hi ${name}, thank you for subscribing to the <strong>${plan}</strong> plan.</p>
         <p>Your store is now fully active with no limits.</p>
         <div style="text-align: center; margin: 30px 0;">
           <a href="${APP_URL}/dashboard"
              style="background: #25D366; color: white; padding: 15px 30px;
                     text-decoration: none; border-radius: 8px; font-weight: bold;">
-            Go to Dashboard →
+            Go to Dashboard
           </a>
         </div>
       </div>

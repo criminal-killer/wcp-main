@@ -1,11 +1,12 @@
-import { db } from '@/lib/db'
-import { organizations, contacts, conversations, products, orders, messages } from '@/lib/schema'
+﻿import { db } from '@/lib/db'
+import { organizations, stores, contacts, conversations, products, orders, messages } from '@/lib/schema'
 import { eq, and } from 'drizzle-orm'
 import { sendTextMessage, sendInteractiveButtonMessage, sendInteractiveListMessage, sendImageMessage } from '@/lib/whatsapp'
 import { getFlowState, setFlowState, deleteFlowState, getCart, setCart, clearCart } from '@/lib/redis'
 import { decrypt } from '@/lib/encryption'
 
 type RunnerOrg = typeof organizations.$inferSelect
+type RunnerStore = typeof stores.$inferSelect
 type RunnerContact = typeof contacts.$inferSelect
 type RunnerConversation = typeof conversations.$inferSelect
 type InboundMessage = {
@@ -20,6 +21,7 @@ type InboundMessage = {
 
 interface EngineContext {
   org: RunnerOrg
+  store: RunnerStore | null
   contact: RunnerContact
   conversation: RunnerConversation
   message: InboundMessage
@@ -82,7 +84,7 @@ export async function processIncomingMessage(ctx: EngineContext) {
     await deleteFlowState(orgId, phone)
     return await sendTextMessage(waConfigObj, {
       to: phone,
-      body: '👋 Session ended. Type *Hi* to start again.',
+      body: '   Session ended. Type *Hi* to start again.',
     })
   }
 
@@ -113,7 +115,7 @@ export async function processIncomingMessage(ctx: EngineContext) {
 
       return await sendTextMessage(waConfigObj, {
         to: phone,
-        body: `✅ Payment Confirmed!\n\nYour order *${pendingOrder[0].order_number}* has been marked as paid.\n\nWe'll process it right away! Thank you for shopping with *${org.name}* 🎉`,
+        body: `  Payment Confirmed!\n\nYour order *${pendingOrder[0].order_number}* has been marked as paid.\n\nWe'll process it right away! Thank you for shopping with *${org.name}*   `,
       })
     }
   }
@@ -181,7 +183,7 @@ async function showMainMenu(waConfig: { phoneNumberId: string; accessToken: stri
     }
   } else {
     // Default greeting
-    greeting = `Hey there! 😊 Hope your *${dayName}* is going wonderfully well!\n\nI'm your personal shopping assistant here at *${org.name}*. We have *${productCount.length}* specially selected items waiting for you today.\n\nHow can I help you find exactly what you're looking for?`
+    greeting = `Hey there!    Hope your *${dayName}* is going wonderfully well!\n\nI'm your personal shopping assistant here at *${org.name}*. We have *${productCount.length}* specially selected items waiting for you today.\n\nHow can I help you find exactly what you're looking for?`
   }
 
   return await sendInteractiveButtonMessage(waConfig, {
@@ -190,9 +192,9 @@ async function showMainMenu(waConfig: { phoneNumberId: string; accessToken: stri
     body: greeting,
     footer: 'Powered by Chatevo',
     buttons: [
-      { id: 'browse', title: '🛍️ Browse Products' },
-      { id: 'view_cart', title: '🛒 View Cart' },
-      { id: 'orders', title: '📦 My Orders' },
+      { id: 'browse', title: '    Browse Products' },
+      { id: 'view_cart', title: '   View Cart' },
+      { id: 'orders', title: '   My Orders' },
     ],
   })
 }
@@ -205,7 +207,7 @@ async function showCategories(waConfig: { phoneNumberId: string; accessToken: st
   const cats = Array.from(new Set(productList.map(p => p.category).filter(Boolean))) as string[]
 
   if (cats.length === 0) {
-    return await sendTextMessage(waConfig, { to: phone, body: '😔 No products available yet. Check back soon!' })
+    return await sendTextMessage(waConfig, { to: phone, body: '   No products available yet. Check back soon!' })
   }
 
   await setFlowState(orgId, phone, { step: 'browsing_categories' })
@@ -218,7 +220,7 @@ async function showCategories(waConfig: { phoneNumberId: string; accessToken: st
 
   return await sendInteractiveListMessage(waConfig, {
     to: phone,
-    header: '🛍️ Categories',
+    header: '    Categories',
     body: 'Select a category to browse products:',
     footer: `${cats.length} categories available`,
     buttonText: 'View Categories',
@@ -231,7 +233,7 @@ async function handleCategorySelected(waConfig: { phoneNumberId: string; accessT
 
   if (input.startsWith('cat_')) {
     category = input.replace('cat_', '').replace(/_/g, ' ')
-  } else if (input === 'browse' || input === '🛍️ browse products') {
+  } else if (input === 'browse' || input === '    browse products') {
     return await showCategories(waConfig, org, phone, orgId)
   } else {
     return await showCategories(waConfig, org, phone, orgId)
@@ -247,7 +249,7 @@ async function handleCategorySelected(waConfig: { phoneNumberId: string; accessT
     .limit(10)
 
   if (productList.length === 0) {
-    return await sendTextMessage(waConfig, { to: phone, body: '😔 No products in this category right now.' })
+    return await sendTextMessage(waConfig, { to: phone, body: '   No products in this category right now.' })
   }
 
   await setFlowState(orgId, phone, { step: 'browsing_products', category })
@@ -260,7 +262,7 @@ async function handleCategorySelected(waConfig: { phoneNumberId: string; accessT
 
   return await sendInteractiveListMessage(waConfig, {
     to: phone,
-    header: `📦 ${category || 'Products'}`,
+    header: `   ${category || 'Products'}`,
     body: 'Select a product to view details:',
     footer: `${productList.length} products`,
     buttonText: 'View Products',
@@ -281,7 +283,7 @@ async function handleProductSelected(
     where: and(eq(products.id, productId), eq(products.org_id, orgId)),
   })
 
-  if (!product) return await sendTextMessage(waConfig, { to: phone, body: '❌ Product not found.' })
+  if (!product) return await sendTextMessage(waConfig, { to: phone, body: '  Product not found.' })
 
   const images = JSON.parse(product.images || '[]') as string[]
   const variants = JSON.parse(product.variants || '[]') as Array<{ type: string; options: string[] }>
@@ -292,16 +294,16 @@ async function handleProductSelected(
   }
 
   const stockText = product.inventory_count === 0
-    ? '❌ *Out of Stock*'
-    : `✅ In Stock (${product.inventory_count} left)`
+    ? '  *Out of Stock*'
+    : `  In Stock (${product.inventory_count} left)`
 
   const compareText = product.compare_at_price
-    ? `\n~${org.currency} ${product.compare_at_price.toLocaleString()}~ → *${org.currency} ${product.price.toLocaleString()}*`
+    ? `\n~${org.currency} ${product.compare_at_price.toLocaleString()}~   *${org.currency} ${product.price.toLocaleString()}*`
     : `\n*${org.currency} ${product.price.toLocaleString()}*`
 
   const description = product.description ? `\n\n${product.description}` : ''
   const variantText = variants.length > 0
-    ? `\n\n📋 Options: ${variants.map(v => `${v.type}: ${v.options.join(', ')}`).join(' | ')}`
+    ? `\n\n   Options: ${variants.map(v => `${v.type}: ${v.options.join(', ')}`).join(' | ')}`
     : ''
 
   await setFlowState(orgId, phone, { step: 'product_detail', product_id: productId, category: flow.category })
@@ -317,8 +319,8 @@ async function handleProductSelected(
     to: phone,
     body: `*${product.name}*${compareText}${description}${variantText}\n\n${stockText}`,
     buttons: [
-      { id: `add_${productId}`, title: '🛒 Add to Cart' },
-      { id: 'back_category', title: '← Back' },
+      { id: `add_${productId}`, title: '   Add to Cart' },
+      { id: 'back_category', title: '  Back' },
     ],
   })
 }
@@ -327,7 +329,7 @@ async function handleProductAction(
   waConfig: { phoneNumberId: string; accessToken: string }, org: RunnerOrg, phone: string,
   orgId: string, input: string, flow: FlowState
 ) {
-  if (input === 'back_category' || input === '← back') {
+  if (input === 'back_category' || input === '  back') {
     return await handleCategorySelected(waConfig, org, phone, orgId, `cat_${(flow.category || '').replace(/\s+/g, '_')}`)
   }
 
@@ -336,7 +338,7 @@ async function handleProductAction(
     const product = await db.query.products.findFirst({
       where: and(eq(products.id, productId), eq(products.org_id, orgId)),
     })
-    if (!product) return await sendTextMessage(waConfig, { to: phone, body: '❌ Product not found.' })
+    if (!product) return await sendTextMessage(waConfig, { to: phone, body: '  Product not found.' })
 
     const variants = JSON.parse(product.variants || '[]') as Array<{ type: string; options: string[] }>
     if (variants.length > 0) {
@@ -357,7 +359,7 @@ async function handleProductAction(
       })
     }
 
-    // No variants — add directly
+    // No variants   add directly
     await addToCart(orgId, phone, { product_id: productId, product_name: product.name, price: product.price, qty: 1 })
     await setFlowState(orgId, phone, { step: 'cart_review' })
     return await showCart(waConfig, org, phone, orgId)
@@ -377,7 +379,7 @@ async function handleVariantSelected(
   const product = await db.query.products.findFirst({
     where: and(eq(products.id, productId), eq(products.org_id, orgId)),
   })
-  if (!product) return await sendTextMessage(waConfig as { phoneNumberId: string; accessToken: string }, { to: phone, body: '❌ Product not found.' })
+  if (!product) return await sendTextMessage(waConfig as { phoneNumberId: string; accessToken: string }, { to: phone, body: '  Product not found.' })
 
   await addToCart(orgId, phone, {
     product_id: productId,
@@ -398,26 +400,26 @@ async function showCart(waConfig: { phoneNumberId: string; accessToken: string }
   if (!cart || cart.length === 0) {
     return await sendInteractiveButtonMessage(waConfig, {
       to: phone,
-      body: '🛒 Your cart is empty!\n\nBrowse our products to start shopping.',
+      body: '   Your cart is empty!\n\nBrowse our products to start shopping.',
       buttons: [
-        { id: 'browse', title: '🛍️ Browse Products' },
-        { id: 'menu', title: '🏠 Main Menu' },
+        { id: 'browse', title: '    Browse Products' },
+        { id: 'menu', title: '   Main Menu' },
       ],
     })
   }
 
   const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0)
-  const orderLines = cart.map((i, idx) => `${idx + 1}. *${i.product_name}* ×${i.qty} = ${org.currency} ${(i.price * i.qty).toLocaleString()}`).join('\n')
+  const orderLines = cart.map((i, idx) => `${idx + 1}. *${i.product_name}*  ${i.qty} = ${org.currency} ${(i.price * i.qty).toLocaleString()}`).join('\n')
 
   return await sendInteractiveButtonMessage(waConfig, {
     to: phone,
-    header: '🛒 Your Cart',
+    header: '   Your Cart',
     body: `${orderLines}\n\n*Total: ${org.currency} ${subtotal.toLocaleString()}*`,
     footer: 'Review your order',
     buttons: [
-      { id: 'checkout', title: '✅ Checkout' },
+      { id: 'checkout', title: '  Checkout' },
       { id: 'browse', title: '+ Add More' },
-      { id: 'clear_cart', title: '🗑️ Clear Cart' },
+      { id: 'clear_cart', title: '    Clear Cart' },
     ],
   })
 }
@@ -429,7 +431,7 @@ async function handleCartAction(
   if (input === 'clear_cart') {
     await clearCart(orgId, phone)
     await deleteFlowState(orgId, phone)
-    return await sendTextMessage(waConfig, { to: phone, body: '🗑️ Cart cleared. Type *Hi* to start again.' })
+    return await sendTextMessage(waConfig, { to: phone, body: '    Cart cleared. Type *Hi* to start again.' })
   }
   if (input === 'browse') {
     return await showCategories(waConfig, org, phone, orgId)
@@ -438,7 +440,7 @@ async function handleCartAction(
     await setFlowState(orgId, phone, { step: 'delivery_info' })
     return await sendTextMessage(waConfig, {
       to: phone,
-      body: '📦 *Delivery Details*\n\nPlease send your delivery address:\n\n_(e.g. "123 Main Street, Nairobi")_',
+      body: '   *Delivery Details*\n\nPlease send your delivery address:\n\n_(e.g. "123 Main Street, Nairobi")_',
     })
   }
   return await showCart(waConfig, org, phone, orgId)
@@ -455,22 +457,22 @@ async function handleDeliveryInfo(
   
   // DEFAULT: Managed Payment (MoR) or Direct Paystack
   if (org.payment_mode === 'managed' || org.store_paystack_key_encrypted || !org.store_paystack_key_encrypted) {
-    paymentOptions.push({ id: 'pay_paystack', title: '💳 M-Pesa / Card' })
+    paymentOptions.push({ id: 'pay_paystack', title: '   M-Pesa / Card' })
   }
   
-  if (org.store_paypal_email) paymentOptions.push({ id: 'pay_paypal', title: '💵 PayPal' })
-  if (org.store_cod_enabled) paymentOptions.push({ id: 'pay_cod', title: '💰 Cash on Delivery' })
+  if (org.store_paypal_email) paymentOptions.push({ id: 'pay_paypal', title: '   PayPal' })
+  if (org.store_cod_enabled) paymentOptions.push({ id: 'pay_cod', title: '   Cash on Delivery' })
 
   if (paymentOptions.length === 0) {
     return await sendTextMessage(waConfig, {
       to: phone,
-      body: '⚠️ The store owner has not set up payment methods yet. Please contact the store directly.',
+      body: '   The store owner has not set up payment methods yet. Please contact the store directly.',
     })
   }
 
   return await sendInteractiveButtonMessage(waConfig, {
     to: phone,
-    header: '💳 Payment Method',
+    header: '   Payment Method',
     body: `Delivering to: *${address}*\n\nChoose how you'd like to pay:`,
     footer: 'Secure checkout',
     buttons: paymentOptions.slice(0, 3).map(p => ({ id: p.id, title: p.title })),
@@ -551,16 +553,16 @@ async function handlePaymentSelected(
   if (paymentLink) {
     return await sendInteractiveButtonMessage(waConfig, {
       to: phone,
-      header: '✅ Order Placed!',
+      header: '  Order Placed!',
       body: `*Order ${orderNumber}*\nTotal: *${org.currency} ${total.toLocaleString()}*\n\nClick below to complete your payment:`,
       footer: 'Your order is reserved for 30 minutes',
-      buttons: [{ id: `pay_link_${order.id}`, title: '💳 Pay Now' }],
+      buttons: [{ id: `pay_link_${order.id}`, title: '   Pay Now' }],
     })
   }
 
   return await sendTextMessage(waConfig, {
     to: phone,
-    body: `✅ *Order Confirmed!*\n\nOrder: *${orderNumber}*\nTotal: *${org.currency} ${total.toLocaleString()}*\nPayment: Cash on Delivery\n\nWe'll contact you to arrange delivery. Thank you for shopping with *${org.name}*! 🎉`,
+    body: `  *Order Confirmed!*\n\nOrder: *${orderNumber}*\nTotal: *${org.currency} ${total.toLocaleString()}*\nPayment: Cash on Delivery\n\nWe'll contact you to arrange delivery. Thank you for shopping with *${org.name}*!   `,
   })
 }
 

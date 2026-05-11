@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { organizations, contacts, conversations, messages, auto_replies, products, orders } from '@/lib/schema'
+import { organizations, stores, contacts, conversations, messages, auto_replies, products, orders } from '@/lib/schema'
 import { eq, and } from 'drizzle-orm'
 import { verifyWebhookSignature } from '@/lib/whatsapp'
 import { redis, getFlowState, setFlowState, deleteFlowState, getCart, setCart, clearCart } from '@/lib/redis'
@@ -75,11 +75,29 @@ export async function POST(req: NextRequest) {
       const phoneNumberId = value.metadata?.phone_number_id
       if (!phoneNumberId) continue
 
-      // Find org by phone number ID
-      const org = await db.query.organizations.findFirst({
-        where: eq(organizations.wa_phone_number_id, phoneNumberId),
+      // Find store by phone number ID first (multi-store)
+      // Then fall back to org-level WhatsApp
+      let store: typeof stores.$inferSelect | null = null
+      let org: typeof organizations.$inferSelect | null = null
+
+      const storeByPhone = await db.query.stores.findFirst({
+        where: eq(stores.wa_phone_number_id, phoneNumberId),
       })
-      if (!org) continue
+      if (storeByPhone) {
+        store = storeByPhone
+        const orgById = await db.query.organizations.findFirst({
+          where: eq(organizations.id, store.org_id),
+        })
+        if (!orgById) continue
+        org = orgById
+      } else {
+        // Fall back to org-level WhatsApp
+        const orgByPhone = await db.query.organizations.findFirst({
+          where: eq(organizations.wa_phone_number_id, phoneNumberId),
+        })
+        if (!orgByPhone) continue
+        org = orgByPhone
+      }
 
       // Auto-activate webhook status on first successful message
       if (!org.wa_webhook_verified) {
@@ -155,6 +173,7 @@ export async function POST(req: NextRequest) {
           try {
             await processIncomingMessage({
               org,
+              store,
               contact,
               conversation,
               message: msg,
