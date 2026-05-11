@@ -39,7 +39,7 @@ const PAGES: Record<string, Page> = {
               Chatevo turns your WhatsApp into a 24/7 AI-powered sales store. Customers browse your catalog, add to cart, and pay — all through WhatsApp messages. No app downloads required.
             </p>
             <div className="bg-slate-900/50 rounded-xl p-5 border border-slate-800">
-              <div className="text-slate-400 text-xs font-mono mb-3">// 3 steps to launch</div>
+              <div className="text-slate-400 text-xs font-mono mb-3">{`// 3 steps to launch`}</div>
               <div className="space-y-2 font-mono text-sm">
                 <div><span className="text-emerald-400">1.</span> <span className="text-slate-200">Connect your WhatsApp Business number</span></div>
                 <div><span className="text-emerald-400">2.</span> <span className="text-slate-200">Add your products and categories</span></div>
@@ -59,7 +59,7 @@ const PAGES: Record<string, Page> = {
               Link your WhatsApp Business number via Meta. This enables the AI to receive and respond to customer messages automatically.
             </p>
             <div className="bg-slate-900/50 rounded-xl p-5 border border-slate-800">
-              <div className="text-slate-400 text-xs font-mono mb-3">// Webhook URL</div>
+              <div className="text-slate-400 text-xs font-mono mb-3">{`// Webhook URL`}</div>
               <div className="flex items-center justify-between bg-slate-900 rounded-lg px-4 py-3">
                 <code className="text-emerald-400 text-sm font-mono">https://app.chatevo.io/api/webhook</code>
                 <button className="text-slate-400 hover:text-white p-1">
@@ -116,7 +116,7 @@ const PAGES: Record<string, Page> = {
               Organize products into categories and subcategories. These guide the AI flow when customers browse your store.
             </p>
             <div className="bg-slate-900/50 rounded-xl p-5 border border-slate-800">
-              <div className="text-slate-400 text-xs font-mono mb-3">// Example structure</div>
+              <div className="text-slate-400 text-xs font-mono mb-3">{`// Example structure`}</div>
               <div className="space-y-2 font-mono text-sm">
                 <div className="text-slate-200">Clothing</div>
                 <div className="pl-4 text-slate-400">- Tops</div>
@@ -147,7 +147,7 @@ const PAGES: Record<string, Page> = {
               Recommended for Africa. Supports M-Pesa, bank transfers, and card payments across Nigeria, Kenya, Ghana, and South Africa.
             </p>
             <div className="bg-slate-900/50 rounded-xl p-5 border border-slate-800">
-              <div className="text-slate-400 text-xs font-mono mb-3">// Features</div>
+              <div className="text-slate-400 text-xs font-mono mb-3">{`// Features`}</div>
               <div className="grid grid-cols-2 gap-4">
                 {['M-Pesa', 'Card Payments', 'Bank Transfer', 'Instant Settlement'].map(f => (
                   <div key={f} className="flex items-center gap-2">
@@ -170,7 +170,7 @@ const PAGES: Record<string, Page> = {
               Customers send payment via M-Pesa, then type "paid" in WhatsApp. The AI auto-confirms their order instantly.
             </p>
             <div className="bg-slate-900/50 rounded-xl p-5 border border-slate-800">
-              <div className="text-slate-400 text-xs font-mono mb-3">// Flow</div>
+              <div className="text-slate-400 text-xs font-mono mb-3">{`// Flow`}</div>
               <div className="flex items-center gap-4">
                 {['Order', 'Pay', 'Confirm', 'Done'].map((step, i) => (
                   <div key={step} className="flex items-center gap-2">
@@ -203,9 +203,9 @@ const PAGES: Record<string, Page> = {
               Set a custom greeting that appears when customers first message your store. Keep it short, friendly, and under 2 sentences.
             </p>
             <div className="bg-slate-900/50 rounded-xl p-5 border border-slate-800">
-              <div className="text-slate-400 text-xs font-mono mb-3">// Example</div>
+              <div className="text-slate-400 text-xs font-mono mb-3">{`// Example`}</div>
               <p className="text-slate-200 text-sm italic font-mono">
-                "Hey! Welcome to Sarah's Boutique. What are you looking for today?"
+                {`"Hey! Welcome to Sarah's Boutique. What are you looking for today?"`}
               </p>
             </div>
           </div>
@@ -276,7 +276,7 @@ const PAGES: Record<string, Page> = {
               Receive instant notifications when customers place orders, confirm payments, or need attention.
             </p>
             <div className="bg-slate-900/50 rounded-xl p-5 border border-slate-800">
-              <div className="text-slate-400 text-xs font-mono mb-3">// Notification types</div>
+              <div className="text-slate-400 text-xs font-mono mb-3">{`// Notification types`}</div>
               <div className="space-y-2">
                 {['New Order', 'Payment Confirmed', 'Customer Message', 'Abandoned Cart'].map(n => (
                   <div key={n} className="flex items-center gap-3">
@@ -306,7 +306,7 @@ const PAGES: Record<string, Page> = {
               Receive real-time events for orders, payments, and customer actions. Verify signatures before processing.
             </p>
             <div className="bg-slate-900/50 rounded-xl p-5 border border-slate-800">
-              <div className="text-slate-400 text-xs font-mono mb-3">// Endpoint</div>
+              <div className="text-slate-400 text-xs font-mono mb-3">{`// Endpoint`}</div>
               <code className="text-emerald-400 text-sm font-mono block">POST /api/webhook</code>
               <div className="text-slate-500 text-xs mt-3">Content-Type: application/json</div>
             </div>
