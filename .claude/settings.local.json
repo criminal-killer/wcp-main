@@ -26,7 +26,8 @@
       "Bash(ls -la tsconfig.tsbuildinfo)",
       "Bash(node fix_lines.js)",
       "Bash(node fix_template_spans.js)",
-      "Bash(git commit *)"
+      "Bash(git commit *)",
+      "Bash(git checkout *)"
     ]
   }
 }
