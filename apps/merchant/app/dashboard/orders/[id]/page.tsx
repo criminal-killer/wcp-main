@@ -4,8 +4,9 @@ import { notFound } from 'next/navigation'
 import { db } from '@/lib/db'
 import { users, organizations, orders, contacts } from '@/lib/schema'
 import { eq, and } from 'drizzle-orm'
-import { ArrowLeft, Package, ShoppingCart, CreditCard, MapPin, Phone, Mail, Clock } from 'lucide-react'
+import { ArrowLeft, Package, ShoppingCart, CreditCard, MapPin, Phone, Mail, Clock, CheckCircle, XCircle, Truck } from 'lucide-react'
 import Link from 'next/link'
+import OrderActions from './order-actions'
 
 interface OrderDetail {
   id: string
@@ -249,6 +250,12 @@ export default async function OrderDetailPage({ params }: { params: { id: string
                 <span>{o.currency} {o.total.toFixed(2)}</span>
               </div>
             </div>
+          </div>
+
+          {/* Order Actions */}
+          <div className="bg-card rounded-2xl border border-border p-6">
+            <h2 className="font-bold mb-4">Actions</h2>
+            <OrderActions order={o} />
           </div>
         </div>
       </div>

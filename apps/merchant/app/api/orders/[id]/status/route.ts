@@ -1,14 +1,62 @@
 import { auth } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { users, orders } from '@/lib/schema'
+import { users, orders, contacts, organizations } from '@/lib/schema'
 import { eq, and } from 'drizzle-orm'
+import { sendTextMessage } from '@/lib/whatsapp'
+import { decrypt } from '@/lib/encryption'
 
 const VALID_STATUSES = ['new', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded'] as const
 type OrderStatus = typeof VALID_STATUSES[number]
 
 function isValidStatus(s: string): s is OrderStatus {
   return VALID_STATUSES.includes(s as OrderStatus)
+}
+
+// WhatsApp notification messages
+const ORDER_MESSAGES: Record<string, { order: string; payment?: string }> = {
+  'payment_paid': {
+    order: 'Payment confirmed! Your order is being processed.',
+  },
+  confirmed: {
+    order: 'Great news! Your order has been confirmed and will be prepared for you.',
+  },
+  processing: {
+    order: 'Your order is now being prepared. We\'ll ship it soon!',
+  },
+  shipped: {
+    order: 'Your order is on its way! 🚚 Track with your tracking number.',
+  },
+  delivered: {
+    order: 'Your order has been delivered! 🎉 Thank you for shopping with us!',
+  },
+  cancelled: {
+    order: 'Your order has been cancelled. Contact us if you need any help.',
+  },
+  refunded: {
+    order: 'Your refund has been processed. The money will be returned to your account shortly.',
+  },
+}
+
+async function notifyCustomerWhatsApp(orderId: string, message: string) {
+  const order = await db.query.orders.findFirst({ where: eq(orders.id, orderId) })
+  if (!order) return
+
+  const contact = await db.query.contacts.findFirst({ where: eq(contacts.id, order.contact_id) })
+  if (!contact?.phone) return
+
+  const org = await db.query.organizations.findFirst({ where: eq(organizations.id, order.org_id) })
+  if (!org?.wa_phone_number_id || !org?.wa_access_token_encrypted) return
+
+  try {
+    const accessToken = decrypt(org.wa_access_token_encrypted)
+    await sendTextMessage(
+      { phoneNumberId: org.wa_phone_number_id, accessToken },
+      { to: contact.phone, body: `📦 *Order ${order.order_number}*\n\n${message}\n\nQuestions? Just message us!` }
+    )
+  } catch (err) {
+    console.error('Failed to send WhatsApp notification:', err)
+  }
 }
 
 export async function PATCH(
@@ -21,18 +69,23 @@ export async function PATCH(
   const user = await db.query.users.findFirst({ where: eq(users.clerk_id, userId) })
   if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
-  const body = await req.json() as { order_status?: string; payment_status?: string; tracking_number?: string; notes?: string }
-  const { order_status, payment_status, tracking_number, notes } = body
+  const body = await req.json() as {
+    order_status?: string
+    payment_status?: string
+    tracking_number?: string
+    notes?: string
+    notify_customer?: boolean
+  }
+  const { order_status, payment_status, tracking_number, notes, notify_customer } = body
 
   if (!order_status && !payment_status && !tracking_number && !notes) {
-    return NextResponse.json({ error: 'At least one field (order_status, payment_status, tracking_number, notes) is required.' }, { status: 400 })
+    return NextResponse.json({ error: 'At least one field is required.' }, { status: 400 })
   }
 
   if (order_status && !isValidStatus(order_status)) {
-    return NextResponse.json({ error: `Invalid order_status. Valid values: ${VALID_STATUSES.join(', ')}` }, { status: 400 })
+    return NextResponse.json({ error: `Invalid order_status. Valid: ${VALID_STATUSES.join(', ')}` }, { status: 400 })
   }
 
-  // Ensure the order belongs to the user's org
   const order = await db.query.orders.findFirst({
     where: and(eq(orders.id, params.id), eq(orders.org_id, user.org_id)),
   })
@@ -47,7 +100,27 @@ export async function PATCH(
   if (tracking_number) updatePayload.tracking_number = tracking_number
   if (notes) updatePayload.notes = notes
 
-  await db.update(orders).set(updatePayload).where(and(eq(orders.id, params.id), eq(orders.org_id, user.org_id)))
+  await db.update(orders).set(updatePayload).where(and(eq(orders.id, params.id), eq(orders.org_id, user.org_id!)))
+
+  // Send WhatsApp notification if requested
+  if (notify_customer !== false) {
+    try {
+      let notificationMsg = ''
+
+      if (payment_status === 'paid' && !order_status) {
+        notificationMsg = ORDER_MESSAGES['payment_paid']?.order || 'Payment confirmed!'
+      } else if (order_status) {
+        notificationMsg = ORDER_MESSAGES[order_status]?.order || `Order status updated to ${order_status}`
+      }
+
+      if (notificationMsg) {
+        await notifyCustomerWhatsApp(params.id, notificationMsg)
+      }
+    } catch (err) {
+      console.error('Notification error:', err)
+      // Don't fail the request if notification fails
+    }
+  }
 
   return NextResponse.json({ success: true, order_id: params.id, ...updatePayload })
 }
