@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(python3 -c \"import sys; lines=open\\('store-engine.ts','r',encoding='utf-8',errors='replace'\\).readlines\\(\\); print\\([\\(i+1, hex\\(ord\\(c\\)\\) if ord\\(c\\)>127 else c\\) for i,l in enumerate\\(lines[635:660],636\\) for c in l]\\)\")",
+      "Bash(powershell -Command '[System.IO.File]::ReadAllLines\\('\\\\''c:\\\\Users\\\\CRIMINAL_KILLER\\\\Desktop\\\\wcp-main\\\\apps\\\\merchant\\\\lib\\\\store-engine.ts'\\\\''\\)[639] | ForEach-Object { for\\($i=0;$i -lt $_.Length;$i++\\) { if\\([int]$_.Chars[$i] -gt 127\\) { Write-Host \\($i, [int]$_.Chars[$i], [string]::Format\\('\\\\''{0:x4}'\\\\'', [int]$_.Chars[$i]\\)\\) } } }')",
+      "Bash(powershell -ExecutionPolicy Bypass -File \"c:\\\\Users\\\\CRIMINAL_KILLER\\\\Desktop\\\\wcp-main\\\\scripts\\\\find-bad-chars.ps1\")",
+      "Bash(powershell -Command '$c = Get-Content '\\\\''c:\\\\Users\\\\CRIMINAL_KILLER\\\\Desktop\\\\wcp-main\\\\apps\\\\merchant\\\\lib\\\\store-engine.ts'\\\\'' -Raw -Encoding UTF8; $lines = $c -split \"`n\"; for\\($i=699;$i -le 701;$i++\\) { for\\($j=0;$j -lt $lines[$i].Length;$j++\\) { $code = [int][char]$lines[$i][$j]; if\\($code -gt 127\\) { Write-Host \"L$\\($i+1\\) C$\\($j+1\\): U+$\\(\\('\\\\''\\\\{0:x4\\\\}'\\\\'' -f $code\\)\\) = '\\\\''$$'\\\\''$lines[$i][$j]'\\\\''$$'\\\\'' code=$code\" } } }')",
+      "Bash(powershell -Command '[System.IO.File]::ReadAllBytes\\('\\\\''c:\\\\Users\\\\CRIMINAL_KILLER\\\\Desktop\\\\wcp-main\\\\apps\\\\merchant\\\\lib\\\\store-engine.ts'\\\\''\\) | ForEach-Object -Begin { $offset = 0; $lineNum = 1; $lineStart = 0 } -Process { if\\($_ -eq 10\\) { if\\($lineNum -ge 698 -and $lineNum -le 703\\) { $lineBytes = [System.IO.File]::ReadAllBytes\\('\\\\''c:\\\\Users\\\\CRIMINAL_KILLER\\\\Desktop\\\\wcp-main\\\\apps\\\\merchant\\\\lib\\\\store-engine.ts'\\\\''\\)[$lineStart..\\($offset-1\\)]; if\\($lineBytes | Where-Object { $_ -gt 127 }\\) { Write-Host \"Line $lineNum: Non-ASCII bytes found: $\\($lineBytes | Where-Object { $_ -gt 127 } | ForEach-Object { '\\\\''0x'\\\\'' + \\('\\\\''\\\\{0:x2\\\\}'\\\\'' -f $_\\) }\\)\" } }; $lineNum++; $lineStart = $offset + 1 }; $offset++ } }')",
+      "Bash(powershell -ExecutionPolicy Bypass -File \"c:\\\\Users\\\\CRIMINAL_KILLER\\\\Desktop\\\\wcp-main\\\\scripts\\\\fix-encoding.ps1\")",
+      "Bash(powershell -Command \"Remove-Item -Path 'c:\\\\Users\\\\CRIMINAL_KILLER\\\\Desktop\\\\wcp-main\\\\apps\\\\merchant\\\\.next' -Recurse -Force -ErrorAction SilentlyContinue; Write-Host 'Cache cleared'\")",
+      "PowerShell($content = [System.IO.File]::ReadAllText\\('C:\\\\Users\\\\CRIMINAL_KILLER\\\\Desktop\\\\wcp-main\\\\apps\\\\merchant\\\\lib\\\\store-engine.ts', [System.Text.Encoding]::UTF8\\); $bytes = [System.Text.Encoding]::UTF8.GetBytes\\($content\\); $problem = @\\(\\); for \\($i = 0; $i -lt $bytes.Length; $i++\\) { if \\($bytes[$i] -gt 127\\) { $hex = $bytes[$i].ToString\\('X2'\\); if \\($bytes[$i] -eq 0xE2\\) { $hex = 'E2 ' + $bytes[$i+1].ToString\\('X2'\\) + ' ' + $bytes[$i+2].ToString\\('X2'\\) }; $problem += \"Pos $i \\(0x$hex\\): $\\($bytes[$i]\\)\" } }; $problem | Select-Object -First 20)",
+      "PowerShell($bytes = [System.IO.File]::ReadAllBytes\\('C:\\\\Users\\\\CRIMINAL_KILLER\\\\Desktop\\\\wcp-main\\\\apps\\\\merchant\\\\lib\\\\store-engine.ts'\\); $lineStart = 1; $pos = 0; $line = 1; foreach \\($b in $bytes\\) { if \\([char]$b -eq \"`n\"\\) { $line++; $lineStart = $pos + 1 }; $pos++; if \\($line -ge 638 -and $line -le 730 -and $b -gt 127\\) { Write-Host \"Line $line, Pos $\\($pos - $lineStart\\): 0x$\\($b.ToString\\('X2'\\)\\)\" } })",
+      "PowerShell($bytes = [System.IO.File]::ReadAllBytes\\('C:\\\\Users\\\\CRIMINAL_KILLER\\\\Desktop\\\\wcp-main\\\\apps\\\\merchant\\\\lib\\\\store-engine.ts'\\); $line = 1; $col = 0; $i = 0; while \\($i -lt $bytes.Length -and $line -lt 641\\) { if \\($bytes[$i] -eq 10\\) { $line++; $col = 0 } else { $col++ }; $i++ }; Write-Host \"Line 640 starts at index $i\"; $snippet = $bytes[$i..\\($i+200\\)]; Write-Host \\([System.Text.Encoding]::UTF8.GetString\\($bytes[$i..\\($i+120\\)]\\)\\))",
+      "PowerShell($bytes = [System.IO.File]::ReadAllBytes\\('C:\\\\Users\\\\CRIMINAL_KILLER\\\\Desktop\\\\wcp-main\\\\apps\\\\merchant\\\\lib\\\\store-engine.ts'\\); $line = 1; $i = 0; while \\($i -lt $bytes.Length -and $line -lt 640\\) { if \\($bytes[$i] -eq 10\\) { $line++ }; $i++ }; $lineStart = $i; $count = 0; while \\($count -lt 150 -and $i -lt $bytes.Length\\) { $b = $bytes[$i]; $hex = $b.ToString\\('X2'\\); if \\($b -gt 127 -or $b -lt 32\\) { Write-Host \"Index $i Char: 0x$hex \\($\\([char]$b\\)\\)\" }; $i++; $count++ })",
+      "PowerShell($bytes = [System.IO.File]::ReadAllBytes\\('C:\\\\Users\\\\CRIMINAL_KILLER\\\\Desktop\\\\wcp-main\\\\apps\\\\merchant\\\\lib\\\\store-engine.ts'\\); Write-Host \"File has $\\($bytes.Length\\) bytes\"; Write-Host \"First 4 bytes: $\\($bytes[0].ToString\\('X2'\\)\\) $\\($bytes[1].ToString\\('X2'\\)\\) $\\($bytes[2].ToString\\('X2'\\)\\) $\\($bytes[3].ToString\\('X2'\\)\\)\"; Write-Host \"Total non-ASCII \\(>127\\): $\\(\\($bytes | Where-Object { $_ -gt 127 }\\).Count\\)\")",
+      "PowerShell($bytes = [System.IO.File]::ReadAllBytes\\('C:\\\\Users\\\\CRIMINAL_KILLER\\\\Desktop\\\\wcp-main\\\\apps\\\\merchant\\\\lib\\\\store-engine.ts'\\); for \\($i = 0; $i -lt $bytes.Length; $i++\\) { if \\($bytes[$i] -gt 127\\) { Write-Host \"Index $i : 0x$\\( $bytes[$i].ToString\\('X2'\\) \\)\" } })",
+      "PowerShell($bytes = [System.IO.File]::ReadAllBytes\\('C:\\\\Users\\\\CRIMINAL_KILLER\\\\Desktop\\\\wcp-main\\\\apps\\\\merchant\\\\lib\\\\store-engine.ts'\\); $line = 1; $i = 0; while \\($i -lt $bytes.Length -and $line -lt 640\\) { if \\($bytes[$i] -eq 10\\) { $line++ }; $i++ }; Write-Host \"Line 640 starts at index $i\"; for \\($j = $i; $j -lt $i + 180; $j++\\) { $b = $bytes[$j]; Write-Host \"Index $j : 0x$\\($b.ToString\\('X2'\\)\\) = '$\\([char]$b\\)'\" })",
+      "Bash(node -e ' *)",
+      "Bash(npx tsc *)",
+      "Bash(Remove-Item -Recurse -Force .next -ErrorAction SilentlyContinue)",
+      "Bash(ls -la .tsbuildinfo)",
+      "Bash(ls -la tsconfig.tsbuildinfo)",
+      "Bash(node fix_lines.js)",
+      "Bash(node fix_template_spans.js)"
+    ]
+  }
+}
