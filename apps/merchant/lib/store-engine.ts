@@ -86,6 +86,38 @@ export async function processIncomingMessage(ctx: EngineContext) {
     })
   }
 
+  // === PAYMENT CONFIRMATION DETECTION ===
+  // Check if user says they've paid
+  const paymentKeywords = ['paid', 'done', 'sent', 'completed', 'paid already', 'already paid', 'mpesa sent', 'transaction done', 'payment done', 'i have paid', 'paid via']
+  const isPaymentConfirmation = paymentKeywords.some(kw => input.includes(kw))
+
+  if (isPaymentConfirmation) {
+    // Find pending order for this contact
+    const pendingOrder = await db.select().from(orders)
+      .where(and(
+        eq(orders.org_id, orgId),
+        eq(orders.contact_id, contact.id),
+        eq(orders.payment_status, 'pending')
+      ))
+      .orderBy(orders.created_at)
+      .limit(1)
+
+    if (pendingOrder.length > 0) {
+      // Update order to paid
+      await db.update(orders).set({
+        payment_status: 'paid',
+        order_status: 'confirmed',
+        payment_reference: `manual_${Date.now()}`,
+        updated_at: new Date().toISOString()
+      }).where(eq(orders.id, pendingOrder[0].id))
+
+      return await sendTextMessage(waConfigObj, {
+        to: phone,
+        body: `✅ Payment Confirmed!\n\nYour order *${pendingOrder[0].order_number}* has been marked as paid.\n\nWe'll process it right away! Thank you for shopping with *${org.name}* 🎉`,
+      })
+    }
+  }
+
   // === FLOW-BASED NAVIGATION ===
   const step = flow?.step || 'main_menu'
 
@@ -135,12 +167,22 @@ async function showMainMenu(waConfig: { phoneNumberId: string; accessToken: stri
   const productCount = await db.select().from(products).where(and(eq(products.org_id, orgId), eq(products.is_active, 1)))
   await setFlowState(orgId, phone, { step: 'main_menu' })
 
-  // --- Human-Like Professional Concierge Greeting ---
+  // --- Custom Greeting from AI Settings or Default ---
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
   const dayName = days[new Date().getDay()]
-  
-  // Suggestive / High-End tone (Standard for all, custom for Growth soon)
-  const greeting = `Hey there! 😊 Hope your *${dayName}* is going wonderfully well!\n\nI'm your personal shopping assistant here at *${org.name}*. We have *${productCount.length}* specially selected items waiting for you today.\n\nHow can I help you find exactly what you're looking for?`
+
+  // Use custom greeting if set in ai_system_prompt (first line as greeting)
+  let greeting = ''
+  if (org.ai_system_prompt && org.ai_system_prompt.trim()) {
+    const lines = org.ai_system_prompt.trim().split('\n')
+    greeting = lines[0].trim() // First line is greeting
+    if (!greeting.endsWith('?') && !greeting.endsWith('!') && !greeting.endsWith('.')) {
+      greeting += '?'
+    }
+  } else {
+    // Default greeting
+    greeting = `Hey there! 😊 Hope your *${dayName}* is going wonderfully well!\n\nI'm your personal shopping assistant here at *${org.name}*. We have *${productCount.length}* specially selected items waiting for you today.\n\nHow can I help you find exactly what you're looking for?`
+  }
 
   return await sendInteractiveButtonMessage(waConfig, {
     to: phone,
