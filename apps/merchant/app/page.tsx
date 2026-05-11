@@ -241,7 +241,7 @@ export default function HomePage() {
           <div className="text-left">
             <div className="inline-flex items-center gap-2 bg-primary/5 border border-primary/20 rounded-full px-5 py-2 mb-10 group cursor-default">
               <span className="w-2 h-2 bg-primary rounded-full animate-ping"></span>
-              <span className="text-primary text-xs font-black tracking-[0.2em] uppercase">Phase 2 Premium · Invitation Only</span>
+              <span className="text-primary text-xs font-black tracking-[0.2em] uppercase">Now with AI-Powered Shopping</span>
             </div>
 
             <h1 className="text-6xl md:text-8xl font-serif font-black mb-6 leading-[0.9] tracking-tight text-[#075E54]">
