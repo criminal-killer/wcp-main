@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
 import { waitlist } from "@/lib/schema";
 import { count, desc } from "drizzle-orm";
-import { Search, Filter, Download, UserCheck, Mail, Database } from "lucide-react";
+import { Search, Filter, Download, UserCheck, Mail, Database, Users } from "lucide-react";
 
 export default async function WaitlistPage() {
   const allEntries = await db.select().from(waitlist).orderBy(desc(waitlist.created_at));
@@ -106,6 +106,13 @@ export default async function WaitlistPage() {
               ))}
             </tbody>
           </table>
+          {allEntries.length === 0 && (
+            <div className="p-20 text-center text-slate-400">
+              <Users size={48} className="mx-auto mb-4 opacity-20" />
+              <p className="font-bold text-sm">No waitlist entries yet</p>
+              <p className="text-xs text-slate-300 mt-1">Share your signup form to start collecting leads</p>
+            </div>
+          )}
         </div>
       </div>
     </div>
