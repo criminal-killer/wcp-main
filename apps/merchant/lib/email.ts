@@ -47,7 +47,7 @@ export async function sendWelcomeEmail(
   await resend.emails.send({
     from: FROM,
     to: email,
-    subject: `Welcome to ${APP_NAME} — Your 14-day trial has started! 🎉`,
+    subject: `Welcome to ${APP_NAME} — Your 14-day trial has started`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <div style="background: #25D366; padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
@@ -55,7 +55,7 @@ export async function sendWelcomeEmail(
           <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0;">WhatsApp Commerce Platform</p>
         </div>
         <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 8px 8px;">
-          <h2>Welcome, ${name}! 👋</h2>
+          <h2>Welcome, ${name}!</h2>
           <p>Your store <strong>${orgName}</strong> is ready to go.</p>
           <p>Your <strong>14-day free trial</strong> has started. No credit card needed.</p>
           <p>Here's what to do next:</p>
@@ -92,7 +92,7 @@ export async function sendOrderConfirmationEmail(
   await resend.emails.send({
     from: FROM,
     to: email,
-    subject: `Order ${orderNumber} Confirmed! ✅`,
+    subject: `Order ${orderNumber} Confirmed`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>Order Confirmed! ✅</h2>
@@ -127,7 +127,7 @@ export async function sendTrialEndingEmail(
   await resend.emails.send({
     from: FROM,
     to: email,
-    subject: `⏰ Your ${APP_NAME} trial ends in ${daysLeft} days`,
+    subject: `Your ${APP_NAME} trial ends in ${daysLeft} days`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>Your trial ends in ${daysLeft} days, ${name}</h2>
@@ -156,7 +156,7 @@ export async function sendSubscriptionConfirmationEmail(
   await resend.emails.send({
     from: FROM,
     to: email,
-    subject: `🎉 Subscribed to ${APP_NAME} ${plan} Plan!`,
+    subject: `Subscribed to ${APP_NAME} ${plan} Plan`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>You are officially subscribed! 🎉</h2>
