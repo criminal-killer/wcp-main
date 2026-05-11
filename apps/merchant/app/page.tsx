@@ -204,49 +204,16 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-card text-slate-900 selection:bg-primary/30 selection:text-primary-foreground font-sans overflow-x-hidden">
       <LiveActivity />
-      
-      {/* Premium Navigation Header */}
-      <header className="fixed top-0 left-0 right-0 z-[100] bg-card/70 backdrop-blur-2xl border-b border-slate-100/50">
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-12">
-            <Link href="/" className="flex items-center gap-3 group">
-              <div className="w-10 h-10 bg-[#25D366] rounded-xl flex items-center justify-center text-white font-serif font-black text-xl shadow-lg shadow-primary/20 group-hover:scale-110 transition-transform">S</div>
-              <span className="font-serif font-black text-2xl tracking-tighter text-[#075E54]">Chatevo</span>
-            </Link>
-            
-            <nav className="hidden md:flex items-center gap-8 text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">
-              <Link href="#features" className="hover:text-primary transition-colors">Features</Link>
-              <Link href="#pricing" className="hover:text-primary transition-colors">Pricing</Link>
-              <Link href="#themes" className="hover:text-primary transition-colors">Themes</Link>
-              <Link href="/affiliates/apply" className="hover:text-primary transition-colors text-primary">Affiliates</Link>
-              <Link href="/docs" className="hover:text-primary transition-colors">Docs</Link>
-            </nav>
-          </div>
 
-          <div className="flex items-center gap-4">
-            <Link 
-              href="/dashboard" 
-              className="px-6 py-2.5 rounded-full text-[11px] font-black uppercase tracking-widest text-slate-600 hover:text-[#075E54] hover:bg-slate-50 transition-all border border-transparent hover:border-slate-100"
-            >
-              Log In
-            </Link>
-            <Link 
-              href="/sign-up/choose-plan" 
-              className="bg-[#075E54] text-white px-8 py-3 rounded-full text-[11px] font-black uppercase tracking-[0.2em] hover:opacity-90 transition-all shadow-xl shadow-primary/10"
-            >
-              Get Started
-            </Link>
-          </div>
-        </div>
-      </header>
-
+      {/* Background Effects */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
         <div className="absolute inset-0 bg-noise opacity-[0.03] mix-blend-overlay" />
         <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-primary/5 blur-[120px] rounded-full" />
         <div className="absolute bottom-[0%] right-[-5%] w-[40%] h-[40%] bg-primary/5 blur-[100px] rounded-full" />
       </div>
 
-      <nav className="fixed top-0 w-full z-50 transition-all border-b border-white/5 bg-black/5 backdrop-blur-xl">
+      {/* Navigation Header */}
+      <header className="fixed top-0 left-0 right-0 z-50 transition-all border-b border-white/5 bg-black/5 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3 group cursor-pointer">
             <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(212,175,55,0.3)] group-hover:scale-110 transition-transform">
@@ -254,31 +221,20 @@ export default function HomePage() {
             </div>
             <span className="font-serif font-black text-2xl tracking-tighter italic">Chatevo</span>
           </div>
-          
+
           <div className="hidden md:flex items-center gap-10 mr-auto ml-12">
-            {['Features', 'Pricing', 'Demo'].map((item) => (
-              <a key={item} href={`#${item.toLowerCase()}`} className="text-sm font-bold text-muted-foreground hover:text-primary transition-colors tracking-tight">
-                {item}
-              </a>
-            ))}
-            <Link href="/affiliates/apply" className="text-sm font-bold text-primary hover:text-primary/80 transition-colors tracking-tight">
-              Affiliates
-            </Link>
+            <a href="#features" className="text-sm font-bold text-muted-foreground hover:text-primary transition-colors tracking-tight">Features</a>
+            <a href="#pricing" className="text-sm font-bold text-muted-foreground hover:text-primary transition-colors tracking-tight">Pricing</a>
+            <Link href="/affiliates/apply" className="text-sm font-bold text-primary hover:text-primary/80 transition-colors tracking-tight">Affiliates</Link>
+            <Link href="/docs" className="text-sm font-bold text-muted-foreground hover:text-primary transition-colors tracking-tight">Docs</Link>
           </div>
 
           <div className="flex items-center gap-6">
-            <Link href="/sign-in" className="text-muted-foreground hover:text-foreground font-semibold text-sm transition-colors uppercase tracking-widest">
-              Sign In
-            </Link>
-            <Link
-              href="/sign-up/choose-plan"
-              className="bg-primary text-primary-foreground px-8 py-3 rounded-full font-bold text-sm hover:opacity-90 transition-all active:scale-95 tracking-tight shadow-lg shadow-primary/20"
-            >
-              Get Started
-            </Link>
+            <Link href="/sign-in" className="text-muted-foreground hover:text-foreground font-semibold text-sm transition-colors uppercase tracking-widest">Sign In</Link>
+            <Link href="/sign-up/choose-plan" className="bg-primary text-primary-foreground px-8 py-3 rounded-full font-bold text-sm hover:opacity-90 transition-all active:scale-95 tracking-tight shadow-lg shadow-primary/20">Get Started</Link>
           </div>
         </div>
-      </nav>
+      </header>
 
       <main className="relative pt-32 pb-20">
         <section className="max-w-7xl mx-auto px-6 pt-12 pb-32 grid lg:grid-cols-2 gap-24 items-center">

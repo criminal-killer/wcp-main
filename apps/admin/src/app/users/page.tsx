@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
 import { users, organizations } from "@/lib/schema";
 import { eq, desc } from "drizzle-orm";
-import { Search, Filter, MoreHorizontal, Shield, Eye, Ban, MessageCircle } from "lucide-react";
+import { Search, Filter, MoreHorizontal, Shield, Eye, Ban, MessageCircle, Users } from "lucide-react";
 
 export default async function UsersPage() {
   const allUsers = await db.select({
@@ -104,6 +104,13 @@ export default async function UsersPage() {
             ))}
           </tbody>
         </table>
+        {allUsers.length === 0 && (
+          <div className="p-20 text-center">
+            <Users size={48} className="mx-auto mb-4 text-slate-200" />
+            <p className="text-sm font-bold text-slate-400">No users found</p>
+            <p className="text-xs text-slate-300 mt-1">Users will appear here once they sign up</p>
+          </div>
+        )}
       </div>
     </div>
   );
