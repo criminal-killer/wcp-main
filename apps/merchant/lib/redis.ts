@@ -104,3 +104,35 @@ export async function clearProductCache(orgId: string) {
   }, null)
 }
 
+// Abandoned cart tracking
+export async function setCartAbandoned(orgId: string, phone: string, orderId: string) {
+  const key = `Chatevo:abandoned:${orgId}:${phone}`
+  await exec(async (r) => {
+    await r.setex(key, 172800, JSON.stringify({ orderId, stage: 'pending', reminders: 0 }))
+  }, null)
+}
+
+export async function getCartAbandoned(orgId: string, phone: string) {
+  return await exec(async (r) => {
+    const key = `Chatevo:abandoned:${orgId}:${phone}`
+    return await r.get<{ orderId: string; stage: string; reminders: number }>(key)
+  }, null)
+}
+
+export async function markCartReminderSent(orgId: string, phone: string) {
+  const key = `Chatevo:abandoned:${orgId}:${phone}`
+  await exec(async (r) => {
+    const current = await r.get<{ orderId: string; stage: string; reminders: number }>(key)
+    if (current) {
+      await r.setex(key, 172800, JSON.stringify({ ...current, reminders: current.reminders + 1 }))
+    }
+  }, null)
+}
+
+export async function clearCartAbandoned(orgId: string, phone: string) {
+  const key = `Chatevo:abandoned:${orgId}:${phone}`
+  await exec(async (r) => {
+    await r.del(key)
+  }, null)
+}
+

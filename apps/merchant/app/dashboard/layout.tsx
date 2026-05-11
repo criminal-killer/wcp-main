@@ -2,7 +2,7 @@ import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { db } from '@/lib/db'
-import { users, organizations, notifications } from '@/lib/schema'
+import { users, organizations, notifications, stores } from '@/lib/schema'
 import { eq, and } from 'drizzle-orm'
 import DashboardSidebar from './sidebar'
 import { Clock } from 'lucide-react'
@@ -21,6 +21,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
   })
   if (!org) redirect('/onboarding')
 
+  // Fetch stores for switcher
+  const storeList = await db.select().from(stores)
+    .where(and(eq(stores.org_id, user.org_id!), eq(stores.is_active, 1)))
+    .orderBy(stores.created_at)
+
   // Unread notification count
   const unreadRows = await db.select({ id: notifications.id })
     .from(notifications)
@@ -35,7 +40,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <div className="flex h-screen bg-secondary overflow-hidden">
-      <DashboardSidebar org={org} unreadCount={unreadCount} />
+      <DashboardSidebar org={org} stores={storeList} unreadCount={unreadCount} />
       <div className="flex-1 flex flex-col min-w-0 pt-14 lg:pt-0">
         {/* Trial Banner */}
         {isOnTrial && (

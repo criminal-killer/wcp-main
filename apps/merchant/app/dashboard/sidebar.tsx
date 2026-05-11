@@ -1,16 +1,21 @@
 'use client'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { UserButton } from '@clerk/nextjs'
 import {
   LayoutDashboard, Package, ShoppingCart, MessageSquare,
   Users, Settings, Store, BarChart3, Globe, Shield,
-  CheckCircle2, Plus, Menu, X, Bell, BookOpen, HandCoins, Gift
+  CheckCircle2, Plus, Menu, X, Bell, BookOpen, HandCoins, Gift,
+  ChevronDown, Check
 } from 'lucide-react'
-import { useState, Fragment, useEffect } from 'react'
+import { useState, Fragment, useRef, useEffect } from 'react'
+
+type StoreItem = { id: string; name: string; slug: string; is_default: number | null; store_type: string | null }
+type OrgItem = { name: string; slug: string; plan: string | null; logo_url?: string | null }
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/dashboard/stores', label: 'Stores', icon: Store },
   { href: '/dashboard/products', label: 'Products', icon: Package },
   { href: '/dashboard/orders', label: 'Orders', icon: ShoppingCart },
   { href: '/dashboard/inbox', label: 'Inbox', icon: MessageSquare },
@@ -28,9 +33,32 @@ interface Org {
   logo_url?: string | null
 }
 
-export default function DashboardSidebar({ org, unreadCount = 0 }: { org: Org; unreadCount?: number }) {
+export default function DashboardSidebar({
+  org, stores = [], unreadCount = 0
+}: {
+  org: Org
+  stores?: StoreItem[]
+  unreadCount?: number
+}) {
   const pathname = usePathname()
+  const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
+  const [storeSwitcherOpen, setStoreSwitcherOpen] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setStoreSwitcherOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  const activeStore = stores.find(s => s.is_default === 1) || stores[0]
+  const showStoreSwitcher = stores.length > 1
 
   return (
     <>
@@ -93,17 +121,67 @@ export default function DashboardSidebar({ org, unreadCount = 0 }: { org: Org; u
       {/* Desktop Sidebar (Permanent) */}
       <aside className="hidden lg:flex lg:w-64 lg:flex-col lg:flex-shrink-0 bg-card border-r border-border h-screen sticky top-0">
         <div className="p-6 border-b border-border">
-          <div className="flex items-center gap-3 p-2 rounded-xl bg-secondary/50 border border-border/50">
-            <div className="w-10 h-10 bg-whatsapp rounded-xl flex items-center justify-center shadow-lg shadow-whatsapp/20">
-              <span className="text-white font-black text-lg">{org.name[0]}</span>
-            </div>
-            <div className="min-w-0">
-              <p className="font-bold text-foreground text-sm truncate uppercase tracking-tighter">{org.name}</p>
-              <div className="flex items-center gap-1">
-                <Shield size={10} className="text-primary" />
-                <p className="text-[10px] text-primary font-black uppercase tracking-widest">{org.plan || 'trial'}</p>
+          <div className="relative" ref={dropdownRef}>
+            {/* Org header */}
+            <div
+              className={`flex items-center gap-3 p-2 rounded-xl border transition-all ${showStoreSwitcher ? 'bg-secondary/50 border-border/50 cursor-pointer hover:bg-secondary' : 'bg-secondary/50 border-border/50'}`}
+              onClick={() => showStoreSwitcher && setStoreSwitcherOpen(!storeSwitcherOpen)}
+            >
+              <div className="w-10 h-10 bg-whatsapp rounded-xl flex items-center justify-center shadow-lg shadow-whatsapp/20">
+                <span className="text-white font-black text-lg">{org.name[0]}</span>
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5">
+                  <p className="font-bold text-foreground text-sm truncate uppercase tracking-tighter">{activeStore?.name || org.name}</p>
+                  {showStoreSwitcher && (
+                    <ChevronDown size={12} className={`text-muted-foreground flex-shrink-0 transition-transform ${storeSwitcherOpen ? 'rotate-180' : ''}`} />
+                  )}
+                </div>
+                <div className="flex items-center gap-1">
+                  <Shield size={10} className="text-primary" />
+                  <p className="text-[10px] text-primary font-black uppercase tracking-widest">{org.plan || 'trial'}</p>
+                </div>
               </div>
             </div>
+
+            {/* Store Switcher Dropdown */}
+            {showStoreSwitcher && storeSwitcherOpen && (
+              <div className="absolute left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-xl z-50 overflow-hidden">
+                <div className="p-2">
+                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-2 py-1">Switch Store</p>
+                  {stores.map(store => (
+                    <button
+                      key={store.id}
+                      onClick={() => {
+                        setStoreSwitcherOpen(false)
+                        // Navigate to store settings for now
+                        router.push(`/dashboard/stores/${store.id}`)
+                      }}
+                      className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-bold transition-all ${
+                        store.id === activeStore?.id ? 'bg-whatsapp/10 text-whatsapp' : 'text-foreground hover:bg-secondary'
+                      }`}
+                    >
+                      <Store size={14} className={store.id === activeStore?.id ? 'text-whatsapp' : 'text-muted-foreground'} />
+                      <span className="flex-1 text-left truncate">{store.name}</span>
+                      {store.is_default === 1 && (
+                        <span className="text-[9px] font-black text-muted-foreground uppercase">Default</span>
+                      )}
+                      {store.id === activeStore?.id && <Check size={12} className="text-whatsapp" />}
+                    </button>
+                  ))}
+                  <div className="border-t border-border mt-1 pt-1">
+                    <Link
+                      href="/dashboard/stores"
+                      onClick={() => setStoreSwitcherOpen(false)}
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold text-muted-foreground hover:bg-secondary hover:text-foreground transition-all"
+                    >
+                      <Plus size={12} />
+                      Manage Stores
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
         <div className="flex-1 px-4 py-4 overflow-y-auto">

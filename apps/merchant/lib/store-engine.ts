@@ -2,7 +2,7 @@
 import { organizations, stores, contacts, conversations, products, orders, messages } from '@/lib/schema'
 import { eq, and } from 'drizzle-orm'
 import { sendTextMessage, sendInteractiveButtonMessage, sendInteractiveListMessage, sendImageMessage } from '@/lib/whatsapp'
-import { getFlowState, setFlowState, deleteFlowState, getCart, setCart, clearCart } from '@/lib/redis'
+import { getFlowState, setFlowState, deleteFlowState, getCart, setCart, clearCart, setCartAbandoned, clearCartAbandoned as clearCartAbandonedState } from '@/lib/redis'
 import { decrypt } from '@/lib/encryption'
 
 type RunnerOrg = typeof organizations.$inferSelect
@@ -112,6 +112,9 @@ export async function processIncomingMessage(ctx: EngineContext) {
         payment_reference: `manual_${Date.now()}`,
         updated_at: new Date().toISOString()
       }).where(eq(orders.id, pendingOrder[0].id))
+
+      // Stop abandoned cart reminders
+      await clearCartAbandonedState(orgId, phone)
 
       return await sendTextMessage(waConfigObj, {
         to: phone,
@@ -306,18 +309,26 @@ async function handleProductSelected(
     ? `\n\n   Options: ${variants.map(v => `${v.type}: ${v.options.join(', ')}`).join(' | ')}`
     : ''
 
-  await setFlowState(orgId, phone, { step: 'product_detail', product_id: productId, category: flow.category })
+  // Product type-specific messaging
+  const productType = product.product_type || 'physical'
+  const typeHint = productType === 'digital'
+    ? '\n\n  Instant delivery after payment'
+    : productType === 'services'
+    ? '\n\n  We will contact you to schedule after payment'
+    : ''
 
-  if (product.inventory_count === 0) {
+  await setFlowState(orgId, phone, { step: 'product_detail', product_id: productId, category: flow.category, product_type: productType })
+
+  if (product.inventory_count === 0 && productType !== 'digital') {
     return await sendTextMessage(waConfig, {
       to: phone,
-      body: `*${product.name}*${compareText}${description}${variantText}\n\n${stockText}\n\nType *menu* to go back.`,
+      body: `*${product.name}*${compareText}${description}${variantText}${typeHint}\n\n${stockText}\n\nType *menu* to go back.`,
     })
   }
 
   return await sendInteractiveButtonMessage(waConfig, {
     to: phone,
-    body: `*${product.name}*${compareText}${description}${variantText}\n\n${stockText}`,
+    body: `*${product.name}*${compareText}${description}${variantText}${typeHint}\n\n${stockText}`,
     buttons: [
       { id: `add_${productId}`, title: '   Add to Cart' },
       { id: 'back_category', title: '  Back' },
@@ -544,6 +555,11 @@ async function handlePaymentSelected(
     total_orders: (contact.total_orders || 0) + 1,
     total_spent: (contact.total_spent || 0) + total,
   }).where(and(eq(contacts.id, contact.id), eq(contacts.org_id, orgId)))
+
+  // Track for abandoned cart reminders (only for pending payment orders)
+  if (paymentStatus === 'pending') {
+    await setCartAbandoned(orgId, phone, order.id)
+  }
 
   // Clear cart & flow
   await clearCart(orgId, phone)
