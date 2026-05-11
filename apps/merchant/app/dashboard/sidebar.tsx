@@ -163,7 +163,7 @@ function NavContent({ pathname, org }: { pathname: string; org: Org }) {
 
       <div className="pt-6 mt-6 border-t border-border/50">
         <Link
-          href={`/store/${org.slug}`}
+          href="/dashboard/my-store"
           target="_blank"
           className="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold text-muted-foreground hover:bg-secondary hover:text-foreground transition-all group"
         >
