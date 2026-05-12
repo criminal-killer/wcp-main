@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next'
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://Chatevo-app.vercel.app'
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://chatevo-app.vercel.app'
 
   return [
     {
@@ -11,29 +11,29 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 1,
     },
     {
+      url: `${baseUrl}/sign-up`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/sign-in`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    {
       url: `${baseUrl}/docs`,
       lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/sign-in`,
-      lastModified: new Date(),
-      changeFrequency: 'never',
-      priority: 0.5,
-    },
-    {
-      url: `${baseUrl}/sign-up`,
-      lastModified: new Date(),
-      changeFrequency: 'never',
-      priority: 0.5,
-    },
-    {
       url: `${baseUrl}/affiliates/apply`,
       lastModified: new Date(),
       changeFrequency: 'monthly',
-      priority: 0.8,
-    }
+      priority: 0.7,
+    },
   ]
 }
 

@@ -22,27 +22,36 @@ export const metadata: Metadata = {
     default: 'Chatevo — WhatsApp Commerce Platform | Sell Products Directly in Chat',
     template: '%s | Chatevo'
   },
-  description: 'The professional way to sell products directly inside WhatsApp chat. Let your customers browse catalogs, add to cart, and checkout without ever leaving WhatsApp. Built for speed and loved by global merchants.',
+  description: 'Turn your WhatsApp into a powerful e-commerce store. Let customers browse products, add to cart, and checkout without leaving chat. Accept M-Pesa, cards, and bank transfers. Built for merchants globally.',
   keywords: [
-    'whatsapp commerce', 'whatsapp store', 'sell on whatsapp', 'whatsapp shopping', 
-    'whatsapp catalog', 'e-commerce over whatsapp', 'whatsapp checkout', 'Chatevo app'
+    'whatsapp commerce', 'whatsapp store', 'sell on whatsapp', 'whatsapp shopping',
+    'whatsapp catalog', 'whatsapp checkout', 'whatsapp business', 'ecommerce whatsapp',
+    'M-Pesa payments', 'mobile money commerce', 'african ecommerce', 'conversational commerce',
+    'shopify alternative', 'woocommerce alternative', 'chatevo', 'chatevo app'
   ],
   authors: [{ name: 'Chatevo Team' }],
   creator: 'Chatevo',
+  publisher: 'Chatevo',
   metadataBase: new URL(
-    process.env.NEXT_PUBLIC_APP_URL?.startsWith('http') 
-      ? process.env.NEXT_PUBLIC_APP_URL 
-      : `https://${process.env.NEXT_PUBLIC_APP_URL || 'Chatevo-app.vercel.app'}`
+    process.env.NEXT_PUBLIC_APP_URL?.startsWith('http')
+      ? process.env.NEXT_PUBLIC_APP_URL
+      : `https://${process.env.NEXT_PUBLIC_APP_URL || 'chatevo-app.vercel.app'}`
   ),
+  alternates: {
+    canonical: '/',
+    languages: {
+      'en-US': '/',
+    },
+  },
   openGraph: {
     type: 'website',
     locale: 'en_US',
     url: '/',
+    siteName: 'Chatevo',
     title: 'Chatevo — WhatsApp Commerce Platform',
     description: 'Transform your WhatsApp into a high-converting storefront. Automate orders, accept global payments (Paystack, Stripe, PayPal, M-Pesa), and scale effortlessly.',
-    siteName: 'Chatevo',
     images: [{
-      url: '/og-image.jpg', // Ensure you add this image in public folder later
+      url: '/og-image.jpg',
       width: 1200,
       height: 630,
       alt: 'Chatevo WhatsApp Commerce Platform',
@@ -53,6 +62,7 @@ export const metadata: Metadata = {
     title: 'Chatevo — The Global WhatsApp Commerce Platform',
     description: 'Sell globally on WhatsApp. Professional e-commerce directly inside chat.',
     creator: '@Chatevohq',
+    site: '@Chatevohq',
   },
   robots: {
     index: true,
@@ -64,6 +74,11 @@ export const metadata: Metadata = {
       'max-image-preview': 'large',
       'max-snippet': -1,
     },
+    notranslate: false,
+  },
+  category: 'E-commerce',
+  verification: {
+    google: 'google-site-verification-code',
   },
 }
 

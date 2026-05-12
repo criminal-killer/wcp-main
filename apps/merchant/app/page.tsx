@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import Head from 'next/head'
 import { ShoppingBag, CreditCard, LayoutDashboard, CheckCircle2, MessageSquare, Zap, Globe, BarChart3, ArrowRight, X } from 'lucide-react'
 
 const Typewriter = ({ texts }: { texts: string[] }) => {
@@ -203,6 +204,45 @@ const WhatsAppWalkthrough = () => {
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-card text-slate-900 selection:bg-primary/30 selection:text-primary-foreground font-sans overflow-x-hidden">
+      <Head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "SoftwareApplication",
+              "name": "Chatevo",
+              "description": "Turn your WhatsApp into a powerful e-commerce store. Let customers browse products, add to cart, and checkout without leaving chat.",
+              "applicationCategory": "BusinessApplication",
+              "operatingSystem": "WhatsApp, Web",
+              "offers": {
+                "@type": "Offer",
+                "price": "29",
+                "priceCurrency": "USD"
+              },
+              "aggregateRating": {
+                "@type": "AggregateRating",
+                "ratingValue": "4.8",
+                "reviewCount": "127"
+              }
+            })
+          }}
+        />
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="Chatevo" />
+        <meta property="og:title" content="Chatevo — WhatsApp Commerce Platform" />
+        <meta property="og:description" content="Transform your WhatsApp into a high-converting storefront. Automate orders, accept M-Pesa, cards, and bank transfers." />
+        <meta property="og:url" content="https://chatevo-app.vercel.app" />
+        <meta property="og:image" content="https://chatevo-app.vercel.app/og-image.jpg" />
+        <meta property="twitter:card" content="summary_large_image" />
+        <meta property="twitter:site" content="@Chatevohq" />
+        <meta property="twitter:creator" content="@Chatevohq" />
+        <meta name="twitter:title" content="Chatevo — WhatsApp Commerce Platform" />
+        <meta name="twitter:description" content="Transform your WhatsApp into a high-converting storefront." />
+        <meta name="twitter:image" content="https://chatevo-app.vercel.app/og-image.jpg" />
+        <meta name="theme-color" content="#006c49" />
+        <link rel="canonical" href="https://chatevo-app.vercel.app" />
+      </Head>
       <LiveActivity />
 
       {/* Background Effects */}
