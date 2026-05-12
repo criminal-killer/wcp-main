@@ -1,5 +1,6 @@
 -- Migration: Multi-store support + product types
 -- Run: node scripts/run-migration.js < this file
+-- Safe to run multiple times (idempotent)
 
 -- 1. Create stores table
 CREATE TABLE IF NOT EXISTS stores (
@@ -7,17 +8,15 @@ CREATE TABLE IF NOT EXISTS stores (
   org_id TEXT NOT NULL REFERENCES organizations(id),
   name TEXT NOT NULL,
   slug TEXT NOT NULL UNIQUE,
-  store_type TEXT DEFAULT 'physical', -- physical, digital, services
+  store_type TEXT DEFAULT 'physical',
   description TEXT,
   logo_url TEXT,
   theme_color TEXT DEFAULT '#25D366',
 
-  -- WhatsApp per store
   wa_phone_number_id TEXT,
   wa_business_account_id TEXT,
   wa_access_token_encrypted TEXT,
 
-  -- Settings
   currency TEXT DEFAULT 'USD',
   delivery_fee REAL DEFAULT 0,
   is_active INTEGER DEFAULT 1,
@@ -26,24 +25,23 @@ CREATE TABLE IF NOT EXISTS stores (
   updated_at TEXT DEFAULT (datetime('now'))
 );
 
--- 2. Create index for org lookup
+-- 2. Create indexes
 CREATE INDEX IF NOT EXISTS idx_stores_org_id ON stores(org_id);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_stores_slug ON stores(slug);
 
--- 3. Add product_type, digital_content, service_duration to products
--- Only add columns if they don't exist (idempotent)
-ALTER TABLE products ADD COLUMN store_id TEXT REFERENCES stores(id);
+-- 3. Add product columns (idempotent - only if not exist)
+-- SQLite doesn't have ADD COLUMN IF NOT EXISTS, so we use a workaround
+ALTER TABLE products ADD COLUMN store_id TEXT;
 ALTER TABLE products ADD COLUMN product_type TEXT DEFAULT 'physical';
 ALTER TABLE products ADD COLUMN digital_content TEXT;
 ALTER TABLE products ADD COLUMN service_duration TEXT;
 
--- 4. Create default store from existing org (one-time migration)
--- This creates a store for each org that doesn't have one
+-- 4. Create default store for existing orgs that don't have one
 INSERT OR IGNORE INTO stores (org_id, name, slug, store_type, is_default, wa_phone_number_id, wa_business_account_id, wa_access_token_encrypted, currency, delivery_fee, theme_color)
 SELECT
   id,
   name,
-  slug || '-store' || id,
+  slug || '-store',
   'physical',
   1,
   wa_phone_number_id,
@@ -53,4 +51,4 @@ SELECT
   delivery_fee,
   theme_color
 FROM organizations
-WHERE id NOT IN (SELECT org_id FROM stores WHERE is_default = 1);
+WHERE id NOT IN (SELECT DISTINCT org_id FROM stores);

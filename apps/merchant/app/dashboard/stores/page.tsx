@@ -119,15 +119,14 @@ export default async function StoresPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <a
+                  <Link
                     href={`/store/${store.slug}`}
                     target="_blank"
-                    onClick={e => e.stopPropagation()}
                     className="p-2 text-muted-foreground hover:text-whatsapp transition-colors"
                     title="View store"
                   >
                     <Globe size={18} />
-                  </a>
+                  </Link>
                   <ChevronRight size={18} className="text-muted-foreground/50 group-hover:text-foreground transition-colors" />
                 </div>
               </div>
