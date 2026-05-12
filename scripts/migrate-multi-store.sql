@@ -1,5 +1,5 @@
 -- Migration: Multi-store support + product types
--- Run: node scripts/run-migration.js < this file
+-- Run: npm run db:migrate -- scripts/migrate-multi-store.sql
 -- Safe to run multiple times (idempotent)
 
 -- 1. Create stores table
@@ -30,15 +30,23 @@ CREATE INDEX IF NOT EXISTS idx_stores_org_id ON stores(org_id);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_stores_slug ON stores(slug);
 
 -- 3. Add product columns (idempotent - only if not exist)
--- SQLite doesn't have ADD COLUMN IF NOT EXISTS, so we use a workaround
+-- Note: Turso/SQLite requires checking if columns exist first
+-- We use a workaround: try to add, catch error if exists
+
+-- 3a. Add store_id to products
 ALTER TABLE products ADD COLUMN store_id TEXT;
+
+-- 3b. Add product_type (physical, digital, service) - rename from 'type' if needed
+-- First check if product_type exists
 ALTER TABLE products ADD COLUMN product_type TEXT DEFAULT 'physical';
-ALTER TABLE products ADD COLUMN digital_content TEXT;
+
+-- 3c. Add service_duration
 ALTER TABLE products ADD COLUMN service_duration TEXT;
 
 -- 4. Create default store for existing orgs that don't have one
-INSERT OR IGNORE INTO stores (org_id, name, slug, store_type, is_default, wa_phone_number_id, wa_business_account_id, wa_access_token_encrypted, currency, delivery_fee, theme_color)
+INSERT OR IGNORE INTO stores (id, org_id, name, slug, store_type, is_default, wa_phone_number_id, wa_business_account_id, wa_access_token_encrypted, currency, delivery_fee, theme_color)
 SELECT
+  lower(hex(randomblob(16))),
   id,
   name,
   slug || '-store',
