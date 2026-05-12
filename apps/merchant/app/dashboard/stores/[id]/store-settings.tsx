@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
   ArrowLeft, Store, Globe, Phone, ShieldCheck, Loader2,
-  CheckCircle2, AlertTriangle, Trash2, Star
+  CheckCircle2, AlertTriangle, Star, Zap, MessageSquare,
+  ShoppingCart, TrendingUp, ExternalLink
 } from 'lucide-react'
 import { PLAN_CONFIG, normalizePlan } from '@/lib/payments'
 
@@ -15,14 +16,22 @@ type StoreType = {
   description: string | null; currency: string | null; delivery_fee: number | null;
   theme_color: string | null; wa_phone_number_id: string | null;
   wa_business_account_id: string | null; is_default: number | null;
+  is_live: number | null;
 }
 type OrgType = { id: string; name: string; plan: string | null } | null
+type StoreStats = {
+  unreadMessages: number;
+  pendingOrders: number;
+  revenue: number;
+}
 
 export default function StoreSettings({ store, org }: { store: StoreType; org: OrgType | null }) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState('')
+  const [launching, setLaunching] = useState(false)
+  const [stats, setStats] = useState<StoreStats | null>(null)
   const [form, setForm] = useState({
     name: store.name || '',
     store_type: store.store_type || 'physical',
@@ -33,10 +42,27 @@ export default function StoreSettings({ store, org }: { store: StoreType; org: O
     wa_phone_number_id: store.wa_phone_number_id || '',
     wa_business_account_id: store.wa_business_account_id || '',
     is_default: store.is_default === 1,
+    is_live: store.is_live === 1,
   })
 
   const plan = normalizePlan(org?.plan || 'starter')
   const storeLimit = PLAN_CONFIG[plan].store_limit
+
+  // Fetch stats
+  useEffect(() => {
+    async function fetchStats() {
+      try {
+        const res = await fetch(`/api/stores/stats?store_id=${store.id}`)
+        if (res.ok) {
+          const data = await res.json()
+          setStats(data.stats)
+        }
+      } catch (err) {
+        console.error('Failed to fetch stats:', err)
+      }
+    }
+    fetchStats()
+  }, [store.id])
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
@@ -64,6 +90,37 @@ export default function StoreSettings({ store, org }: { store: StoreType; org: O
     }
   }
 
+  async function handleLaunch() {
+    setLaunching(true)
+    try {
+      const res = await fetch('/api/stores', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ store_id: store.id, is_live: !form.is_live }),
+      })
+      if (res.ok) {
+        setForm({ ...form, is_live: !form.is_live })
+        router.refresh()
+      }
+    } catch {
+      console.error('Failed to toggle launch')
+    } finally {
+      setLaunching(false)
+    }
+  }
+
+  // Store type badge colors
+  function getStoreTypeBadge(type: string | null) {
+    switch (type) {
+      case 'physical': return { bg: 'bg-blue-100 text-blue-700', label: 'Physical' }
+      case 'digital': return { bg: 'bg-purple-100 text-purple-700', label: 'Digital' }
+      case 'services': return { bg: 'bg-amber-100 text-amber-700', label: 'Services' }
+      default: return { bg: 'bg-gray-100 text-gray-700', label: 'Store' }
+    }
+  }
+
+  const typeBadge = getStoreTypeBadge(store.store_type)
+
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <Link
@@ -74,32 +131,99 @@ export default function StoreSettings({ store, org }: { store: StoreType; org: O
         Back to Stores
       </Link>
 
-      {/* Store Header */}
+      {/* Store Header with Stats */}
       <div className="bg-card rounded-2xl border border-border p-6 shadow-sm">
-        <div className="flex items-center gap-4">
-          <div className="w-14 h-14 bg-whatsapp/10 text-whatsapp rounded-xl flex items-center justify-center">
-            <Store size={26} />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-black text-foreground tracking-tight">{store.name}</h1>
-              {form.is_default && (
-                <span className="flex items-center gap-1 text-[10px] font-black bg-whatsapp/10 text-whatsapp px-2 py-0.5 rounded-full uppercase tracking-widest">
-                  <Star size={8} /> Default
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-4">
+            <div className={`w-14 h-14 rounded-xl flex items-center justify-center ${
+              form.is_live ? 'bg-green-500 text-white' : 'bg-whatsapp/10 text-whatsapp'
+            }`}>
+              <Store size={26} />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-2xl font-black text-foreground tracking-tight">{store.name}</h1>
+                {form.is_default && (
+                  <span className="flex items-center gap-1 text-[10px] font-black bg-whatsapp/10 text-whatsapp px-2 py-0.5 rounded-full uppercase tracking-widest">
+                    <Star size={8} /> Default
+                  </span>
+                )}
+                <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${typeBadge.bg}`}>
+                  {typeBadge.label}
                 </span>
-              )}
-            </div>
-            <div className="flex items-center gap-2 mt-1">
-              <a
-                href={`/store/${store.slug}`}
-                target="_blank"
-                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-whatsapp font-medium transition-colors"
-              >
-                <Globe size={12} /> /store/{store.slug}
-              </a>
-              <span className="text-xs text-muted-foreground capitalize">{store.store_type || 'physical'}</span>
+              </div>
+              <div className="flex items-center gap-3 mt-1">
+                <a
+                  href={`/store/${store.slug}`}
+                  target="_blank"
+                  className="flex items-center gap-1 text-xs text-muted-foreground hover:text-whatsapp font-medium transition-colors"
+                >
+                  <Globe size={12} /> /store/{store.slug}
+                  <ExternalLink size={10} />
+                </a>
+              </div>
             </div>
           </div>
+          <button
+            onClick={handleLaunch}
+            disabled={launching}
+            className={`flex items-center gap-2 px-5 py-3 rounded-xl font-black text-sm transition-all shadow-lg ${
+              form.is_live
+                ? 'bg-amber-500 text-white hover:bg-amber-600'
+                : 'bg-green-500 text-white hover:bg-green-600 shadow-green-500/20'
+            } disabled:opacity-50`}
+          >
+            {launching ? (
+              <Loader2 size={16} className="animate-spin" />
+            ) : (
+              <Zap size={16} />
+            )}
+            {form.is_live ? 'Unlaunch Store' : 'Launch Store'}
+          </button>
+        </div>
+
+        {/* Stats */}
+        {stats && (
+          <div className="grid grid-cols-3 gap-4 mt-6">
+            <div className="bg-secondary/30 rounded-xl p-4 text-center">
+              <div className="flex items-center justify-center gap-2 text-muted-foreground mb-1">
+                <MessageSquare size={14} />
+                <span className="text-xs font-bold uppercase">Messages</span>
+              </div>
+              <div className="text-2xl font-black text-foreground">{stats.unreadMessages}</div>
+            </div>
+            <div className="bg-secondary/30 rounded-xl p-4 text-center">
+              <div className="flex items-center justify-center gap-2 text-muted-foreground mb-1">
+                <ShoppingCart size={14} />
+                <span className="text-xs font-bold uppercase">Orders</span>
+              </div>
+              <div className="text-2xl font-black text-foreground">{stats.pendingOrders}</div>
+            </div>
+            <div className="bg-secondary/30 rounded-xl p-4 text-center">
+              <div className="flex items-center justify-center gap-2 text-muted-foreground mb-1">
+                <TrendingUp size={14} />
+                <span className="text-xs font-bold uppercase">Revenue (30d)</span>
+              </div>
+              <div className="text-2xl font-black text-green-600">${stats.revenue.toFixed(0)}</div>
+            </div>
+          </div>
+        )}
+
+        {/* Live Status */}
+        <div className={`mt-4 flex items-center gap-2 px-4 py-2 rounded-xl ${
+          form.is_live ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'
+        }`}>
+          {form.is_live ? (
+            <>
+              <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+              <span className="text-sm font-bold">Store is live and visible to customers</span>
+            </>
+          ) : (
+            <>
+              <span className="w-2 h-2 bg-amber-500 rounded-full" />
+              <span className="text-sm font-bold">Store is not launched yet</span>
+            </>
+          )}
         </div>
       </div>
 

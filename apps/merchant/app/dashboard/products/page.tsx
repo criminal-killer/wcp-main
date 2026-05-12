@@ -1,10 +1,11 @@
 import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import { db } from '@/lib/db'
-import { users, products } from '@/lib/schema'
+import { users, products, stores } from '@/lib/schema'
 import { eq, and, desc } from 'drizzle-orm'
 import Link from 'next/link'
 import { Plus, Package } from 'lucide-react'
+import { getActiveStore } from '@/lib/store-context'
 
 export const dynamic = 'force-dynamic'
 
@@ -14,9 +15,17 @@ export default async function ProductsPage() {
   const user = await db.query.users.findFirst({ where: eq(users.clerk_id, userId) })
   if (!user) redirect('/onboarding')
 
+  // Get active store
+  const activeStore = await getActiveStore(userId)
+
+  // Fetch products for active store
   const productList = await db.select()
     .from(products)
-    .where(and(eq(products.org_id, user.org_id)))
+    .where(
+      activeStore
+        ? and(eq(products.org_id, user.org_id!), eq(products.store_id, activeStore.id))
+        : eq(products.org_id, user.org_id!)
+    )
     .orderBy(desc(products.created_at))
 
   return (
@@ -24,7 +33,11 @@ export default async function ProductsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-black text-foreground">Products</h1>
-          <p className="text-muted-foreground mt-1">{productList.length} products · Up to 200</p>
+          {activeStore && (
+            <p className="text-sm text-muted-foreground mt-1">
+              {productList.length} products in <span className="font-semibold text-whatsapp">{activeStore.name}</span>
+            </p>
+          )}
         </div>
         <Link
           href="/dashboard/products/new"

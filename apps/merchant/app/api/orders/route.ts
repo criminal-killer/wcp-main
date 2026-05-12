@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { users, orders, contacts } from '@/lib/schema'
 import { eq, and, desc } from 'drizzle-orm'
+import { getActiveStore } from '@/lib/store-context'
 
 export async function GET(req: NextRequest) {
   const { userId } = await auth()
@@ -13,6 +14,11 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const status = searchParams.get('status')
   const search = searchParams.get('search')
+  const storeId = searchParams.get('store_id')
+
+  // Get active store if no specific store_id provided
+  const activeStore = storeId ? null : await getActiveStore(userId)
+  const targetStoreId = storeId || activeStore?.id
 
   let orderList = await db.select({
     id: orders.id, order_number: orders.order_number,
@@ -22,12 +28,14 @@ export async function GET(req: NextRequest) {
     order_status: orders.order_status, tracking_number: orders.tracking_number,
     created_at: orders.created_at, updated_at: orders.updated_at,
     contact_name: contacts.name, contact_phone: contacts.phone, contact_id: orders.contact_id,
+    store_id: orders.store_id,
   })
     .from(orders)
     .leftJoin(contacts, eq(orders.contact_id, contacts.id))
     .where(
       and(
-        eq(orders.org_id, user.org_id),
+        eq(orders.org_id, user.org_id!),
+        targetStoreId ? eq(orders.store_id, targetStoreId) : undefined,
         status ? eq(orders.order_status, status) : undefined,
       )
     )
@@ -41,5 +49,5 @@ export async function GET(req: NextRequest) {
     )
   }
 
-  return NextResponse.json({ data: orderList, total: orderList.length })
+  return NextResponse.json({ data: orderList, total: orderList.length, store_id: targetStoreId })
 }

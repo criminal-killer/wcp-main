@@ -92,6 +92,7 @@ export async function PATCH(req: NextRequest) {
     delivery_fee?: number
     theme_color?: string
     is_default?: boolean
+    is_live?: boolean
     default_categories?: string
   }
 
@@ -112,6 +113,7 @@ export async function PATCH(req: NextRequest) {
   if (body.delivery_fee !== undefined) updateData.delivery_fee = body.delivery_fee
   if (body.theme_color) updateData.theme_color = body.theme_color
   if (body.default_categories !== undefined) updateData.default_categories = body.default_categories
+  if (body.is_live !== undefined) updateData.is_live = body.is_live ? 1 : 0
 
   // If setting as default, unset other defaults first
   if (body.is_default) {

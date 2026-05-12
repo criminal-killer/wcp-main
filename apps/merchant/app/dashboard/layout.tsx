@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { db } from '@/lib/db'
 import { users, organizations, notifications, stores } from '@/lib/schema'
 import { eq, and } from 'drizzle-orm'
+import { getActiveStore } from '@/lib/store-context'
 import DashboardSidebar from './sidebar'
 import { Clock } from 'lucide-react'
 import AiAssist from '@/components/dashboard/AiAssist'
@@ -26,7 +27,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
     .where(and(eq(stores.org_id, user.org_id!), eq(stores.is_active, 1)))
     .orderBy(stores.created_at)
 
-  // Unread notification count
+  // Get active store
+  const activeStore = await getActiveStore(userId)
+
+  // Unread notification count (for active store)
   const unreadRows = await db.select({ id: notifications.id })
     .from(notifications)
     .where(and(eq(notifications.org_id, user.org_id!), eq(notifications.is_read, 0)))
@@ -40,7 +44,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <div className="flex h-screen bg-secondary overflow-hidden">
-      <DashboardSidebar org={org} stores={storeList} unreadCount={unreadCount} />
+      <DashboardSidebar
+        org={org}
+        stores={storeList}
+        activeStore={activeStore}
+        unreadCount={unreadCount}
+      />
       <div className="flex-1 flex flex-col min-w-0 pt-14 lg:pt-0">
         {/* Trial Banner */}
         {isOnTrial && (

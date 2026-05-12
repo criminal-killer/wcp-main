@@ -5,22 +5,15 @@ import { users, organizations, products } from '@/lib/schema'
 import { eq, and } from 'drizzle-orm'
 import { z } from 'zod'
 import { clearProductCache } from '@/lib/redis'
+import { getActiveStore } from '@/lib/store-context'
 
-const PLAN_LIMITS = { 
-  trial: 100, 
-  free: 10, 
-  starter: 100, 
-  pro: 500, 
+const PLAN_LIMITS = {
+  trial: 100,
+  free: 10,
+  starter: 100,
+  pro: 500,
   elite: 5000,
-  custom: 10000 
-}
-const CATEGORY_LIMITS = { 
-  trial: 20, 
-  free: 5, 
-  starter: 20, 
-  pro: 50, 
-  elite: 100,
-  custom: 200 
+  custom: 10000
 }
 
 const productSchema = z.object({
@@ -32,6 +25,7 @@ const productSchema = z.object({
   images: z.array(z.string().url()).max(5).default([]),
   variants: z.array(z.object({ type: z.string(), options: z.array(z.string()) })).default([]),
   inventory_count: z.number().int().min(0).default(0),
+  store_id: z.string().optional(), // Allow specifying store_id
 })
 
 export async function GET(req: NextRequest) {
@@ -44,10 +38,16 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const category = searchParams.get('category')
   const search = searchParams.get('search')
+  const storeId = searchParams.get('store_id')
+
+  // Get active store if no specific store_id provided
+  const activeStore = storeId ? null : await getActiveStore(userId)
+  const targetStoreId = storeId || activeStore?.id
 
   const productList = await db.select().from(products).where(
     and(
-      eq(products.org_id, user.org_id),
+      eq(products.org_id, user.org_id!),
+      targetStoreId ? eq(products.store_id, targetStoreId) : undefined,
       category ? eq(products.category, category) : undefined,
     )
   )
@@ -56,7 +56,7 @@ export async function GET(req: NextRequest) {
     ? productList.filter(p => p.name.toLowerCase().includes(search.toLowerCase()))
     : productList
 
-  return NextResponse.json({ data: filtered, total: filtered.length })
+  return NextResponse.json({ data: filtered, total: filtered.length, store_id: targetStoreId })
 }
 
 export async function POST(req: NextRequest) {
@@ -69,8 +69,13 @@ export async function POST(req: NextRequest) {
   const org = await db.query.organizations.findFirst({ where: eq(organizations.id, user.org_id) })
   if (!org) return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
 
-  // Check plan limits
-  const existing = await db.select().from(products).where(eq(products.org_id, user.org_id))
+  // Get active store
+  const activeStore = await getActiveStore(userId)
+
+  // Check plan limits (count products for this store)
+  const existing = await db.select().from(products).where(
+    activeStore ? eq(products.store_id, activeStore.id) : eq(products.org_id, user.org_id!)
+  )
   const plan = (org.plan || 'free') as keyof typeof PLAN_LIMITS
   const limit = PLAN_LIMITS[plan] || 10
 
@@ -90,6 +95,7 @@ export async function POST(req: NextRequest) {
   const data = parsed.data
   const [product] = await db.insert(products).values({
     org_id: user.org_id,
+    store_id: data.store_id || activeStore?.id || null,
     name: data.name,
     description: data.description,
     price: data.price,

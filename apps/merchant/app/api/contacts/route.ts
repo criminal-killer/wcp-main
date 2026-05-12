@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { users, contacts } from '@/lib/schema'
 import { eq, and, desc } from 'drizzle-orm'
+import { getActiveStore } from '@/lib/store-context'
 
 export async function GET(req: NextRequest) {
   const { userId } = await auth()
@@ -13,10 +14,20 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const search = searchParams.get('search')
   const tag = searchParams.get('tag')
+  const storeId = searchParams.get('store_id')
+
+  // Get active store if no specific store_id provided
+  const activeStore = storeId ? null : await getActiveStore(userId)
+  const targetStoreId = storeId || activeStore?.id
 
   let list = await db.select()
     .from(contacts)
-    .where(eq(contacts.org_id, user.org_id))
+    .where(
+      and(
+        eq(contacts.org_id, user.org_id!),
+        targetStoreId ? eq(contacts.store_id, targetStoreId) : undefined,
+      )
+    )
     .orderBy(desc(contacts.created_at))
     .limit(1000)
 
@@ -33,5 +44,5 @@ export async function GET(req: NextRequest) {
     })
   }
 
-  return NextResponse.json({ data: list, total: list.length })
+  return NextResponse.json({ data: list, total: list.length, store_id: targetStoreId })
 }

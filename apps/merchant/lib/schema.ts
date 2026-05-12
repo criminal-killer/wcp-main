@@ -96,6 +96,7 @@ export const stores = sqliteTable('stores', {
   currency: text('currency').default('USD'),
   delivery_fee: real('delivery_fee').default(0),
   is_active: integer('is_active').default(1),
+  is_live: integer('is_live').default(0), // Whether the store is "launched" and visible
   is_default: integer('is_default').default(0),
   // Pre-configured categories for AI guidance (JSON)
   default_categories: text('default_categories').default('[]'),
@@ -124,6 +125,7 @@ export const users = sqliteTable('users', {
   email: text('email').notNull(),
   name: text('name'),
   role: text('role').default('owner'),
+  active_store_id: text('active_store_id').references(() => stores.id), // Currently active store for this user
   created_at: text('created_at').default(sql`(datetime('now'))`),
   is_active: integer('is_active').default(1),
 })
@@ -159,6 +161,7 @@ export const products = sqliteTable('products', {
 export const contacts = sqliteTable('contacts', {
   id: text('id').primaryKey().default(sql`(lower(hex(randomblob(16))))`),
   org_id: text('org_id').notNull().references(() => organizations.id),
+  store_id: text('store_id').references(() => stores.id), // Scoped to specific store
   phone: text('phone').notNull(),
   name: text('name'),
   email: text('email'),
@@ -179,6 +182,7 @@ export const contacts = sqliteTable('contacts', {
 export const conversations = sqliteTable('conversations', {
   id: text('id').primaryKey().default(sql`(lower(hex(randomblob(16))))`),
   org_id: text('org_id').notNull().references(() => organizations.id),
+  store_id: text('store_id').references(() => stores.id), // Scoped to specific store
   contact_id: text('contact_id').notNull().references(() => contacts.id),
   assigned_to: text('assigned_to').references(() => users.id),
   status: text('status').default('open'),
@@ -195,6 +199,7 @@ export const conversations = sqliteTable('conversations', {
 export const messages = sqliteTable('messages', {
   id: text('id').primaryKey().default(sql`(lower(hex(randomblob(16))))`),
   org_id: text('org_id').notNull().references(() => organizations.id),
+  store_id: text('store_id').references(() => stores.id), // Scoped to specific store
   conversation_id: text('conversation_id').notNull().references(() => conversations.id),
   contact_id: text('contact_id').notNull().references(() => contacts.id),
   direction: text('direction').notNull(),
@@ -213,6 +218,7 @@ export const messages = sqliteTable('messages', {
 export const orders = sqliteTable('orders', {
   id: text('id').primaryKey().default(sql`(lower(hex(randomblob(16))))`),
   org_id: text('org_id').notNull().references(() => organizations.id),
+  store_id: text('store_id').references(() => stores.id), // Scoped to specific store
   contact_id: text('contact_id').notNull().references(() => contacts.id),
   order_number: text('order_number').notNull(),
   items: text('items').notNull(),
