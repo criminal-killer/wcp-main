@@ -171,18 +171,20 @@ export default function NewStorePage() {
                     <option value="GHS">GHS</option>
                   </select>
                 </div>
-                <div>
-                  <label className="block text-sm font-black text-foreground mb-2 uppercase tracking-tight">Default Delivery Fee</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={form.delivery_fee}
-                    onChange={e => setForm({ ...form, delivery_fee: e.target.value })}
-                    className="w-full px-4 py-3 bg-secondary border-0 rounded-xl text-sm font-medium focus:ring-2 focus:ring-whatsapp"
-                    placeholder="0.00"
-                  />
-                </div>
+                {form.store_type === 'physical' && (
+                  <div>
+                    <label className="block text-sm font-black text-foreground mb-2 uppercase tracking-tight">Default Delivery Fee</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={form.delivery_fee}
+                      onChange={e => setForm({ ...form, delivery_fee: e.target.value })}
+                      className="w-full px-4 py-3 bg-secondary border-0 rounded-xl text-sm font-medium focus:ring-2 focus:ring-whatsapp"
+                      placeholder="0.00"
+                    />
+                  </div>
+                )}
               </div>
 
               {error && (
