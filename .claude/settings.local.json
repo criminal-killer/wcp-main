@@ -27,7 +27,11 @@
       "Bash(node fix_lines.js)",
       "Bash(node fix_template_spans.js)",
       "Bash(git commit *)",
-      "Bash(git checkout *)"
+      "Bash(git checkout *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/)",
+      "Bash(PUSHER_SKIP_CONFIRM=1 npx drizzle-kit push --force)",
+      "Bash(npx drizzle-kit *)",
+      "Bash(node migrate.js)"
     ]
   }
 }
