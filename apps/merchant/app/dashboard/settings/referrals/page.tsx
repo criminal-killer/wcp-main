@@ -48,7 +48,7 @@ export default async function MerchantReferralPage() {
           <div className="flex-1 space-y-6">
             <div className="inline-flex items-center gap-2 bg-emerald-800/50 border border-emerald-700/50 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest text-emerald-200">
               <Sparkles size={14} />
-              {discountActive ? '🎉 Discount Active!' : 'B2B Partner Program'}
+              {discountActive ? 'Discount Active!' : 'B2B Partner Program'}
             </div>
 
             {discountActive ? (

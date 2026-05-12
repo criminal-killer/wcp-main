@@ -25,7 +25,7 @@ const GENERAL_SYSTEM_PROMPT = `You are Chatevo AI, a friendly and helpful assist
 - Payments: Paystack (M-Pesa, card, bank), PayPal, Cash on Delivery
 - WhatsApp Cloud API for message handling
 - 7-day free trial for new merchants
-- Referrals: earn 50% commission on referred merchants' subscriptions
+- Referrals: earn 40% commission on first subscription payment, then 10% recurring for 6 months
 - Product types: Physical, Digital (instant delivery), Services (bookings)
 
 ### Tone:

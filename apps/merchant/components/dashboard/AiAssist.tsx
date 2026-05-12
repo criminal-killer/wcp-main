@@ -8,7 +8,7 @@ export default function AiAssist() {
   const [isOpen, setIsOpen] = useState(false)
   const [isMinimized, setIsMinimized] = useState(false)
   const [messages, setMessages] = useState<{ role: 'user' | 'assistant', content: string }[]>([
-    { role: 'assistant', content: "Hi! I'm the **Chatevo Support Teacher** 🧑‍🏫. I can help you set up your store, connect WhatsApp, or explain referrals. Would you like a **Full Guide** or a **Step-by-Step** walkthrough? 🚀" }
+    { role: 'assistant', content: "Hi! I'm **Chatevo AI**. I can help you set up your store, connect WhatsApp, or explain referrals. Would you like a **Full Guide** or a **Step-by-Step** walkthrough?" }
   ])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
@@ -39,7 +39,7 @@ export default function AiAssist() {
       const data = await res.json()
       setMessages(prev => [...prev, { role: 'assistant', content: data.reply }])
     } catch (error) {
-      setMessages(prev => [...prev, { role: 'assistant', content: "Sorry, I'm having trouble connecting right now. Please try again later. 🧡" }])
+      setMessages(prev => [...prev, { role: 'assistant', content: "Sorry, I'm having trouble connecting right now. Please try again later." }])
     } finally {
       setLoading(false)
     }
@@ -69,11 +69,7 @@ export default function AiAssist() {
             <MessageSquare size={20} className="text-white" />
           </div>
           <div>
-            <p className="font-black text-sm tracking-tight uppercase">Support Assistant</p>
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-1 opacity-70">
-              <span className="w-1.5 h-1.5 bg-[#25D366] rounded-full animate-pulse" />
-              Teacher Mode
-            </p>
+            <p className="font-black text-sm tracking-tight uppercase">Chatevo AI</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -117,7 +113,7 @@ export default function AiAssist() {
                     <span className="w-1.5 h-1.5 bg-slate-300 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                     <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                   </div>
-                  <span className="text-xs text-slate-400 font-bold uppercase tracking-widest">Teacher is typing...</span>
+                  <span className="text-xs text-slate-400 font-bold uppercase tracking-widest">Chatevo AI is typing...</span>
                 </div>
               </div>
             )}
@@ -131,7 +127,7 @@ export default function AiAssist() {
                 value={input}
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleSend()}
-                placeholder="Ask your teacher anything..."
+                placeholder="Ask Chatevo AI anything..."
                 className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-4 text-sm focus:ring-4 focus:ring-[#075E54]/5 focus:border-[#075E54] outline-none font-bold placeholder-slate-400 pr-12 transition-all"
               />
               <button
