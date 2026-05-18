@@ -27,9 +27,18 @@ export async function POST(req: NextRequest) {
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   try {
-    // Check if user already onboarded
-    const existing = await db.query.users.findFirst({ where: eq(users.clerk_id, userId) })
-    if (existing) return NextResponse.json({ data: { org_id: existing.org_id }, message: 'Already onboarded' })
+    // Check if user already exists
+    const existingUser = await db.query.users.findFirst({ where: eq(users.clerk_id, userId) })
+    
+    // If they exist, verify their org is valid
+    if (existingUser && existingUser.org_id && existingUser.org_id !== 'system') {
+      const existingOrg = await db.query.organizations.findFirst({
+        where: eq(organizations.id, existingUser.org_id)
+      })
+      if (existingOrg) {
+        return NextResponse.json({ data: { org_id: existingOrg.id }, message: 'Already onboarded' })
+      }
+    }
 
     const body = await req.json() as { name: string; country: string; business_type: string; plan?: string }
     const { name, country = 'KE', business_type, plan = 'trial' } = body
@@ -82,18 +91,29 @@ export async function POST(req: NextRequest) {
       console.error('[Onboarding] Failed to fetch Clerk user details:', e)
     }
 
-    // Create user
-    const [user] = await db.insert(users).values({
-      clerk_id: userId,
-      org_id: org.id,
-      email: email, // Pulled from Clerk synchronously
-      name: userName,
-      role: 'owner',
-    }).returning()
+    let finalUser;
+    
+    // Create or update user
+    if (existingUser) {
+      [finalUser] = await db.update(users).set({
+        org_id: org.id,
+        email: email || existingUser.email,
+        name: userName || existingUser.name,
+        role: 'owner',
+      }).where(eq(users.clerk_id, userId)).returning()
+    } else {
+      [finalUser] = await db.insert(users).values({
+        clerk_id: userId,
+        org_id: org.id,
+        email: email, // Pulled from Clerk synchronously
+        name: userName,
+        role: 'owner',
+      }).returning()
+    }
 
     // Send welcome email (best-effort)
     try {
-      await sendWelcomeEmail(user.email || '', name.trim(), name.trim())
+      await sendWelcomeEmail(finalUser.email || '', name.trim(), name.trim())
     } catch (err) {
       console.error('Welcome email failed:', err)
     }
