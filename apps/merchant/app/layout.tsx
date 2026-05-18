@@ -35,7 +35,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_APP_URL?.startsWith('http')
       ? process.env.NEXT_PUBLIC_APP_URL
-      : `https://${process.env.NEXT_PUBLIC_APP_URL || 'chatevo-app.vercel.app'}`
+      : `https://${process.env.NEXT_PUBLIC_APP_URL || 'chatsevo.com'}`
   ),
   alternates: {
     canonical: '/',
