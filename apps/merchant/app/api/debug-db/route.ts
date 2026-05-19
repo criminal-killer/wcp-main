@@ -15,8 +15,8 @@ export async function GET(req: NextRequest) {
       created_at: messages.created_at,
     })
     .from(messages)
-    .orderBy(desc(messages.id))
-    .limit(5);
+    .orderBy(desc(messages.created_at))
+    .limit(10);
 
     return NextResponse.json({ success: true, messages: list });
   } catch (err: any) {
