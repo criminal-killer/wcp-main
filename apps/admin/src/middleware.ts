@@ -57,12 +57,19 @@ const isPublicRoute = createRouteMatcher([
   '/sign-up(.*)',
   '/auth/super-login',
   '/api/auth/super-login',
-  '/waiting-approval(.*)'
+  '/waiting-approval(.*)',
+  '/not-authorized(.*)'
 ]);
 
 export default clerkMiddleware(async (auth, request) => {
-  const response = NextResponse.next();
-  response.headers.set("x-url", request.nextUrl.pathname);
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-url", request.nextUrl.pathname);
+  
+  let response = NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
 
   // 1. Check for Super Admin Backdoor Cookie
   const token = request.cookies.get("chatevo_admin_token")?.value;
@@ -73,7 +80,7 @@ export default clerkMiddleware(async (auth, request) => {
       if (!secret) throw new Error("SUPER_ADMIN_JWT_SECRET is not set");
       await verifyJwtHS256(token, secret);
       // Valid Super Admin token found - Grant access to all routes
-      return NextResponse.next();
+      return response;
     } catch (err) {
       // Invalid or expired token - proceed to standard Clerk auth
       console.warn("Invalid super admin token, falling back to Clerk.");
@@ -95,6 +102,8 @@ export default clerkMiddleware(async (auth, request) => {
       return NextResponse.redirect(new URL('/not-authorized', request.url));
     }
   }
+
+  return response;
 });
 
 export const config = {
