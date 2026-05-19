@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useUser } from '@clerk/nextjs'
 import { LoadingStore } from '@/components/LoadingStore'
+import { AnimatedLogo } from '@/components/AnimatedLogo'
 
 const BUSINESS_TYPES = [
   'Fashion & Clothing', 'Food & Beverages', 'Electronics', 'Beauty & Cosmetics',
@@ -76,9 +77,7 @@ export default function OnboardingPage() {
         {/* Header */}
         <div className="text-center mb-12">
             <div className="inline-flex items-center gap-4 mb-6">
-                <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20">
-                    <span className="text-white font-serif font-black text-3xl">S</span>
-                </div>
+                <AnimatedLogo />
             </div>
             <h1 className="text-5xl font-serif font-black text-[#075E54] mb-4 tracking-tight">
                 Create Your <span className="text-primary italic">Store</span>

@@ -8,5 +8,13 @@
       "path": "/api/cron/expire-trials",
       "schedule": "0 2 * * *"
     }
+  ],
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "has": [{ "type": "host", "value": "chatevo-app.vercel.app" }],
+      "destination": "https://chatsevo.com/$1",
+      "permanent": true
+    }
   ]
 }
