@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
 
   // Verify meta webhook signature
   const appSecret = process.env.WHATSAPP_APP_SECRET || ''
-  if (appSecret && !verifyWebhookSignature(body, signature, appSecret)) {
+  if (appSecret && !await verifyWebhookSignature(body, signature, appSecret)) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
   }
 
