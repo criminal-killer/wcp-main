@@ -161,12 +161,14 @@ export default async function RootLayout({
     </div>
   )
 
+  const isStandalonePage = path.includes('/not-authorized') || path.includes('/waiting-approval') || path.includes('/auth/super-login');
+
   return (
     <ClerkProvider>
       <html lang="en">
         <body className={inter.className}>
           {isSuperAdmin ? (
-            <DashboardShell isSuper={true} />
+            isStandalonePage ? children : <DashboardShell isSuper={true} />
           ) : (
             <>
               <SignedOut>
@@ -183,7 +185,7 @@ export default async function RootLayout({
                 </div>
               </SignedOut>
               <SignedIn>
-                <DashboardShell isSuper={false} />
+                {isStandalonePage ? children : <DashboardShell isSuper={false} />}
               </SignedIn>
             </>
           )}
