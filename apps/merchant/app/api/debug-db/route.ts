@@ -3,6 +3,8 @@ import { db } from '@/lib/db';
 import { messages } from '@/lib/schema';
 import { desc } from 'drizzle-orm';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: NextRequest) {
   try {
     const list = await db.select({
