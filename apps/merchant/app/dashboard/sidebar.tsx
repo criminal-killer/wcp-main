@@ -1,7 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { UserButton } from '@clerk/nextjs'
+import { UserButton, useClerk } from '@clerk/nextjs'
 import {
   LayoutDashboard, Package, ShoppingCart, MessageSquare,
   Users, Settings, Store, BarChart3, Globe, Shield,
@@ -42,6 +42,7 @@ export default function DashboardSidebar({
 }) {
   const pathname = usePathname()
   const router = useRouter()
+  const { signOut } = useClerk()
   const [isOpen, setIsOpen] = useState(false)
   const [storeSwitcherOpen, setStoreSwitcherOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -195,7 +196,7 @@ export default function DashboardSidebar({
             </div>
           </div>
           <button 
-            onClick={() => window.location.href = '/sign-in'} 
+            onClick={() => signOut(() => router.push('/sign-in'))} 
             className="w-full flex items-center gap-3 p-2 hover:bg-red-50 text-red-600 rounded-2xl transition-all group"
           >
             <div className="w-8 h-8 flex items-center justify-center">

@@ -39,6 +39,6 @@ export default async function SettingsPage() {
     .from(auto_replies)
     .where(eq(auto_replies.org_id, user.org_id))
 
-  return <SettingsClient org={org as unknown as OrgShape} autoReplies={replies} />
+  return <SettingsClient org={org as unknown as OrgShape} autoReplies={replies} waVerifyToken={process.env.WHATSAPP_VERIFY_TOKEN || ''} />
 }
 

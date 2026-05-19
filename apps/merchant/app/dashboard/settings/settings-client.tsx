@@ -164,15 +164,15 @@ const SecureSection = ({ children, email, onUnlock }: { children: React.ReactNod
   )
 }
 
-export default function SettingsClient({ org, autoReplies }: { org: Org, autoReplies: AutoReply[] }) {
+export default function SettingsClient({ org, autoReplies, waVerifyToken }: { org: Org, autoReplies: AutoReply[], waVerifyToken?: string }) {
   return (
     <Suspense fallback={<div>Loading Settings...</div>}>
-      <SettingsContent org={org} autoReplies={autoReplies} />
+      <SettingsContent org={org} autoReplies={autoReplies} waVerifyToken={waVerifyToken} />
     </Suspense>
   )
 }
 
-function SettingsContent({ org, autoReplies }: { org: Org, autoReplies: AutoReply[] }) {
+function SettingsContent({ org, autoReplies, waVerifyToken }: { org: Org, autoReplies: AutoReply[], waVerifyToken?: string }) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { user } = useUser()
@@ -233,6 +233,7 @@ function SettingsContent({ org, autoReplies }: { org: Org, autoReplies: AutoRepl
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null)
   const [subscribeError, setSubscribeError] = useState('')
   const [showAllPlans, setShowAllPlans] = useState(false)
+  const [showInstructions, setShowInstructions] = useState(false)
 
   async function handleSubscribe(plan: string, provider: 'paystack' | 'stripe' | 'paypal') {
     setLoadingPlan(`${plan}-${provider}`)
@@ -368,7 +369,10 @@ function SettingsContent({ org, autoReplies }: { org: Org, autoReplies: AutoRepl
             </div>
 
             <div className="bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 p-6 space-y-4">
-              <h3 className="text-xs font-black uppercase tracking-widest text-slate-500">Meta Webhook Setup</h3>
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-black uppercase tracking-widest text-slate-500">Meta Webhook Setup</h3>
+                <button onClick={() => setShowInstructions(!showInstructions)} className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-black hover:bg-blue-200 transition-colors">!</button>
+              </div>
               <div className="space-y-3">
                 <div className="bg-white rounded-xl p-3 border border-slate-100">
                   <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Callback URL</p>
@@ -379,15 +383,34 @@ function SettingsContent({ org, autoReplies }: { org: Org, autoReplies: AutoRepl
                 <div className="bg-white rounded-xl p-3 border border-slate-100">
                   <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Verify Token</p>
                   <code className="text-[11px] font-bold text-primary">
-                    {process.env.NEXT_PUBLIC_WA_WEBHOOK_VERIFY_TOKEN ?? '(set NEXT_PUBLIC_WA_WEBHOOK_VERIFY_TOKEN in env)'}
+                    {waVerifyToken || '(Token missing in server env)'}
                   </code>
                 </div>
               </div>
-              <ul className="text-[10px] font-bold text-slate-500 space-y-2 list-disc pl-4">
-                <li>Go to Meta Developers Console &gt; WhatsApp &gt; Configuration</li>
-                <li>Paste the URL and Token above</li>
-                <li>Click <strong>"Manage"</strong> under Webhooks and subscribe to <strong>"messages"</strong></li>
-              </ul>
+              
+              {showInstructions && (
+                <div className="mt-4 p-4 bg-white border border-blue-100 rounded-xl space-y-3 animate-in slide-in-from-top-2 duration-200">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-blue-600 mb-2">How to get your System Access Token</p>
+                  <ul className="text-[10px] font-bold text-slate-500 space-y-2 list-decimal pl-4 mb-4 border-b border-slate-100 pb-4">
+                    <li>Go to <strong>Business Settings</strong> in Meta Business Manager.</li>
+                    <li>Under Users, click <strong>System Users</strong>.</li>
+                    <li>Create a new System User (or select an existing one) with <strong>Admin</strong> role.</li>
+                    <li>Click <strong>Generate New Token</strong>.</li>
+                    <li>Select your App, and ensure you check: <code>whatsapp_business_messaging</code> and <code>whatsapp_business_management</code>.</li>
+                    <li>Copy the token and paste it into the <strong>System Access Token</strong> field above.</li>
+                  </ul>
+                  
+                  <p className="text-[10px] font-black uppercase tracking-widest text-blue-600 mb-2">How to verify your Webhook</p>
+                  <ul className="text-[10px] font-bold text-slate-500 space-y-2 list-decimal pl-4">
+                    <li>Go to your App in the <strong>Meta Developers Console</strong>.</li>
+                    <li>Navigate to <strong>WhatsApp</strong> &gt; <strong>Configuration</strong>.</li>
+                    <li>Under Webhook, click Edit.</li>
+                    <li>Paste the <strong>Callback URL</strong> and <strong>Verify Token</strong> from above exactly as they appear.</li>
+                    <li>Click <strong>Verify and Save</strong>.</li>
+                    <li>Click <strong>Manage</strong> under Webhooks and subscribe to the <strong>"messages"</strong> field.</li>
+                  </ul>
+                </div>
+              )}
             </div>
 
             <div className="bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 p-6 space-y-4">
@@ -423,7 +446,12 @@ function SettingsContent({ org, autoReplies }: { org: Org, autoReplies: AutoRepl
                         setTestResult({ success: true });
                         router.refresh();
                       } else {
-                        setTestResult({ error: data.error });
+                        const errString = typeof data.error === 'object' ? JSON.stringify(data.error) : String(data.error);
+                        if (errString.includes('190') || errString.includes('OAuthException') || errString.includes('Authentication Error')) {
+                          setTestResult({ error: 'Your System Access Token is invalid or expired. Please generate a new permanent token in Meta Business Settings and save it above.' });
+                        } else {
+                          setTestResult({ error: errString });
+                        }
                       }
                     } catch (e) {
                       setTestResult({ error: 'Network error' });
