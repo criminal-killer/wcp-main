@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
   const token = searchParams.get('hub.verify_token')
   const challenge = searchParams.get('hub.challenge')
 
-  if (mode === 'subscribe' && token === process.env.WA_WEBHOOK_VERIFY_TOKEN) {
+  if (mode === 'subscribe' && token === process.env.WHATSAPP_VERIFY_TOKEN) {
     return new Response(challenge || '', { status: 200 })
   }
   return new Response('Forbidden', { status: 403 })
@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
   const signature = req.headers.get('x-hub-signature-256') || ''
 
   // Verify meta webhook signature
-  const appSecret = process.env.META_APP_SECRET || ''
+  const appSecret = process.env.WHATSAPP_APP_SECRET || ''
   if (appSecret && !verifyWebhookSignature(body, signature, appSecret)) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
   }
