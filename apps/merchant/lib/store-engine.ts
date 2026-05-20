@@ -80,6 +80,10 @@ export async function processIncomingMessage(ctx: EngineContext) {
   if (['hi', 'hello', 'hey', 'start', 'menu', '0', '00'].includes(inputNorm) || !flow) {
     await clearCart(orgId, phone)
     await deleteFlowState(orgId, phone)
+    return await showGreeting(waConfigObj, org, store, phone, orgId)
+  }
+
+  if (inputNorm === 'continue' || inputNorm === 'continue_to_menu') {
     return await showMainMenu(waConfigObj, org, store, phone, orgId)
   }
 
@@ -153,6 +157,12 @@ export async function processIncomingMessage(ctx: EngineContext) {
   const step = flow?.step || 'main_menu'
 
   switch (step) {
+    case 'greeting':
+      if (inputNorm === 'continue') {
+        return await showMainMenu(waConfigObj, org, store, phone, orgId)
+      }
+      return await showGreeting(waConfigObj, org, store, phone, orgId)
+
     case 'main_menu':
       if (inputNorm === 'browse') {
         return await showCategories(waConfigObj, org, store, phone, orgId)
@@ -213,35 +223,46 @@ async function handleAiFallback(waConfig: { phoneNumberId: string; accessToken: 
   }
 }
 
-async function showMainMenu(waConfig: { phoneNumberId: string; accessToken: string }, org: RunnerOrg, store: RunnerStore | null, phone: string, orgId: string) {
-  const storeCondition = store ? and(eq(products.org_id, orgId), eq(products.store_id, store.id), eq(products.is_active, 1)) : and(eq(products.org_id, orgId), eq(products.is_active, 1))
-  const productList = await db.select().from(products).where(storeCondition)
-  await setFlowState(orgId, phone, { step: 'main_menu', store_id: store?.id })
-
-  // --- Custom Greeting from AI Settings or Default ---
+async function showGreeting(waConfig: { phoneNumberId: string; accessToken: string }, org: RunnerOrg, store: RunnerStore | null, phone: string, orgId: string) {
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
   const dayName = days[new Date().getDay()]
 
-  // Use custom greeting if set in ai_system_prompt (first line as greeting)
   let greeting = ''
   if (org.ai_system_prompt && org.ai_system_prompt.trim()) {
     const lines = org.ai_system_prompt.trim().split('\n')
-    greeting = lines[0].trim() // First line is greeting
+    greeting = lines[0].trim()
     if (!greeting.endsWith('?') && !greeting.endsWith('!') && !greeting.endsWith('.')) {
       greeting += '?'
     }
   } else {
-    // Default greeting
-    greeting = `Hey there!    Hope your *${dayName}* is going wonderfully well!\n\nI'm your personal shopping assistant here at *${org.name}*. We have *${productList.length}* specially selected items waiting for you today.\n\nHow can I help you find exactly what you're looking for?`
+    greeting = `Hey there! Hope your *${dayName}* is going wonderfully well!`
   }
+
+  await setFlowState(orgId, phone, { step: 'greeting', store_id: store?.id })
 
   return await sendInteractiveButtonMessage(waConfig, {
     to: phone,
     header: org.name,
     body: greeting,
-    footer: 'Powered by Chatevo',
+    footer: `Today: ${dayName}`,
     buttons: [
-      { id: 'browse', title: '    Browse Products' },
+      { id: 'continue', title: '   Start Shopping' },
+    ],
+  })
+}
+
+async function showMainMenu(waConfig: { phoneNumberId: string; accessToken: string }, org: RunnerOrg, store: RunnerStore | null, phone: string, orgId: string) {
+  const storeCondition = store ? and(eq(products.org_id, orgId), eq(products.store_id, store.id), eq(products.is_active, 1)) : and(eq(products.org_id, orgId), eq(products.is_active, 1))
+  const productList = await db.select().from(products).where(storeCondition)
+  await setFlowState(orgId, phone, { step: 'main_menu', store_id: store?.id })
+
+  return await sendInteractiveButtonMessage(waConfig, {
+    to: phone,
+    header: `${org.name} Store`,
+    body: `Welcome to *${org.name}*!\n\nWe have *${productList.length}* products ready for you.`,
+    footer: 'What would you like to do?',
+    buttons: [
+      { id: 'browse', title: '   Browse Products' },
       { id: 'view_cart', title: '   View Cart' },
       { id: 'orders', title: '   My Orders' },
     ],
@@ -273,11 +294,11 @@ async function showCategories(waConfig: { phoneNumberId: string; accessToken: st
 
   return await sendInteractiveListMessage(waConfig, {
     to: phone,
-    header: '    Categories',
-    body: 'Select a category to browse products:',
-    footer: `${cats.length} categories available`,
+    header: 'Shop by Category',
+    body: `We have ${cats.length} categories for you. Choose one to browse.`,
+    footer: 'Tap a category to explore',
     buttonText: 'View Categories',
-    sections: [{ title: 'All Categories', rows }],
+    sections: [{ title: 'Categories', rows }],
   })
 }
 
@@ -431,25 +452,26 @@ async function handleProductSelected(
   }
 
   const stockText = product.inventory_count === 0
-    ? '  *Out of Stock*'
-    : `  In Stock (${product.inventory_count} left)`
+    ? '*Out of Stock*'
+    : `${product.inventory_count} in stock`
 
   const compareText = product.compare_at_price
-    ? `\n~${org.currency} ${product.compare_at_price.toLocaleString()}~   *${org.currency} ${product.price.toLocaleString()}*`
-    : `\n*${org.currency} ${product.price.toLocaleString()}*`
+    ? `*${org.currency} ${product.price.toLocaleString()}* ~(was ${org.currency} ${product.compare_at_price.toLocaleString()})~`
+    : `*${org.currency} ${product.price.toLocaleString()}*`
 
-  const description = product.description ? `\n\n${product.description}` : ''
-  const subCategoryText = product.sub_category ? `\n   Category: ${product.category} > ${product.sub_category}` : `\n   Category: ${product.category}`
+  const description = product.description ? `\n${product.description}` : ''
+  const subCategoryText = product.sub_category 
+    ? `${product.category} > ${product.sub_category}` 
+    : product.category
   const variantText = variants.length > 0
-    ? `\n\n   Options: ${variants.map(v => `${v.type}: ${v.options.map(o => o.name).join(', ')}`).join(' | ')}`
+    ? `\n\n*Options:* ${variants.map(v => `${v.type}: ${v.options.map(o => o.name).join(', ')}`).join(' | ')}`
     : ''
 
-  // Product type-specific messaging
   const productType = product.product_type || 'physical'
   const typeHint = productType === 'digital'
-    ? '\n\n  Instant delivery after payment'
+    ? '\n\n*Delivery:* Instant after payment'
     : productType === 'services'
-    ? '\n\n  We will contact you to schedule after payment'
+    ? '\n\n*Service:* We will contact to schedule'
     : ''
 
   await setFlowState(orgId, phone, { step: 'product_detail', product_id: productId, category: flow.category, product_type: productType })
@@ -457,16 +479,17 @@ async function handleProductSelected(
   if (product.inventory_count === 0 && productType !== 'digital') {
     return await sendTextMessage(waConfig, {
       to: phone,
-      body: `*${product.name}*${compareText}${subCategoryText}${description}${variantText}${typeHint}\n\n${stockText}\n\nType *menu* to go back.`,
+      body: `*${product.name}*\n\n${compareText}\n${subCategoryText}${description}${variantText}${typeHint}\n\n${stockText}\n\nType *menu* to go back.`,
     })
   }
 
   return await sendInteractiveButtonMessage(waConfig, {
     to: phone,
-    body: `*${product.name}*${compareText}${subCategoryText}${description}${variantText}${typeHint}\n\n${stockText}`,
+    header: product.name,
+    body: `${compareText}\n${subCategoryText}${description}${variantText}${typeHint}\n\n${stockText}`,
     buttons: [
       { id: `add_${productId}`, title: '   Add to Cart' },
-      { id: 'back_category', title: '  Back' },
+      { id: 'back_category', title: '  Back to Categories' },
     ],
   })
 }
@@ -492,19 +515,19 @@ async function handleProductAction(
       await setFlowState(orgId, phone, { ...flow, step: 'variant_select', product_id: productId, base_price: product.price })
       const rows = variants[0].options.map(opt => {
         const price = opt.price ?? product.price
-        const priceText = opt.price ? ` - ${org.currency} ${opt.price.toLocaleString()}` : ''
+        const priceText = opt.price ? ` — ${org.currency} ${opt.price.toLocaleString()}` : ` — ${org.currency} ${price.toLocaleString()}`
         return {
           id: `var_${opt.name.replace(/\s+/g, '_')}`,
           title: `${opt.name}${priceText}`,
-          description: `Select ${variants[0].type}`,
+          description: `Choose this option`,
         }
       })
       return await sendInteractiveListMessage(waConfig, {
         to: phone,
-        header: `Select ${variants[0].type}`,
-        body: `Choose your *${variants[0].type}* for *${product.name}*:`,
-        footer: product.name,
-        buttonText: `Pick ${variants[0].type}`,
+        header: `${product.name} — Select ${variants[0].type}`,
+        body: `Choose your ${variants[0].type}:`,
+        footer: 'Tap to select',
+        buttonText: 'Select Option',
         sections: [{ title: variants[0].type, rows }],
       })
     }
@@ -512,7 +535,7 @@ async function handleProductAction(
     await setFlowState(orgId, phone, { ...flow, step: 'quantity_select', product_id: productId, variant: undefined, variant_price: product.price })
     return await sendInteractiveButtonMessage(waConfig, {
       to: phone,
-      body: `How many *${product.name}* would you like?\n\n*${org.currency} ${product.price.toLocaleString()}* each`,
+      body: `How many *${product.name}*?\n\n*${org.currency} ${product.price.toLocaleString()}* each`,
       buttons: [
         { id: 'qty_1', title: '1' },
         { id: 'qty_2', title: '2' },
@@ -537,7 +560,7 @@ async function handleVariantSelected(
   const product = await db.query.products.findFirst({
     where: storeCondition,
   })
-  if (!product) return await sendTextMessage(waConfig as { phoneNumberId: string; accessToken: string }, { to: phone, body: '  Product not found.' })
+  if (!product) return await sendTextMessage(waConfig as { phoneNumberId: string; accessToken: string }, { to: phone, body: 'Product not found.' })
 
   const variants = JSON.parse(product.variants || '[]') as Array<{ type: string; options: Array<{ name: string; price?: number }> }>
   let variantPrice = product.price
@@ -558,6 +581,7 @@ async function handleVariantSelected(
 
   return await sendInteractiveButtonMessage(waConfig as { phoneNumberId: string; accessToken: string }, {
     to: phone,
+    header: `Add: ${variantName}`,
     body: `How many *${product.name} (${variantName})*?\n\n*${org.currency} ${variantPrice.toLocaleString()}* each`,
     buttons: [
       { id: 'qty_1', title: '1' },
@@ -610,26 +634,28 @@ async function showCart(waConfig: { phoneNumberId: string; accessToken: string }
   if (!cart || cart.length === 0) {
     return await sendInteractiveButtonMessage(waConfig, {
       to: phone,
-      body: '   Your cart is empty!\n\nBrowse our products to start shopping.',
+      header: 'Your Cart',
+      body: 'Your cart is empty.\n\nBrowse products and add items to get started.',
       buttons: [
-        { id: 'browse', title: '    Browse Products' },
-        { id: 'menu', title: '   Main Menu' },
+        { id: 'browse', title: '   Browse Products' },
+        { id: 'menu', title: '   Go to Menu' },
       ],
     })
   }
 
   const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0)
-  const orderLines = cart.map((i, idx) => `${idx + 1}. *${i.product_name}*  ${i.qty} = ${org.currency} ${(i.price * i.qty).toLocaleString()}`).join('\n')
+  const itemCount = cart.reduce((s, i) => s + i.qty, 0)
+  const orderLines = cart.map((i, idx) => `*${idx + 1}.* ${i.product_name} x${i.qty} = ${org.currency} ${(i.price * i.qty).toLocaleString()}`).join('\n')
 
   return await sendInteractiveButtonMessage(waConfig, {
     to: phone,
-    header: '   Your Cart',
+    header: `Cart (${itemCount} items)`,
     body: `${orderLines}\n\n*Total: ${org.currency} ${subtotal.toLocaleString()}*`,
-    footer: 'Review your order',
+    footer: 'Ready to checkout?',
     buttons: [
-      { id: 'checkout', title: '  Checkout' },
-      { id: 'browse', title: '+ Add More' },
-      { id: 'clear_cart', title: '    Clear Cart' },
+      { id: 'checkout', title: '   Checkout' },
+      { id: 'browse', title: '   Add More' },
+      { id: 'clear_cart', title: '   Clear Cart' },
     ],
   })
 }
