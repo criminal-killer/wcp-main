@@ -1,4 +1,4 @@
-﻿import { db } from '@/lib/db'
+import { db } from '@/lib/db'
 import { organizations, stores, contacts, conversations, products, orders, messages } from '@/lib/schema'
 import { eq, and } from 'drizzle-orm'
 import { sendTextMessage, sendInteractiveButtonMessage, sendInteractiveListMessage, sendImageMessage } from '@/lib/whatsapp'
@@ -129,6 +129,19 @@ export async function processIncomingMessage(ctx: EngineContext) {
   const step = flow?.step || 'main_menu'
 
   switch (step) {
+    case 'main_menu':
+      if (input === 'browse') {
+        return await showCategories(waConfigObj, org, store, phone, orgId)
+      } else if (input === 'view_cart') {
+        return await showCart(waConfigObj, org, store, phone, orgId)
+      } else if (input === 'orders') {
+        return await sendTextMessage(waConfigObj, {
+          to: phone,
+          body: 'You do not have any active orders right now.'
+        })
+      }
+      return await handleAiFallback(waConfigObj, org, phone, input)
+
     case 'browsing_categories':
       return await handleCategorySelected(waConfigObj, org, store, phone, orgId, input)
 
