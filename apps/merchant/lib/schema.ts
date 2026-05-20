@@ -226,6 +226,7 @@ export const orders = sqliteTable('orders', {
   payment_status: text('payment_status').default('pending'),
   payment_reference: text('payment_reference'),
   payment_provider: text('payment_provider'),
+  payment_link: text('payment_link'),
   delivery_address: text('delivery_address'),
   tracking_number: text('tracking_number'),
   order_status: text('order_status').default('new'),

@@ -2,7 +2,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useUser } from '@clerk/nextjs'
-import { Settings, MessageSquare, CreditCard, Zap, Globe, Palette, Lock, ShieldCheck, AlertCircle, CheckCircle2, SendHorizonal, Loader2 } from 'lucide-react'
+import { Settings, MessageSquare, CreditCard, Zap, Globe, Palette, Lock, ShieldCheck, AlertCircle, CheckCircle2, SendHorizonal, Loader2, User, LogOut, ArrowLeft } from 'lucide-react'
 import ThemePicker from '@/components/dashboard/ThemePicker'
 
 interface Org {
@@ -29,6 +29,7 @@ interface AutoReply {
 }
 
 const TABS = [
+  { id: 'account', label: 'Account', icon: User },
   { id: 'store', label: 'Store Info', icon: Settings },
   { id: 'whatsapp', label: 'WhatsApp', icon: MessageSquare, secure: true },
   { id: 'payments', label: 'Payments', icon: CreditCard, secure: true },
@@ -276,7 +277,12 @@ function SettingsContent({ org, autoReplies, waVerifyToken }: { org: Org, autoRe
   return (
     <div className="space-y-6 pb-20">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-black text-foreground italic font-serif">Workspace Settings</h1>
+        <div className="flex items-center gap-3">
+          <button onClick={() => router.push('/dashboard')} className="p-2 hover:bg-secondary rounded-xl transition-colors">
+            <ArrowLeft size={20} className="text-muted-foreground" />
+          </button>
+          <h1 className="text-2xl font-black text-foreground italic font-serif">Workspace Settings</h1>
+        </div>
         <div className="flex items-center gap-2 bg-emerald-50 text-[#075E54] px-4 py-1.5 rounded-full border border-emerald-100">
            <ShieldCheck size={14} />
            <span className="text-[10px] font-black uppercase tracking-widest">Enterprise Encrypted</span>
@@ -297,6 +303,66 @@ function SettingsContent({ org, autoReplies, waVerifyToken }: { org: Org, autoRe
           </button>
         ))}
       </div>
+
+      {/* Account Tab */}
+      {tab === 'account' && (
+        <div className="space-y-6">
+          <div className="bg-card rounded-2xl border border-border p-8 max-w-xl shadow-sm">
+            <h2 className="font-bold text-foreground italic font-serif text-lg text-primary mb-6">Profile Settings</h2>
+            
+            <div className="flex items-center gap-4 mb-8">
+              <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
+                {user?.imageUrl ? (
+                  <img src={user.imageUrl} alt="Profile" className="w-20 h-20 rounded-full object-cover" />
+                ) : (
+                  <User size={40} className="text-primary" />
+                )}
+              </div>
+              <div>
+                <p className="font-bold text-foreground text-lg">{user?.fullName || 'Your Name'}</p>
+                <p className="text-sm text-muted-foreground">{userEmail}</p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Display Name</label>
+                <input 
+                  value={user?.fullName || ''} 
+                  disabled
+                  className="w-full border border-border rounded-xl px-4 py-3 text-sm font-bold bg-slate-50 text-muted-foreground"
+                />
+                <p className="text-xs text-slate-400 mt-1">Update your name in your Clerk profile</p>
+              </div>
+              
+              <div>
+                <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Email Address</label>
+                <input 
+                  value={userEmail} 
+                  disabled
+                  className="w-full border border-border rounded-xl px-4 py-3 text-sm font-bold bg-slate-50 text-muted-foreground"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-card rounded-2xl border border-red-200/50 p-8 max-w-xl shadow-sm">
+            <h2 className="font-bold text-red-600 italic font-serif text-lg mb-4">Danger Zone</h2>
+            <p className="text-sm text-muted-foreground mb-4">Once you log out, you'll need to sign in again to access your dashboard.</p>
+            <button 
+              onClick={() => {
+                if (confirm('Are you sure you want to log out?')) {
+                  router.push('/')
+                }
+              }}
+              className="flex items-center gap-2 px-6 py-3 bg-red-50 text-red-600 rounded-xl font-bold hover:bg-red-100 transition-colors"
+            >
+              <LogOut size={18} />
+              Log Out
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Store Info Tab */}
       {tab === 'store' && (

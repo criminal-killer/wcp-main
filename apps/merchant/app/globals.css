@@ -91,6 +91,11 @@
   100% { transform: translateY(0px); }
 }
 
+@keyframes colorFloat {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-8px) scale(1.05); }
+}
+
 /* WhatsApp-branded scrollbar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }

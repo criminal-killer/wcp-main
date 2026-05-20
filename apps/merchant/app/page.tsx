@@ -434,34 +434,49 @@ export default function HomePage() {
             ))}
           </div>
 
-          <div className="mt-40 bg-[#111B21] rounded-[60px] p-12 md:p-24 overflow-hidden relative border border-white/5">
-             <div className="grid lg:grid-cols-2 gap-20 items-center">
-               <div>
-                  <h2 className="text-4xl md:text-6xl font-serif font-black text-white mb-8 leading-[0.9] tracking-tight">
-                    Your Brand, <br />
-                    <span className="text-primary italic">Your Identity.</span>
-                  </h2>
-                  <p className="text-muted-foreground/70 font-medium mb-12 max-w-md leading-relaxed">
-                    Chatevo adapts to your aesthetic. Choose from 10+ professional themes or create your own signature palette.
-                  </p>
-                  <div className="grid grid-cols-5 gap-4">
-                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(i => (
-                      <div key={i} className="w-10 h-10 rounded-full bg-primary opacity-20 hover:opacity-100 cursor-pointer transition-all border border-white/10 hover:scale-110" />
-                    ))}
-                  </div>
-               </div>
-               <div className="relative group">
-                  <div className="absolute inset-0 bg-primary/20 blur-[80px] rounded-full group-hover:bg-primary/30 transition-all" />
-                  <div className="relative bg-card/5 backdrop-blur-3xl rounded-[40px] p-10 border border-white/10 shadow-2xl">
-                    <div className="h-64 w-full bg-slate-100 rounded-[30px] animate-pulse mb-6" />
-                    <div className="space-y-3">
-                      <div className="h-4 w-1/2 bg-card/10 rounded-full" />
-                      <div className="h-4 w-3/4 bg-card/10 rounded-full" />
-                    </div>
-                  </div>
-               </div>
-             </div>
-          </div>
+<div className="mt-40 bg-[#111B21] rounded-[60px] p-12 md:p-24 overflow-hidden relative border border-white/5">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-50" />
+              <div className="grid lg:grid-cols-2 gap-20 items-center relative z-10">
+                <div>
+                   <h2 className="text-4xl md:text-6xl font-serif font-black text-white mb-8 leading-[0.9] tracking-tight">
+                     Your Brand, <br />
+                     <span className="text-primary italic">Your Identity.</span>
+                   </h2>
+                   <p className="text-muted-foreground/70 font-medium mb-12 max-w-md leading-relaxed">
+                     Chatevo adapts to your aesthetic. Choose from 10+ professional themes or create your own signature palette.
+                   </p>
+                   <div className="flex gap-3 flex-wrap max-w-xs">
+                     {['#25D366', '#0EA5E9', '#8B5CF6', '#F43F5E', '#F59E0B', '#475569', '#78350F', '#065F46', '#991B1B', '#6366F1'].map((color, i) => (
+                       <div 
+                        key={i} 
+                        className="w-10 h-10 rounded-full cursor-pointer transition-all duration-300 hover:scale-125 border border-white/10 shadow-lg hover:shadow-xl"
+                        style={{ 
+                          backgroundColor: color,
+                          animation: `colorFloat ${3 + i * 0.2}s ease-in-out infinite`,
+                          animationDelay: `${i * 0.1}s`
+                        }} 
+                       />
+                     ))}
+                   </div>
+                </div>
+                <div className="relative group">
+                   <div className="absolute inset-0 bg-primary/20 blur-[80px] rounded-full group-hover:bg-primary/40 transition-all duration-700" />
+                   <div className="absolute -inset-4 bg-gradient-to-r from-primary/0 via-primary/10 to-primary/0 rounded-[50px] opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+                   <div className="relative bg-gradient-to-br from-card/20 to-card/5 backdrop-blur-3xl rounded-[40px] p-10 border border-white/10 shadow-2xl group-hover:border-white/20 transition-all duration-500">
+                     <div className="h-64 w-full bg-gradient-to-br from-slate-100 to-slate-200 rounded-[30px] mb-6 relative overflow-hidden">
+                       <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent" />
+                       <div className="absolute bottom-4 left-4 right-4 h-2 bg-slate-300/50 rounded-full" />
+                       <div className="absolute top-4 left-4 w-20 h-6 bg-slate-300/30 rounded-full" />
+                     </div>
+                     <div className="space-y-3">
+                       <div className="h-4 w-1/2 bg-white/20 rounded-full animate-pulse" />
+                       <div className="h-4 w-3/4 bg-white/10 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }} />
+                       <div className="h-4 w-1/3 bg-white/10 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }} />
+                     </div>
+                   </div>
+                </div>
+              </div>
+           </div>
         </section>
 
         <section className="max-w-7xl mx-auto px-6 py-20">

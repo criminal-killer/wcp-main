@@ -96,6 +96,24 @@ export async function processIncomingMessage(ctx: EngineContext) {
     })
   }
 
+  // === PAY LINK HANDLER ===
+  if (inputRaw.startsWith('pay_link_')) {
+    const orderId = inputRaw.replace('pay_link_', '')
+    const order = await db.query.orders.findFirst({
+      where: and(eq(orders.id, orderId), eq(orders.org_id, orgId)),
+    })
+    if (order && order.payment_link) {
+      return await sendTextMessage(waConfigObj, {
+        to: phone,
+        body: `Click to pay: ${order.payment_link}`,
+      })
+    }
+    return await sendTextMessage(waConfigObj, {
+      to: phone,
+      body: 'Payment link not found. Type *menu* to start again.',
+    })
+  }
+
   // === PAYMENT CONFIRMATION DETECTION ===
   // Check if user says they've paid
   const paymentKeywords = ['paid', 'done', 'sent', 'completed', 'paid already', 'already paid', 'mpesa sent', 'transaction done', 'payment done', 'i have paid', 'paid via']
@@ -729,6 +747,7 @@ async function handlePaymentSelected(
     currency: org.currency || 'KES',
     payment_method: paymentMethod,
     payment_status: paymentStatus,
+    payment_link: paymentLink || null,
     order_status: 'new',
     delivery_address: flow.delivery,
   }).returning()
