@@ -86,8 +86,18 @@ export async function sendImageMessage(
   credentials: WhatsAppCredentials,
   { to, imageUrl, caption }: ImageMessage
 ) {
-  if (!imageUrl || !imageUrl.startsWith('http')) {
-    console.warn('Invalid image URL, skipping image message')
+  try {
+    if (!imageUrl || typeof imageUrl !== 'string' || !imageUrl.startsWith('http')) {
+      console.warn('Invalid or missing image URL, skipping image message')
+      return null
+    }
+    const url = new URL(imageUrl)
+    if (!['http:', 'https:'].includes(url.protocol)) {
+      console.warn('Image URL must use http or https protocol')
+      return null
+    }
+  } catch {
+    console.warn('Malformed image URL, skipping image message')
     return null
   }
   return sendWhatsAppRequest(credentials, {

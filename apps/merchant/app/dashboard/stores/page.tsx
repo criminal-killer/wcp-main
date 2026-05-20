@@ -6,6 +6,7 @@ import { eq, and } from 'drizzle-orm'
 import { PLAN_CONFIG, normalizePlan } from '@/lib/payments'
 import Link from 'next/link'
 import { Store, Plus, Globe, Phone, Settings, ChevronRight } from 'lucide-react'
+import ViewStoreLink from '@/components/dashboard/ViewStoreLink'
 
 export default async function StoresPage() {
   const { userId } = await auth()
@@ -119,15 +120,7 @@ export default async function StoresPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <a
-                    href={`/store/${store.slug}`}
-                    target="_blank"
-                    onClick={e => e.stopPropagation()}
-                    className="p-2 text-muted-foreground hover:text-whatsapp transition-colors"
-                    title="View store"
-                  >
-                    <Globe size={18} />
-                  </a>
+                  <ViewStoreLink href={`/store/${store.slug}`} />
                   <ChevronRight size={18} className="text-muted-foreground/50 group-hover:text-foreground transition-colors" />
                 </div>
               </div>
