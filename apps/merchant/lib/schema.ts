@@ -141,6 +141,7 @@ export const products = sqliteTable('products', {
   compare_at_price: real('compare_at_price'),
   currency: text('currency').default('KES'),
   category: text('category').default('General'),
+  sub_category: text('sub_category'),
   product_type: text('product_type').default('physical'), // physical, digital, service
   digital_content: text('digital_content'), // link/code for digital products
   service_duration: text('service_duration'), // e.g. "60 minutes" for services

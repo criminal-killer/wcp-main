@@ -15,11 +15,12 @@ export default function NewProductPage() {
     price: '',
     compare_at_price: '',
     category: '',
+    sub_category: '',
     inventory_count: '',
   })
   const [images, setImages] = useState<string[]>([])
   const [imageInput, setImageInput] = useState('')
-  const [variants, setVariants] = useState<Array<{ type: string; options: string }>>([])
+  const [variants, setVariants] = useState<Array<{ type: string; options: Array<{ name: string; price: string }> }>>([])
 
   function addImageUrl() {
     if (imageInput.trim() && images.length < 5) {
@@ -29,7 +30,7 @@ export default function NewProductPage() {
   }
 
   function addVariant() {
-    setVariants([...variants, { type: 'size', options: 'S,M,L,XL' }])
+    setVariants([...variants, { type: 'size', options: [{ name: 'S', price: '' }, { name: 'M', price: '' }, { name: 'L', price: '' }, { name: 'XL', price: '' }] }])
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -50,11 +51,15 @@ export default function NewProductPage() {
           price: parseFloat(form.price),
           compare_at_price: form.compare_at_price ? parseFloat(form.compare_at_price) : undefined,
           category: form.category,
+          sub_category: form.sub_category || undefined,
           inventory_count: form.inventory_count ? parseInt(form.inventory_count) : 0,
           images,
           variants: variants.map(v => ({
             type: v.type,
-            options: v.options.split(',').map(o => o.trim()).filter(Boolean),
+            options: v.options.filter(o => o.name.trim()).map(o => ({
+              name: o.name.trim(),
+              price: o.price ? parseFloat(o.price) : undefined,
+            })),
           })),
         }),
       })
@@ -144,15 +149,27 @@ export default function NewProductPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-muted-foreground mb-1.5">Inventory Count</label>
+              <label className="block text-sm font-semibold text-muted-foreground mb-1.5">Sub-Category</label>
               <input
-                type="number" min="0"
-                value={form.inventory_count}
-                onChange={e => setForm({ ...form, inventory_count: e.target.value })}
-                placeholder="0"
+                type="text"
+                value={form.sub_category}
+                onChange={e => setForm({ ...form, sub_category: e.target.value })}
+                placeholder="e.g. Shorts, Trousers"
                 className="w-full border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#25D366]"
+                maxLength={100}
               />
             </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-muted-foreground mb-1.5">Inventory Count</label>
+            <input
+              type="number" min="0"
+              value={form.inventory_count}
+              onChange={e => setForm({ ...form, inventory_count: e.target.value })}
+              placeholder="0"
+              className="w-full border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#25D366] max-w-[200px]"
+            />
           </div>
         </div>
 
@@ -213,33 +230,61 @@ export default function NewProductPage() {
         </div>
 
         {/* Variants */}
-        <div className="bg-card rounded-2xl border border-border p-6 space-y-3">
+        <div className="bg-card rounded-2xl border border-border p-6 space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="font-bold text-foreground">Variants <span className="text-muted-foreground/70 font-normal text-sm">(size, color, etc.)</span></h2>
+            <div>
+              <h2 className="font-bold text-foreground">Variants <span className="text-muted-foreground/70 font-normal text-sm">(size, color, ports, etc.)</span></h2>
+              <p className="text-xs text-muted-foreground mt-1">Add optional price per variant (e.g., 8-port switch costs more than 4-port)</p>
+            </div>
             <button type="button" onClick={addVariant}
               className="text-sm text-[#25D366] font-semibold hover:underline">
               + Add Variant
             </button>
           </div>
           {variants.map((v, i) => (
-            <div key={i} className="grid grid-cols-2 gap-2">
-              <input
-                type="text"
-                value={v.type}
-                onChange={e => setVariants(variants.map((vv, j) => j === i ? { ...vv, type: e.target.value } : vv))}
-                placeholder="Type (e.g. size)"
-                className="border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#25D366]"
-              />
-              <div className="flex gap-2">
+            <div key={i} className="border border-border rounded-xl p-4 space-y-3">
+              <div className="flex items-center gap-2">
                 <input
                   type="text"
-                  value={v.options}
-                  onChange={e => setVariants(variants.map((vv, j) => j === i ? { ...vv, options: e.target.value } : vv))}
-                  placeholder="Options (comma separated)"
+                  value={v.type}
+                  onChange={e => setVariants(variants.map((vv, j) => j === i ? { ...vv, type: e.target.value } : vv))}
+                  placeholder="Variant type (e.g. ports, size, color)"
                   className="flex-1 border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#25D366]"
                 />
                 <button type="button" onClick={() => setVariants(variants.filter((_, j) => j !== i))}>
-                  <Trash2 size={14} className="text-red-400 hover:text-red-600 mt-3" />
+                  <Trash2 size={14} className="text-red-400 hover:text-red-600" />
+                </button>
+              </div>
+              <div className="space-y-2">
+                <p className="text-xs font-semibold text-muted-foreground">Options (leave price empty to use base price)</p>
+                {v.options.map((opt, k) => (
+                  <div key={k} className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={opt.name}
+                      onChange={e => setVariants(variants.map((vv, j) => j === i ? { ...vv, options: vv.options.map((o, l) => l === k ? { ...o, name: e.target.value } : o) } : vv))}
+                      placeholder="Option name"
+                      className="flex-1 border border-border rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#25D366]"
+                    />
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={opt.price}
+                      onChange={e => setVariants(variants.map((vv, j) => j === i ? { ...vv, options: vv.options.map((o, l) => l === k ? { ...o, price: e.target.value } : o) } : vv))}
+                      placeholder="Price"
+                      className="w-28 border border-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#25D366]"
+                    />
+                    <button type="button" onClick={() => setVariants(variants.map((vv, j) => j === i ? { ...vv, options: vv.options.filter((_, l) => l !== k) } : vv))}>
+                      <Trash2 size={12} className="text-red-300 hover:text-red-500" />
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => setVariants(variants.map((vv, j) => j === i ? { ...vv, options: [...vv.options, { name: '', price: '' }] } : vv))}
+                  className="text-xs text-[#25D366] font-semibold hover:underline"
+                >
+                  + Add option
                 </button>
               </div>
             </div>

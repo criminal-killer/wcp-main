@@ -29,8 +29,15 @@ const productSchema = z.object({
   price: z.number().positive(),
   compare_at_price: z.number().positive().optional(),
   category: z.string().min(1).max(100).default('General'),
+  sub_category: z.string().max(100).optional(),
   images: z.array(z.string().url()).max(5).default([]),
-  variants: z.array(z.object({ type: z.string(), options: z.array(z.string()) })).default([]),
+  variants: z.array(z.object({
+    type: z.string(),
+    options: z.array(z.object({
+      name: z.string(),
+      price: z.number().optional(),
+    })),
+  })).default([]),
   inventory_count: z.number().int().min(0).default(0),
 })
 
@@ -95,6 +102,7 @@ export async function POST(req: NextRequest) {
     price: data.price,
     compare_at_price: data.compare_at_price,
     category: data.category,
+    sub_category: data.sub_category || null,
     images: JSON.stringify(data.images),
     variants: JSON.stringify(data.variants),
     inventory_count: data.inventory_count,
