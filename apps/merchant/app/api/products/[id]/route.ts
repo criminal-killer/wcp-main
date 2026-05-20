@@ -50,6 +50,7 @@ export async function PUT(
     price?: number
     compare_at_price?: number
     category?: string
+    sub_category?: string
     images?: string[]
     variants?: unknown[]
     inventory_count?: number
@@ -65,6 +66,7 @@ export async function PUT(
   if (body.price !== undefined) updatePayload.price = body.price
   if (body.compare_at_price !== undefined) updatePayload.compare_at_price = body.compare_at_price
   if (body.category !== undefined) updatePayload.category = body.category
+  if (body.sub_category !== undefined) updatePayload.sub_category = body.sub_category
   if (body.images !== undefined) updatePayload.images = JSON.stringify(body.images)
   if (body.variants !== undefined) updatePayload.variants = JSON.stringify(body.variants)
   if (body.inventory_count !== undefined) updatePayload.inventory_count = body.inventory_count
