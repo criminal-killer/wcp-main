@@ -65,23 +65,24 @@ export async function processIncomingMessage(ctx: EngineContext) {
   const phone = contact.phone
   const orgId = org.id
   const convId = conversation.id
-  const input = parseInput(message).toLowerCase().trim()
+  const inputRaw = parseInput(message).trim()
+  const inputNorm = inputRaw.toLowerCase()
   const storeId = store?.id
 
   const flow = await getFlowState(orgId, phone) as FlowState | null
 
   // === GLOBAL COMMANDS ===
-  if (['hi', 'hello', 'hey', 'start', 'menu', '0', '00'].includes(input) || !flow) {
+  if (['hi', 'hello', 'hey', 'start', 'menu', '0', '00'].includes(inputNorm) || !flow) {
     await clearCart(orgId, phone)
     await deleteFlowState(orgId, phone)
     return await showMainMenu(waConfigObj, org, store, phone, orgId)
   }
 
-  if (['cart', 'view cart', '#cart'].includes(input)) {
+  if (['cart', 'view cart', '#cart'].includes(inputNorm)) {
     return await showCart(waConfigObj, org, store, phone, orgId)
   }
 
-  if (['cancel', 'stop', 'exit'].includes(input)) {
+  if (['cancel', 'stop', 'exit'].includes(inputNorm)) {
     await clearCart(orgId, phone)
     await deleteFlowState(orgId, phone)
     return await sendTextMessage(waConfigObj, {
@@ -93,7 +94,7 @@ export async function processIncomingMessage(ctx: EngineContext) {
   // === PAYMENT CONFIRMATION DETECTION ===
   // Check if user says they've paid
   const paymentKeywords = ['paid', 'done', 'sent', 'completed', 'paid already', 'already paid', 'mpesa sent', 'transaction done', 'payment done', 'i have paid', 'paid via']
-  const isPaymentConfirmation = paymentKeywords.some(kw => input.includes(kw))
+  const isPaymentConfirmation = paymentKeywords.some(kw => inputNorm.includes(kw))
 
   if (isPaymentConfirmation) {
     // Find pending order for this contact
@@ -130,42 +131,42 @@ export async function processIncomingMessage(ctx: EngineContext) {
 
   switch (step) {
     case 'main_menu':
-      if (input === 'browse') {
+      if (inputNorm === 'browse') {
         return await showCategories(waConfigObj, org, store, phone, orgId)
-      } else if (input === 'view_cart') {
+      } else if (inputNorm === 'view_cart') {
         return await showCart(waConfigObj, org, store, phone, orgId)
-      } else if (input === 'orders') {
+      } else if (inputNorm === 'orders') {
         return await sendTextMessage(waConfigObj, {
           to: phone,
           body: 'You do not have any active orders right now.'
         })
       }
-      return await handleAiFallback(waConfigObj, org, phone, input)
+      return await handleAiFallback(waConfigObj, org, phone, inputRaw)
 
     case 'browsing_categories':
-      return await handleCategorySelected(waConfigObj, org, store, phone, orgId, input)
+      return await handleCategorySelected(waConfigObj, org, store, phone, orgId, inputRaw)
 
     case 'browsing_products':
-      return await handleProductSelected(waConfigObj, org, store, phone, orgId, input, flow)
+      return await handleProductSelected(waConfigObj, org, store, phone, orgId, inputRaw, flow)
 
     case 'product_detail':
-      return await handleProductAction(waConfigObj, org, store, phone, orgId, input, flow)
+      return await handleProductAction(waConfigObj, org, store, phone, orgId, inputRaw, flow)
 
     case 'variant_select':
-      return await handleVariantSelected(waConfigObj, org, store, phone, orgId, input, flow)
+      return await handleVariantSelected(waConfigObj, org, store, phone, orgId, inputRaw, flow)
 
     case 'cart_review':
-      return await handleCartAction(waConfigObj, org, store, phone, orgId, input, flow)
+      return await handleCartAction(waConfigObj, org, store, phone, orgId, inputRaw, flow)
 
     case 'delivery_info':
-      return await handleDeliveryInfo(waConfigObj, org, store, phone, orgId, convId, input, flow, contact)
+      return await handleDeliveryInfo(waConfigObj, org, store, phone, orgId, convId, inputRaw, flow, contact)
 
     case 'payment_select':
-      return await handlePaymentSelected(waConfigObj, org, store, phone, orgId, convId, input, flow, contact)
+      return await handlePaymentSelected(waConfigObj, org, store, phone, orgId, convId, inputRaw, flow, contact)
 
     default:
       // Try AI Fallback if not a recognized command
-      return await handleAiFallback(waConfigObj, org, phone, input)
+      return await handleAiFallback(waConfigObj, org, phone, inputRaw)
   }
 }
 
@@ -232,11 +233,14 @@ async function showCategories(waConfig: { phoneNumberId: string; accessToken: st
 
   await setFlowState(orgId, phone, { step: 'browsing_categories' })
 
-  const rows = cats.slice(0, 10).map(cat => ({
-    id: `cat_${cat?.replace(/\s+/g, '_')}`,
-    title: cat || 'General',
-    description: `Browse ${cat} products`,
-  }))
+  const rows = [
+    { id: 'back_menu', title: '   Back to Main Menu', description: 'Return to main menu' },
+    ...cats.slice(0, 9).map(cat => ({
+      id: `cat_${cat?.replace(/\s+/g, '_')}`,
+      title: cat || 'General',
+      description: `Browse ${cat} products`,
+    }))
+  ]
 
   return await sendInteractiveListMessage(waConfig, {
     to: phone,
@@ -249,13 +253,28 @@ async function showCategories(waConfig: { phoneNumberId: string; accessToken: st
 }
 
 async function handleCategorySelected(waConfig: { phoneNumberId: string; accessToken: string }, org: RunnerOrg, store: RunnerStore | null, phone: string, orgId: string, input: string) {
+  const inputNorm = input.toLowerCase()
+  
+  if (inputNorm === 'back_menu' || inputNorm === 'menu') {
+    return await showMainMenu(waConfig, org, store, phone, orgId)
+  }
+
   let category: string | undefined
 
   if (input.startsWith('cat_')) {
     category = input.replace('cat_', '').replace(/_/g, ' ')
-  } else if (input === 'browse' || input === '    browse products') {
-    return await showCategories(waConfig, org, store, phone, orgId)
   } else {
+    const storeCondition = store ? and(eq(products.org_id, orgId), eq(products.store_id, store.id), eq(products.is_active, 1)) : and(eq(products.org_id, orgId), eq(products.is_active, 1))
+    const productList = await db.select({ category: products.category }).from(products).where(storeCondition)
+    const cats = Array.from(new Set(productList.map(p => p.category).filter(Boolean))) as string[]
+    const matched = cats.find(c => c.toLowerCase() === inputNorm)
+    if (matched) {
+      category = matched
+    }
+  }
+
+  if (!category) {
+    await sendTextMessage(waConfig, { to: phone, body: 'Please tap a category or type *menu*' })
     return await showCategories(waConfig, org, store, phone, orgId)
   }
 
@@ -454,15 +473,16 @@ async function handleCartAction(
   waConfig: { phoneNumberId: string; accessToken: string }, org: RunnerOrg, store: RunnerStore | null, phone: string,
   orgId: string, input: string, flow: FlowState
 ) {
-  if (input === 'clear_cart') {
+  const inputNorm = input.toLowerCase()
+  if (inputNorm === 'clear_cart') {
     await clearCart(orgId, phone)
     await deleteFlowState(orgId, phone)
     return await sendTextMessage(waConfig, { to: phone, body: '    Cart cleared. Type *Hi* to start again.' })
   }
-  if (input === 'browse') {
+  if (inputNorm === 'browse') {
     return await showCategories(waConfig, org, store, phone, orgId)
   }
-  if (input === 'checkout') {
+  if (inputNorm === 'checkout') {
     await setFlowState(orgId, phone, { step: 'delivery_info' })
     return await sendTextMessage(waConfig, {
       to: phone,
@@ -509,6 +529,7 @@ async function handlePaymentSelected(
   waConfig: { phoneNumberId: string; accessToken: string }, org: RunnerOrg, store: RunnerStore | null, phone: string,
   orgId: string, convId: string, input: string, flow: FlowState, contact: RunnerContact
 ) {
+  const inputNorm = input.toLowerCase()
   const cart = await getCart(orgId, phone) as CartItem[] | null
   if (!cart || cart.length === 0) {
     return await showMainMenu(waConfig, org, store, phone, orgId)
@@ -523,7 +544,7 @@ async function handlePaymentSelected(
   let paymentStatus: 'pending' | 'paid' = 'pending'
   let paymentLink: string | undefined
 
-  if (input === 'pay_paystack') {
+  if (inputNorm === 'pay_paystack') {
     paymentMethod = 'paystack'
     // Generate Paystack payment link
     try {
@@ -541,10 +562,10 @@ async function handlePaymentSelected(
     } catch (err) {
       console.error('Paystack payment link error:', err)
     }
-  } else if (input === 'pay_paypal' && org.store_paypal_email) {
+  } else if (inputNorm === 'pay_paypal' && org.store_paypal_email) {
     paymentMethod = 'paypal'
     paymentLink = `https://www.paypal.me/${org.store_paypal_email.split('@')[0]}/${total}`
-  } else if (input === 'pay_cod') {
+  } else if (inputNorm === 'pay_cod') {
     paymentMethod = 'cod'
     paymentStatus = 'pending'
   }
