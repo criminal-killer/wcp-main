@@ -28,6 +28,7 @@ interface InteractiveButtonMessage {
   buttons: Array<{ id: string; title: string }>
   header?: string
   footer?: string
+  imageUrl?: string
 }
 
 interface InteractiveListMessage {
@@ -109,7 +110,7 @@ export async function sendImageMessage(
 
 export async function sendInteractiveButtonMessage(
   credentials: WhatsAppCredentials,
-  { to, body, buttons, header, footer }: InteractiveButtonMessage
+  { to, body, buttons, header, footer, imageUrl }: InteractiveButtonMessage
 ) {
   const payload: Record<string, unknown> = {
     to,
@@ -123,6 +124,37 @@ export async function sendInteractiveButtonMessage(
           type: 'reply',
           reply: { id: b.id, title: b.title },
         })),
+      },
+    },
+  }
+  if (imageUrl) {
+    (payload.interactive as Record<string, unknown>).header = { type: 'image', image: { link: imageUrl } }
+  } else if (header) {
+    (payload.interactive as Record<string, unknown>).header = { type: 'text', text: header }
+  }
+  if (footer) {
+    (payload.interactive as Record<string, unknown>).footer = { text: footer }
+  }
+  return sendWhatsAppRequest(credentials, payload)
+}
+
+export async function sendInteractiveCTAUrlMessage(
+  credentials: WhatsAppCredentials,
+  { to, body, url, buttonText, header, footer }: { to: string; body: string; url: string; buttonText: string; header?: string; footer?: string }
+) {
+  const payload: Record<string, unknown> = {
+    to,
+    messaging_product: 'whatsapp',
+    type: 'interactive',
+    interactive: {
+      type: 'cta_url',
+      body: { text: body },
+      action: {
+        name: 'cta_url',
+        parameters: {
+          display_text: buttonText,
+          url,
+        },
       },
     },
   }

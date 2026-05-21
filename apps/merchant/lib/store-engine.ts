@@ -1,7 +1,7 @@
 import { db } from '@/lib/db'
 import { organizations, stores, contacts, conversations, products, orders, messages } from '@/lib/schema'
 import { eq, and } from 'drizzle-orm'
-import { sendTextMessage, sendInteractiveButtonMessage, sendInteractiveListMessage, sendImageMessage } from '@/lib/whatsapp'
+import { sendTextMessage, sendInteractiveButtonMessage, sendInteractiveListMessage, sendImageMessage, sendInteractiveCTAUrlMessage } from '@/lib/whatsapp'
 import { getFlowState, setFlowState, deleteFlowState, getCart, setCart, clearCart, setCartAbandoned, clearCartAbandoned as clearCartAbandonedState } from '@/lib/redis'
 import { decrypt } from '@/lib/encryption'
 
@@ -135,14 +135,10 @@ export async function processIncomingMessage(ctx: EngineContext) {
     }
   }
 
-  // === FLOW RESET (only reset when user explicitly says hi, not on every null flow) ===
+  // === FLOW RESET ===
   if (['hi', 'hello', 'hey', 'start', 'menu', '0', '00'].includes(inputNorm)) {
     await clearCart(orgId, phone)
     await deleteFlowState(orgId, phone)
-    return await showGreeting(waConfigObj, org, store, phone, orgId)
-  }
-
-  if (!flow) {
     return await showGreeting(waConfigObj, org, store, phone, orgId)
   }
 
@@ -152,6 +148,10 @@ export async function processIncomingMessage(ctx: EngineContext) {
 
   if (['cart', 'view cart', '#cart'].includes(inputNorm)) {
     return await showCart(waConfigObj, org, store, phone, orgId)
+  }
+
+  if (!flow) {
+    return await showGreeting(waConfigObj, org, store, phone, orgId)
   }
 
   // === FLOW-BASED NAVIGATION ===
@@ -451,10 +451,6 @@ async function handleProductSelected(
   const images = JSON.parse(product.images || '[]') as string[]
   const variants = JSON.parse(product.variants || '[]') as Array<{ type: string; options: Array<{ name: string; price?: number }> }>
 
-  if (images[0]) {
-    await sendImageMessage(waConfig, { to: phone, imageUrl: images[0], caption: product.name })
-  }
-
   const stockText = product.inventory_count === 0
     ? '*Out of Stock*'
     : `${product.inventory_count} in stock`
@@ -489,8 +485,8 @@ async function handleProductSelected(
 
   return await sendInteractiveButtonMessage(waConfig, {
     to: phone,
-    header: product.name,
-    body: `${compareText}\n${subCategoryText}${description}${variantText}${typeHint}\n\n${stockText}`,
+    imageUrl: images[0] || undefined,
+    body: `*${product.name}*\n${compareText}\n${subCategoryText}${description}${variantText}${typeHint}\n\n${stockText}`,
     buttons: [
       { id: `add_${productId}`, title: '   Add to Cart' },
       { id: 'back_category', title: '  Back to Categories' },
@@ -891,14 +887,15 @@ async function handlePaymentSelected(
   await clearCart(orgId, phone)
   await deleteFlowState(orgId, phone)
 
-  // Send confirmation
+  // Send confirmation with direct payment button
   if (paymentLink) {
-    return await sendInteractiveButtonMessage(waConfig, {
+    return await sendInteractiveCTAUrlMessage(waConfig, {
       to: phone,
       header: '  Order Placed!',
-      body: `*Order ${orderNumber}*\nTotal: *${org.currency} ${total.toLocaleString()}*\n\nClick below to complete your payment:`,
-      footer: 'Your order is reserved for 30 minutes',
-      buttons: [{ id: `pay_link_${order.id}`, title: '   Pay Now' }],
+      body: `*Order ${orderNumber}*\nTotal: *${org.currency} ${total.toLocaleString()}*\n\nTap the button below to complete your payment securely.`,
+      footer: `Your order is reserved for 30 minutes`,
+      url: paymentLink,
+      buttonText: '   Pay Now',
     })
   }
 
