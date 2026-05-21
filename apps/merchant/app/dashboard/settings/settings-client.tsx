@@ -277,10 +277,16 @@ function SettingsContent({ org, autoReplies, waVerifyToken }: { org: Org, autoRe
       features: ['500 Products', 'Custom AI Agent (Gemini/GPT)', 'Advanced Analytics', 'Bulk Product Upload', 'Abandoned Cart Recovery']
     },
     { 
-      id: 'elite', name: 'Elite', price: 99, trial: 7, 
+      id: 'growth', name: 'Growth', price: 99, trial: 7, 
       features: ['5,000 Products', 'White-label Storefront', 'Dedicated Account Manager', 'Custom API Integrations', 'Priority AI Processing']
     }
   ]
+
+  const activePlan = org.plan || 'trial'
+  const isOnTrial = activePlan === 'trial'
+  const chosenPlan = PLANS.find(p => p.id === activePlan)
+  const hasSubscribed = !isOnTrial && org.trial_ends_at && new Date(org.trial_ends_at).getTime() < Date.now()
+  const trialDaysLeft = org.trial_ends_at ? Math.max(0, Math.ceil((new Date(org.trial_ends_at).getTime() - Date.now()) / 86400000)) : 0
 
   return (
     <div className="space-y-6 pb-20">
@@ -637,10 +643,15 @@ function SettingsContent({ org, autoReplies, waVerifyToken }: { org: Org, autoRe
             <div className="flex-1">
               <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 mb-2">Current Plan</p>
               <h3 className="text-3xl font-serif font-black text-[#075E54] italic capitalize">
-                {(org.plan === 'trial' || !org.plan) ? 'Free Trial' : `${org.plan} Plan`}
+                {isOnTrial ? 'Trial / No Plan' : `${chosenPlan?.name || activePlan} Plan`}
               </h3>
               <p className="text-sm font-semibold text-slate-500 mt-1">
-                {org.plan === 'trial' ? `${org.trial_ends_at ? Math.max(0, Math.ceil((new Date(org.trial_ends_at).getTime() - Date.now()) / 86400000)) : 0} days remaining in trial` : 'Subscription Active'}
+                {isOnTrial
+                  ? 'Choose a plan below to get started'
+                  : trialDaysLeft > 0
+                    ? `${trialDaysLeft} days remaining in trial`
+                    : 'Subscription Active'
+                }
               </p>
             </div>
             <div className="w-20 h-20 bg-primary/5 rounded-full flex items-center justify-center border-4 border-white shadow-xl">
@@ -648,28 +659,56 @@ function SettingsContent({ org, autoReplies, waVerifyToken }: { org: Org, autoRe
             </div>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6">
-            {PLANS.map(plan => {
-              const isCurrent = org.plan === plan.id
-              const payUrl = `https://paystack.shop/pay/chatevo-${plan.id}`
-              return (
-              <div key={plan.id} className={`bg-card rounded-3xl p-8 border-2 transition-all flex flex-col ${isCurrent ? 'border-primary shadow-xl shadow-primary/10' : 'border-border'}`}>
-                <div className="flex justify-between items-start mb-6">
-                  <div>
+          {isOnTrial ? (
+            <div className="grid md:grid-cols-3 gap-6">
+              {PLANS.map(plan => (
+                <div key={plan.id} className="bg-card rounded-3xl p-8 border-2 border-border flex flex-col">
+                  <div className="mb-6">
                     <h4 className="text-xl font-black text-[#075E54] font-serif italic">{plan.name}</h4>
                     <div className="flex items-baseline gap-1 mt-1">
                       <span className="text-2xl font-black">${plan.price}</span>
                       <span className="text-xs font-bold text-slate-400">/mo</span>
                     </div>
+                    <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full mt-2 inline-block">{plan.trial}-Day Free Trial</span>
                   </div>
-                  {isCurrent && (
-                    <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center text-white">
-                      <CheckCircle2 size={14} />
-                    </div>
-                  )}
+                  <ul className="space-y-3 mb-8 flex-1">
+                    {plan.features.map(f => (
+                      <li key={f} className="flex items-center gap-3 text-xs font-bold text-slate-500">
+                        <div className="w-4 h-4 rounded bg-primary/10 flex items-center justify-center text-primary">
+                          <CheckCircle2 size={10} />
+                        </div>
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                  <a
+                    href={`https://paystack.shop/pay/chatevo-${plan.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block w-full bg-[#075E54] text-white py-4 rounded-xl font-black text-sm text-center uppercase tracking-widest hover:opacity-90 transition-all"
+                  >
+                    Start Free Trial — Choose {plan.name}
+                  </a>
                 </div>
-                <ul className="space-y-3 mb-8 flex-1">
-                  {plan.features.map(f => (
+              ))}
+            </div>
+          ) : chosenPlan ? (
+            <div className="max-w-md mx-auto">
+              <div className="bg-card rounded-3xl p-8 border-2 border-primary shadow-xl shadow-primary/10">
+                <div className="flex justify-between items-start mb-6">
+                  <div>
+                    <h4 className="text-xl font-black text-[#075E54] font-serif italic">{chosenPlan.name}</h4>
+                    <div className="flex items-baseline gap-1 mt-1">
+                      <span className="text-2xl font-black">${chosenPlan.price}</span>
+                      <span className="text-xs font-bold text-slate-400">/mo</span>
+                    </div>
+                  </div>
+                  <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center text-white">
+                    <CheckCircle2 size={14} />
+                  </div>
+                </div>
+                <ul className="space-y-3 mb-8">
+                  {chosenPlan.features.map(f => (
                     <li key={f} className="flex items-center gap-3 text-xs font-bold text-slate-500">
                       <div className="w-4 h-4 rounded bg-primary/10 flex items-center justify-center text-primary">
                         <CheckCircle2 size={10} />
@@ -678,19 +717,24 @@ function SettingsContent({ org, autoReplies, waVerifyToken }: { org: Org, autoRe
                     </li>
                   ))}
                 </ul>
-                {!isCurrent && (
+                <p className="text-xs font-bold text-slate-400 text-center mb-4">
+                  {trialDaysLeft > 0
+                    ? `You're on the ${chosenPlan.name} trial. Subscribe to continue after your trial ends.`
+                    : 'Your subscription is active.'}
+                </p>
+                {trialDaysLeft > 0 && (
                   <a
-                    href={payUrl}
+                    href={`https://paystack.shop/pay/chatevo-${chosenPlan.id}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="block w-full bg-[#075E54] text-white py-4 rounded-xl font-black text-sm text-center uppercase tracking-widest hover:opacity-90 transition-all"
                   >
-                    Pay Now
+                    Pay Now — Subscribe to {chosenPlan.name}
                   </a>
                 )}
               </div>
-            )})}
-          </div>
+            </div>
+          ) : null}
         </div>
       )}
 

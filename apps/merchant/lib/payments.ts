@@ -9,13 +9,13 @@ export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 // Plan Configuration (Single Source of Truth)
 // ============================================
 
-export type PlanId = 'starter' | 'pro' | 'elite'
+export type PlanId = 'starter' | 'pro' | 'growth'
 
 export const PLAN_CONFIG: Record<PlanId, {
   name: string
-  price_usd: number // in dollars
-  price_cents: number // in cents for Stripe
-  price_kobo: number // in kobo for Paystack (USD * 100 * 100 for Paystack USD)
+  price_usd: number
+  price_cents: number
+  price_kobo: number
   paystack_plan_code_env: string
   stripe_price_id_env: string
   features: string[]
@@ -50,13 +50,13 @@ export const PLAN_CONFIG: Record<PlanId, {
     ai_custom: true,
     white_label: false,
   },
-  elite: {
-    name: 'Elite',
+  growth: {
+    name: 'Growth',
     price_usd: 99,
     price_cents: 9900,
     price_kobo: 9900 * 100,
-    paystack_plan_code_env: 'PAYSTACK_ELITE_PLAN_CODE',
-    stripe_price_id_env: 'STRIPE_ELITE_PRICE_ID',
+    paystack_plan_code_env: 'PAYSTACK_GROWTH_PLAN_CODE',
+    stripe_price_id_env: 'STRIPE_GROWTH_PRICE_ID',
     features: ['5,000 Products', 'White-label Storefront', 'Dedicated Account Manager', 'Custom API Integrations', 'Priority AI Processing'],
     product_limit: 5000,
     store_limit: 20,
@@ -66,13 +66,11 @@ export const PLAN_CONFIG: Record<PlanId, {
 }
 
 export function isValidPlan(plan: string): plan is PlanId {
-  return plan === 'starter' || plan === 'pro' || plan === 'elite'
+  return plan === 'starter' || plan === 'pro' || plan === 'growth'
 }
 
 export function normalizePlan(plan: string): PlanId {
-  // Normalize any legacy names
-  if (plan === 'growth') return 'pro'
-  if (plan === 'premium') return 'elite'
+  if (plan === 'elite' || plan === 'premium') return 'growth'
   if (isValidPlan(plan)) return plan
   return 'starter'
 }

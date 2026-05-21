@@ -13,6 +13,7 @@ async function main() {
   const migrations = [
     'ALTER TABLE organizations ADD COLUMN meta_business_id text',
     'ALTER TABLE organizations ADD COLUMN wa_catalog_id text',
+    'ALTER TABLE organizations ADD COLUMN category_mapping text',
   ]
 
   for (const sql of migrations) {

@@ -7,20 +7,20 @@ import { z } from 'zod'
 import { clearProductCache } from '@/lib/redis'
 import { syncProductToCatalog } from '@/lib/meta-catalog'
 
-const PLAN_LIMITS = { 
-  trial: 100, 
-  free: 10, 
+const PLAN_LIMITS: Record<string, number> = { 
+  trial: 25, 
   starter: 100, 
   pro: 500, 
+  growth: 5000,
   elite: 5000,
   custom: 10000 
 }
-const CATEGORY_LIMITS = { 
-  trial: 20, 
-  free: 5, 
+const CATEGORY_LIMITS: Record<string, number> = { 
+  trial: 5, 
   starter: 20, 
   pro: 50, 
-  elite: 100,
+  growth: 200,
+  elite: 200,
   custom: 200 
 }
 
