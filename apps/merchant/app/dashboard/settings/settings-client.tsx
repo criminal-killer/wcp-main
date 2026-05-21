@@ -12,6 +12,9 @@ interface Org {
   theme_color: string | null
   currency: string | null
   wa_phone_number_id: string | null
+  wa_business_account_id: string | null
+  meta_business_id: string | null
+  wa_catalog_id: string | null
   store_paypal_email: string | null
   store_cod_enabled: number | null
   whatsapp_verified: number | null
@@ -216,10 +219,15 @@ function SettingsContent({ org, autoReplies, waVerifyToken }: { org: Org, autoRe
     currency: org.currency || 'KES',
   })
   const [waForm, setWaForm] = useState({
-    phone_number_id: org.wa_phone_number_id || '', access_token: '',
+    phone_number_id: org.wa_phone_number_id || '',
+    access_token: '',
+    wa_business_account_id: org.wa_business_account_id || '',
+    meta_business_id: org.meta_business_id || '',
+    wa_catalog_id: org.wa_catalog_id || '',
   })
   const [payForm, setPayForm] = useState({
-    paystack_key: '', paypal_email: org.store_paypal_email || '',
+    paystack_key: '',
+    store_mpesa_till: (org as any).store_mpesa_till || '',
     cod_enabled: String(org.store_cod_enabled ?? 1) === '1',
   })
   const [aiForm, setAiForm] = useState({
@@ -434,6 +442,34 @@ function SettingsContent({ org, autoReplies, waVerifyToken }: { org: Org, autoRe
               </div>
             </div>
 
+            <div className="bg-card rounded-2xl border border-border p-6 space-y-4">
+              <h3 className="text-xs font-black uppercase tracking-widest text-primary">Meta Commerce Catalog</h3>
+              <p className="text-[10px] text-muted-foreground font-bold leading-relaxed">
+                Connect your Meta Commerce Catalog to enable product carousel messages in WhatsApp.
+                <a href="/docs/catalog-setup" target="_blank" className="text-primary underline ml-1">Learn how →</a>
+              </p>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Meta Business ID</label>
+                  <input value={waForm.meta_business_id} onChange={e => setWaForm({ ...waForm, meta_business_id: e.target.value })}
+                    placeholder="From Meta Business Settings"
+                    className="w-full border border-border rounded-xl px-4 py-3 text-sm font-bold font-mono focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50" />
+                </div>
+                <div>
+                  <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">WABA ID</label>
+                  <input value={waForm.wa_business_account_id} onChange={e => setWaForm({ ...waForm, wa_business_account_id: e.target.value })}
+                    placeholder="From WhatsApp Manager"
+                    className="w-full border border-border rounded-xl px-4 py-3 text-sm font-bold font-mono focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50" />
+                </div>
+                <div>
+                  <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Catalog ID</label>
+                  <input value={waForm.wa_catalog_id} onChange={e => setWaForm({ ...waForm, wa_catalog_id: e.target.value })}
+                    placeholder="From Commerce Manager"
+                    className="w-full border border-border rounded-xl px-4 py-3 text-sm font-bold font-mono focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50" />
+                </div>
+              </div>
+            </div>
+
             <div className="bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 p-6 space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-xs font-black uppercase tracking-widest text-slate-500">Meta Webhook Setup</h3>
@@ -538,7 +574,13 @@ function SettingsContent({ org, autoReplies, waVerifyToken }: { org: Org, autoRe
               {testResult?.success && <p className="text-[10px] text-green-600 font-bold bg-green-50 p-3 rounded-lg border border-green-100 italic font-serif">Success! Engine is now activated.</p>}
             </div>
 
-            <button onClick={async () => { setSaving(true); await fetch('/api/settings/whatsapp', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(waForm) }); setSaving(false); setSaved(true); setTimeout(() => setSaved(false), 2000) }} disabled={saving}
+            <button onClick={async () => { setSaving(true); await fetch('/api/settings/whatsapp', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
+              phone_number_id: waForm.phone_number_id,
+              access_token: waForm.access_token,
+              meta_business_id: waForm.meta_business_id,
+              wa_catalog_id: waForm.wa_catalog_id,
+              wa_business_account_id: waForm.wa_business_account_id,
+            }) }); setSaving(false); setSaved(true); setTimeout(() => setSaved(false), 2000) }} disabled={saving}
               className="w-full bg-[#075E54] text-white py-4 rounded-xl font-bold hover:shadow-xl hover:shadow-[#075E54]/20 transition-all disabled:opacity-60">
               {saved ? '✓ Credentials Saved' : saving ? 'Saving...' : 'Save WhatsApp Credentials'}
             </button>
@@ -550,36 +592,39 @@ function SettingsContent({ org, autoReplies, waVerifyToken }: { org: Org, autoRe
       {tab === 'payments' && (
         <SecureSection email={userEmail} onUnlock={() => setUnlockedTabs([...unlockedTabs, 'payments'])}>
           <div className="bg-card rounded-2xl border border-border p-8 space-y-6 max-w-xl shadow-sm">
-            <h2 className="font-bold text-foreground italic font-serif text-lg text-primary text-center">Revenue Gateway</h2>
-            <div className="space-y-4">
-              <div className="bg-slate-50 border border-slate-100 rounded-2xl p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center text-white font-black text-xs italic">P.</div>
-                    <p className="font-black text-sm text-[#075E54]">Paystack API</p>
-                  </div>
-                  <span className="text-[10px] font-black bg-green-100 text-green-700 px-3 py-1 rounded-full uppercase tracking-tighter">Recommended</span>
+            <h2 className="font-bold text-foreground italic font-serif text-lg text-primary text-center">Payment Gateway</h2>
+            <div className="bg-slate-50 border border-slate-100 rounded-2xl p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center text-white font-black text-xs italic">$</div>
+                  <p className="font-black text-sm text-[#075E54]">Secret Key</p>
                 </div>
-                <input value={payForm.paystack_key} onChange={e => setPayForm({ ...payForm, paystack_key: e.target.value })}
-                  type="password" placeholder="sk_live_... (Secret Key)"
-                  className="w-full border-2 border-slate-100 rounded-xl px-4 py-3 text-sm font-bold font-mono focus:border-primary focus:outline-none shadow-sm" />
               </div>
-
-              <div className="bg-slate-50 border border-slate-100 rounded-2xl p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-black text-xs">PP</div>
-                    <p className="font-black text-sm text-[#075E54]">PayPal Business</p>
-                  </div>
+              <input value={payForm.paystack_key} onChange={e => setPayForm({ ...payForm, paystack_key: e.target.value })}
+                type="password" placeholder="Enter your secret key"
+                className="w-full border-2 border-slate-100 rounded-xl px-4 py-3 text-sm font-bold font-mono focus:border-primary focus:outline-none shadow-sm" />
+              <p className="text-[10px] text-muted-foreground/70 mt-2 font-bold">This key is used to process payments from your customers. Keep it private.</p>
+            </div>
+            <div className="bg-slate-50 border border-slate-100 rounded-2xl p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 bg-orange-600 rounded-lg flex items-center justify-center text-white font-black text-xs">MP</div>
+                  <p className="font-black text-sm text-[#075E54]">M-Pesa Till / Paybill</p>
                 </div>
-                <input value={payForm.paypal_email} onChange={e => setPayForm({ ...payForm, paypal_email: e.target.value })}
-                  type="email" placeholder="your@paypal.com"
-                  className="w-full border-2 border-slate-100 rounded-xl px-4 py-3 text-sm font-bold focus:border-primary focus:outline-none shadow-sm" />
               </div>
+              <input value={payForm.store_mpesa_till || ''} onChange={e => setPayForm({ ...payForm, store_mpesa_till: e.target.value })}
+                type="text" placeholder="e.g. 123456 (Till Number)"
+                className="w-full border-2 border-slate-100 rounded-xl px-4 py-3 text-sm font-bold font-mono focus:border-primary focus:outline-none shadow-sm" />
+            </div>
+            <div className="flex items-center gap-3">
+              <input type="checkbox" id="cod" checked={payForm.cod_enabled}
+                onChange={e => setPayForm({ ...payForm, cod_enabled: e.target.checked })}
+                className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary" />
+              <label htmlFor="cod" className="text-xs font-bold text-slate-500">Accept Cash on Delivery</label>
             </div>
             <button onClick={async () => { setSaving(true); await fetch('/api/settings/payments', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payForm) }); setSaving(false); setSaved(true); setTimeout(() => setSaved(false), 2000) }} disabled={saving}
               className="w-full bg-[#075E54] text-white py-4 rounded-xl font-bold hover:shadow-xl hover:shadow-[#075E54]/20 transition-all disabled:opacity-60">
-              {saved ? 'âœ“ Verified' : saving ? 'Validating...' : 'Enable Gateways'}
+              {saved ? '✓ Saved' : saving ? 'Saving...' : 'Save Payment Settings'}
             </button>
           </div>
         </SecureSection>
@@ -590,103 +635,62 @@ function SettingsContent({ org, autoReplies, waVerifyToken }: { org: Org, autoRe
         <div className="max-w-4xl space-y-8 animate-in fade-in duration-500">
           <div className="bg-card rounded-3xl border border-border p-8 flex flex-col md:flex-row items-center justify-between shadow-sm gap-6">
             <div className="flex-1">
-              <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 mb-2">Current Commitment</p>
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 mb-2">Current Plan</p>
               <h3 className="text-3xl font-serif font-black text-[#075E54] italic capitalize">
-                {(org.plan === 'trial' || !org.plan) ? 'Standard Trial' : `${org.plan} Plan`}
+                {(org.plan === 'trial' || !org.plan) ? 'Free Trial' : `${org.plan} Plan`}
               </h3>
               <p className="text-sm font-semibold text-slate-500 mt-1">
-                {org.plan === 'trial' ? `Free Trial · ${org.trial_ends_at ? Math.max(0, Math.ceil((new Date(org.trial_ends_at).getTime() - Date.now()) / 86400000)) : 0} days remaining` : 'Subscription Active'}
+                {org.plan === 'trial' ? `${org.trial_ends_at ? Math.max(0, Math.ceil((new Date(org.trial_ends_at).getTime() - Date.now()) / 86400000)) : 0} days remaining in trial` : 'Subscription Active'}
               </p>
             </div>
-            <div className="flex items-center gap-4">
-              {org.plan && org.plan !== 'trial' && !showAllPlans && (
-                <button 
-                  onClick={() => setShowAllPlans(true)}
-                  className="px-6 py-3 bg-secondary text-foreground rounded-2xl font-bold text-sm hover:bg-secondary/80 transition-all border border-border"
-                >
-                  Manage / Change Plan
-                </button>
-              )}
-              <div className="w-20 h-20 bg-primary/5 rounded-full flex items-center justify-center border-4 border-white shadow-xl">
-                 <CreditCard size={32} className="text-primary" />
-              </div>
+            <div className="w-20 h-20 bg-primary/5 rounded-full flex items-center justify-center border-4 border-white shadow-xl">
+               <CreditCard size={32} className="text-primary" />
             </div>
           </div>
 
-          {((org.plan === 'trial' || !org.plan) || showAllPlans) && (
-            <div className="grid md:grid-cols-3 gap-6 animate-in zoom-in-95 duration-300">
-              {PLANS.map(plan => {
-                const isHighlighted = org.plan === plan.id || searchParams.get('plan') === plan.id
-                return (
-                <div key={plan.id} className={`bg-card rounded-3xl p-8 border-2 transition-all flex flex-col ${isHighlighted ? 'border-primary shadow-xl shadow-primary/10 ring-2 ring-primary/20 scale-105 bg-primary/5' : 'border-border opacity-90'}`}>
-                  <div className="flex justify-between items-start mb-6">
-                    <div>
-                      <h4 className="text-xl font-black text-[#075E54] font-serif italic">{plan.name}</h4>
-                      <div className="flex items-baseline gap-1 mt-1">
-                        <span className="text-2xl font-black">${plan.price}</span>
-                        <span className="text-xs font-bold text-slate-400">/mo</span>
-                      </div>
+          <div className="grid md:grid-cols-3 gap-6">
+            {PLANS.map(plan => {
+              const isCurrent = org.plan === plan.id
+              const payUrl = `https://paystack.shop/pay/chatevo-${plan.id}`
+              return (
+              <div key={plan.id} className={`bg-card rounded-3xl p-8 border-2 transition-all flex flex-col ${isCurrent ? 'border-primary shadow-xl shadow-primary/10' : 'border-border'}`}>
+                <div className="flex justify-between items-start mb-6">
+                  <div>
+                    <h4 className="text-xl font-black text-[#075E54] font-serif italic">{plan.name}</h4>
+                    <div className="flex items-baseline gap-1 mt-1">
+                      <span className="text-2xl font-black">${plan.price}</span>
+                      <span className="text-xs font-bold text-slate-400">/mo</span>
                     </div>
-                    {org.plan === plan.id && (
-                      <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center text-white">
-                        <CheckCircle2 size={14} />
-                      </div>
-                    )}
                   </div>
-
-                  <ul className="space-y-3 mb-8 flex-1">
-                    {plan.features.map(f => (
-                      <li key={f} className="flex items-center gap-3 text-xs font-bold text-slate-500">
-                        <div className="w-4 h-4 rounded bg-primary/10 flex items-center justify-center text-primary">
-                          <CheckCircle2 size={10} />
-                        </div>
-                        {f}
-                      </li>
-                    ))}
-                  </ul>
-
-                  {(org.plan !== plan.id || showAllPlans) && (
-                    <div className="space-y-2 mt-auto">
-                      <button 
-                        onClick={() => handleSubscribe(plan.id, 'paystack')}
-                        disabled={!!loadingPlan}
-                        className={`w-full ${org.plan === plan.id ? 'bg-secondary text-foreground border border-border' : 'bg-[#075E54] text-white'} py-3 rounded-xl font-black text-xs uppercase tracking-widest hover:opacity-95 transition-all disabled:opacity-50`}
-                      >
-                        {loadingPlan === `${plan.id}-paystack` ? 'Processing...' : (org.plan === plan.id ? 'Current Plan' : 'Pay via Paystack (Local)')}
-                      </button>
-                      {org.plan !== plan.id && (
-                        <button 
-                          onClick={() => handleSubscribe(plan.id, 'stripe')}
-                          disabled={!!loadingPlan}
-                          className="w-full bg-[#635BFF] text-white py-3 rounded-xl font-black text-xs uppercase tracking-widest hover:opacity-95 transition-all disabled:opacity-50"
-                        >
-                          {loadingPlan === `${plan.id}-stripe` ? 'Processing...' : 'Pay via Stripe (Global)'}
-                        </button>
-                      )}
+                  {isCurrent && (
+                    <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center text-white">
+                      <CheckCircle2 size={14} />
                     </div>
                   )}
                 </div>
-              )})}
-            </div>
-          )}
-
-          {showAllPlans && (
-            <div className="text-center">
-              <button 
-                onClick={() => setShowAllPlans(false)}
-                className="text-xs font-black uppercase tracking-widest text-slate-400 hover:text-primary transition-colors"
-              >
-                ← Back to Active Plan
-              </button>
-            </div>
-          )}
-
-          {subscribeError && (
-             <div className="bg-red-50 border border-red-100 rounded-2xl p-6 flex items-center gap-4 text-red-700">
-                <AlertCircle size={24} />
-                <p className="text-sm font-bold tracking-tight">{subscribeError}</p>
-             </div>
-          )}
+                <ul className="space-y-3 mb-8 flex-1">
+                  {plan.features.map(f => (
+                    <li key={f} className="flex items-center gap-3 text-xs font-bold text-slate-500">
+                      <div className="w-4 h-4 rounded bg-primary/10 flex items-center justify-center text-primary">
+                        <CheckCircle2 size={10} />
+                      </div>
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                {!isCurrent && (
+                  <a
+                    href={payUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block w-full bg-[#075E54] text-white py-4 rounded-xl font-black text-sm text-center uppercase tracking-widest hover:opacity-90 transition-all"
+                  >
+                    Pay Now
+                  </a>
+                )}
+              </div>
+            )})}
+          </div>
         </div>
       )}
 

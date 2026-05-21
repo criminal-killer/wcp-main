@@ -1,4 +1,4 @@
-# Future Enhancements - WhatsApp Rich Features
+steps fo# Future Enhancements - WhatsApp Rich Features
 
 ## Overview
 Some advanced WhatsApp features require Meta Business Account setup. This document outlines what's possible and what's needed.

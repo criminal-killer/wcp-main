@@ -15,6 +15,11 @@ export const organizations = sqliteTable('organizations', {
   wa_access_token_encrypted: text('wa_access_token_encrypted'),
   wa_webhook_verified: integer('wa_webhook_verified').default(0),
 
+  // Meta Commerce Catalog
+  meta_business_id: text('meta_business_id'),
+  wa_catalog_id: text('wa_catalog_id'),
+  category_mapping: text('category_mapping'), // JSON: {"My Category": "google_cat_id"}
+
   // Business Info
   country: text('country').default('US'),
   currency: text('currency').default('USD'),

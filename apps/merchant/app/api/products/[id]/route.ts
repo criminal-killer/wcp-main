@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { users, products } from '@/lib/schema'
 import { eq, and } from 'drizzle-orm'
+import { syncProductToCatalog } from '@/lib/meta-catalog'
+import { clearProductCache } from '@/lib/redis'
 
 // ============================================
 // GET /api/products/[id] — Get a single product
@@ -75,6 +77,17 @@ export async function PUT(
 
   await db.update(products).set(updatePayload).where(and(eq(products.id, params.id), eq(products.org_id, user.org_id)))
 
+  await clearProductCache(user.org_id)
+
+  const updated = await db.query.products.findFirst({
+    where: and(eq(products.id, params.id), eq(products.org_id, user.org_id)),
+  })
+  if (updated) {
+    syncProductToCatalog(user.org_id, updated, 'UPDATE').catch(e =>
+      console.error('Meta catalog sync failed:', e)
+    )
+  }
+
   return NextResponse.json({ success: true, product_id: params.id })
 }
 
@@ -97,6 +110,10 @@ export async function DELETE(
   if (!existing) return NextResponse.json({ error: 'Product not found' }, { status: 404 })
 
   await db.delete(products).where(and(eq(products.id, params.id), eq(products.org_id, user.org_id)))
+
+  syncProductToCatalog(user.org_id, existing, 'DELETE').catch(e =>
+    console.error('Meta catalog sync failed:', e)
+  )
 
   return NextResponse.json({ success: true, message: 'Product deleted.' })
 }

@@ -76,21 +76,7 @@ export async function processIncomingMessage(ctx: EngineContext) {
 
   const flow = await getFlowState(orgId, phone) as FlowState | null
 
-  // === GLOBAL COMMANDS ===
-  if (['hi', 'hello', 'hey', 'start', 'menu', '0', '00'].includes(inputNorm) || !flow) {
-    await clearCart(orgId, phone)
-    await deleteFlowState(orgId, phone)
-    return await showGreeting(waConfigObj, org, store, phone, orgId)
-  }
-
-  if (inputNorm === 'continue' || inputNorm === 'continue_to_menu') {
-    return await showMainMenu(waConfigObj, org, store, phone, orgId)
-  }
-
-  if (['cart', 'view cart', '#cart'].includes(inputNorm)) {
-    return await showCart(waConfigObj, org, store, phone, orgId)
-  }
-
+  // === ALWAYS-CHECKED COMMANDS (run even without flow state) ===
   if (['cancel', 'stop', 'exit'].includes(inputNorm)) {
     await clearCart(orgId, phone)
     await deleteFlowState(orgId, phone)
@@ -100,7 +86,7 @@ export async function processIncomingMessage(ctx: EngineContext) {
     })
   }
 
-  // === PAY LINK HANDLER ===
+  // === PAY LINK HANDLER (always check — survives flow reset) ===
   if (inputRaw.startsWith('pay_link_')) {
     const orderId = inputRaw.replace('pay_link_', '')
     const order = await db.query.orders.findFirst({
@@ -118,13 +104,11 @@ export async function processIncomingMessage(ctx: EngineContext) {
     })
   }
 
-  // === PAYMENT CONFIRMATION DETECTION ===
-  // Check if user says they've paid
+  // === PAYMENT CONFIRMATION DETECTION (always check) ===
   const paymentKeywords = ['paid', 'done', 'sent', 'completed', 'paid already', 'already paid', 'mpesa sent', 'transaction done', 'payment done', 'i have paid', 'paid via']
   const isPaymentConfirmation = paymentKeywords.some(kw => inputNorm.includes(kw))
 
   if (isPaymentConfirmation) {
-    // Find pending order for this contact
     const pendingOrder = await db.select().from(orders)
       .where(and(
         eq(orders.org_id, orgId),
@@ -135,7 +119,6 @@ export async function processIncomingMessage(ctx: EngineContext) {
       .limit(1)
 
     if (pendingOrder.length > 0) {
-      // Update order to paid
       await db.update(orders).set({
         payment_status: 'paid',
         order_status: 'confirmed',
@@ -143,7 +126,6 @@ export async function processIncomingMessage(ctx: EngineContext) {
         updated_at: new Date().toISOString()
       }).where(eq(orders.id, pendingOrder[0].id))
 
-      // Stop abandoned cart reminders
       await clearCartAbandonedState(orgId, phone)
 
       return await sendTextMessage(waConfigObj, {
@@ -151,6 +133,25 @@ export async function processIncomingMessage(ctx: EngineContext) {
         body: `  Payment Confirmed!\n\nYour order *${pendingOrder[0].order_number}* has been marked as paid.\n\nWe'll process it right away! Thank you for shopping with *${org.name}*   `,
       })
     }
+  }
+
+  // === FLOW RESET (only reset when user explicitly says hi, not on every null flow) ===
+  if (['hi', 'hello', 'hey', 'start', 'menu', '0', '00'].includes(inputNorm)) {
+    await clearCart(orgId, phone)
+    await deleteFlowState(orgId, phone)
+    return await showGreeting(waConfigObj, org, store, phone, orgId)
+  }
+
+  if (!flow) {
+    return await showGreeting(waConfigObj, org, store, phone, orgId)
+  }
+
+  if (inputNorm === 'continue' || inputNorm === 'continue_to_menu') {
+    return await showMainMenu(waConfigObj, org, store, phone, orgId)
+  }
+
+  if (['cart', 'view cart', '#cart'].includes(inputNorm)) {
+    return await showCart(waConfigObj, org, store, phone, orgId)
   }
 
   // === FLOW-BASED NAVIGATION ===
@@ -202,6 +203,9 @@ export async function processIncomingMessage(ctx: EngineContext) {
 
     case 'quantity_select':
       return await handleQuantitySelected(waConfigObj, org, store, phone, orgId, inputRaw, flow)
+
+    case 'edit_quantity':
+      return await handleEditQuantity(waConfigObj, org, store, phone, orgId, inputRaw, flow)
 
     default:
       // Try AI Fallback if not a recognized command
@@ -549,18 +553,18 @@ async function handleProductAction(
 }
 
 async function handleVariantSelected(
-  waConfig: { phoneNameId: string; accessToken: string } | { phoneNumberId: string; accessToken: string },
+  waConfig: { phoneNumberId: string; accessToken: string },
   org: RunnerOrg, store: RunnerStore | null, phone: string, orgId: string, input: string, flow: FlowState
 ) {
   const variantName = input.startsWith('var_') ? input.replace('var_', '').replace(/_/g, ' ') : input
   const productId = flow.product_id
-  if (!productId) return await showMainMenu(waConfig as { phoneNumberId: string; accessToken: string }, org, store, phone, orgId)
+  if (!productId) return await showMainMenu(waConfig, org, store, phone, orgId)
 
   const storeCondition = store ? and(eq(products.id, productId), eq(products.org_id, orgId), eq(products.store_id, store.id)) : and(eq(products.id, productId), eq(products.org_id, orgId))
   const product = await db.query.products.findFirst({
     where: storeCondition,
   })
-  if (!product) return await sendTextMessage(waConfig as { phoneNumberId: string; accessToken: string }, { to: phone, body: 'Product not found.' })
+  if (!product) return await sendTextMessage(waConfig, { to: phone, body: 'Product not found.' })
 
   const variants = JSON.parse(product.variants || '[]') as Array<{ type: string; options: Array<{ name: string; price?: number }> }>
   let variantPrice = product.price
@@ -579,7 +583,7 @@ async function handleVariantSelected(
     variant_price: variantPrice 
   })
 
-  return await sendInteractiveButtonMessage(waConfig as { phoneNumberId: string; accessToken: string }, {
+  return await sendInteractiveButtonMessage(waConfig, {
     to: phone,
     header: `Add: ${variantName}`,
     body: `How many *${product.name} (${variantName})*?\n\n*${org.currency} ${variantPrice.toLocaleString()}* each`,
@@ -647,9 +651,38 @@ async function showCart(waConfig: { phoneNumberId: string; accessToken: string }
   const itemCount = cart.reduce((s, i) => s + i.qty, 0)
   const orderLines = cart.map((i, idx) => `*${idx + 1}.* ${i.product_name} x${i.qty} = ${org.currency} ${(i.price * i.qty).toLocaleString()}`).join('\n')
 
+  const editRows = cart.length <= 10 ? cart.map((i, idx) => ({
+    id: `edit_item_${idx}`,
+    title: `${idx + 1}. ${i.product_name}`,
+    description: `${i.qty} x ${org.currency} ${i.price.toLocaleString()}`,
+  })) : []
+
+  await setFlowState(orgId, phone, { step: 'cart_review' })
+
+  if (editRows.length > 0) {
+    return await sendInteractiveListMessage(waConfig, {
+      to: phone,
+      header: `   Cart (${itemCount} items)`,
+      body: `${orderLines}\n\n*Total: ${org.currency} ${subtotal.toLocaleString()}*`,
+      footer: 'Tap item to edit or remove',
+      buttonText: 'Manage Cart',
+      sections: [
+        {
+          title: 'Actions',
+          rows: [
+            { id: 'checkout', title: '   Checkout', description: 'Place your order' },
+            { id: 'browse', title: '   Add More', description: 'Keep shopping' },
+            { id: 'clear_cart', title: '   Clear Cart', description: 'Remove all items' },
+          ]
+        },
+        { title: 'Items', rows: editRows }
+      ],
+    })
+  }
+
   return await sendInteractiveButtonMessage(waConfig, {
     to: phone,
-    header: `Cart (${itemCount} items)`,
+    header: `   Cart (${itemCount} items)`,
     body: `${orderLines}\n\n*Total: ${org.currency} ${subtotal.toLocaleString()}*`,
     footer: 'Ready to checkout?',
     buttons: [
@@ -679,6 +712,49 @@ async function handleCartAction(
       to: phone,
       body: '   *Delivery Details*\n\nPlease send your delivery address:\n\n_(e.g. "123 Main Street, Nairobi")_',
     })
+  }
+  if (input.startsWith('edit_item_')) {
+    const idx = parseInt(input.replace('edit_item_', ''))
+    const cart = await getCart(orgId, phone) as CartItem[] | null
+    if (!cart || !cart[idx]) return await showCart(waConfig, org, store, phone, orgId)
+    const item = cart[idx]
+    return await sendInteractiveButtonMessage(waConfig, {
+      to: phone,
+      header: item.product_name,
+      body: `What would you like to do with *${item.product_name}*?\n\nQty: ${item.qty}\nPrice: ${org.currency} ${item.price.toLocaleString()} each`,
+      buttons: [
+        { id: `update_qty_${idx}`, title: '   Change Qty' },
+        { id: `remove_item_${idx}`, title: '   Remove' },
+        { id: 'cart', title: '  Back to Cart' },
+      ],
+    })
+  }
+  if (input.startsWith('update_qty_')) {
+    const idx = parseInt(input.replace('update_qty_', ''))
+    await setFlowState(orgId, phone, { ...flow, step: 'edit_quantity', edit_idx: idx })
+    return await sendInteractiveButtonMessage(waConfig, {
+      to: phone,
+      body: 'Choose new quantity:',
+      buttons: [
+        { id: 'eqty_1', title: '1' },
+        { id: 'eqty_2', title: '2' },
+        { id: 'eqty_3', title: '3' },
+        { id: 'eqty_5', title: '5' },
+      ],
+    })
+  }
+  if (input.startsWith('remove_item_')) {
+    const idx = parseInt(input.replace('remove_item_', ''))
+    const cart = await getCart(orgId, phone) as CartItem[] | null
+    if (cart && cart[idx]) {
+      cart.splice(idx, 1)
+      await setCart(orgId, phone, cart)
+      if (cart.length === 0) {
+        await deleteFlowState(orgId, phone)
+        return await sendTextMessage(waConfig, { to: phone, body: '  Item removed. Your cart is now empty. Type *Hi* to start again.' })
+      }
+    }
+    return await showCart(waConfig, org, store, phone, orgId)
   }
   return await showCart(waConfig, org, store, phone, orgId)
 }
@@ -714,6 +790,28 @@ async function handleDeliveryInfo(
     footer: 'Secure checkout',
     buttons: paymentOptions.slice(0, 3).map(p => ({ id: p.id, title: p.title })),
   })
+}
+
+async function handleEditQuantity(
+  waConfig: { phoneNumberId: string; accessToken: string }, org: RunnerOrg, store: RunnerStore | null, phone: string,
+  orgId: string, input: string, flow: FlowState
+) {
+  const idx = typeof flow.edit_idx === 'number' ? flow.edit_idx : parseInt(String(flow.edit_idx) || '0')
+  const cart = await getCart(orgId, phone) as CartItem[] | null
+  if (!cart || !cart[idx]) return await showCart(waConfig, org, store, phone, orgId)
+
+  let qty = 1
+  if (input.startsWith('eqty_')) {
+    qty = parseInt(input.replace('eqty_', '')) || 1
+  } else if (input.startsWith('qty_')) {
+    qty = parseInt(input.replace('qty_', '')) || 1
+  } else {
+    qty = parseInt(input) || 1
+  }
+
+  cart[idx].qty = qty
+  await setCart(orgId, phone, cart)
+  return await showCart(waConfig, org, store, phone, orgId)
 }
 
 async function handlePaymentSelected(

@@ -58,9 +58,10 @@ npm run dev:admin       # http://localhost:3001
 - `apps/merchant/lib/email.ts` — Resend email client (graceful no-op when RESEND_API_KEY missing)
 - `apps/merchant/lib/redis.ts` — Cart and flow state management via Upstash
 - `apps/merchant/lib/encryption.ts` — AES-256-CBC encryption for WhatsApp tokens, payment keys
+- `apps/merchant/lib/meta-catalog.ts` — Meta Commerce Catalog sync (Batch API for product create/update/delete)
 
 ### Schema Notes
-- `organizations` table holds the merchant account with `wa_*` fields (WhatsApp phone number, access token)
+- `organizations` table holds the merchant account with `wa_*` fields (WhatsApp phone number, access token), plus `meta_business_id` and `wa_catalog_id` for Meta Commerce Catalog sync
 - All merchant data is scoped by `org_id` — always include `eq(orders.org_id, user.org_id)` in queries
 - `contacts` table = end customers (identified by WhatsApp phone number)
 - `orders` stores cart items as JSON string in `items` field
@@ -84,8 +85,9 @@ const order = await db.select().from(orders)
 1. Incoming WhatsApp message → `processIncomingMessage()` in store-engine.ts
 2. Checks Redis for cart/flow state
 3. Routes through flow states: main_menu → browsing_categories → browsing_products → cart → delivery_info → payment_select
-4. Falls back to AI via `/api/ai/chat` (Groq Llama by default, or custom provider)
-5. Custom greeting loaded from `ai_system_prompt` field (first line)
+4. Cart supports per-item qty update, remove, and multi-item management via edit_item_N / update_qty_N / remove_item_N handlers
+5. Falls back to AI via `/api/ai/chat` (Groq Llama by default, or custom provider)
+6. Custom greeting loaded from `ai_system_prompt` field (first line)
 
 ### Plan/Price Constants
 `apps/merchant/lib/payments.ts` exports `PLAN_CONFIG` with correct prices ($29/$59/$99). These are the source of truth — do not hardcode in UI.

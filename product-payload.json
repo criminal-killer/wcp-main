@@ -1,0 +1,20 @@
+{
+  "item_type": "PRODUCT_ITEM",
+  "requests": [
+    {
+      "method": "CREATE",
+      "data": {
+        "id": "test-product-001",
+        "title": "Test Door Lock - Premium",
+        "description": "A high quality door lock for testing",
+        "price": "1500 KES",
+        "image_link": "https://picsum.photos/400",
+        "link": "https://example.com/product/test-lock",
+        "availability": "in stock",
+        "brand": "Chatevo Test",
+        "condition": "new",
+        "google_product_category": "603"
+      }
+    }
+  ]
+}

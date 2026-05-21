@@ -5,6 +5,7 @@ import { users, organizations, products } from '@/lib/schema'
 import { eq, and } from 'drizzle-orm'
 import { z } from 'zod'
 import { clearProductCache } from '@/lib/redis'
+import { syncProductToCatalog } from '@/lib/meta-catalog'
 
 const PLAN_LIMITS = { 
   trial: 100, 
@@ -111,5 +112,10 @@ export async function POST(req: NextRequest) {
   }).returning()
 
   await clearProductCache(user.org_id)
+
+  syncProductToCatalog(user.org_id, product, 'CREATE').catch(e =>
+    console.error('Meta catalog sync failed:', e)
+  )
+
   return NextResponse.json({ data: product, message: 'Product created' }, { status: 201 })
 }
