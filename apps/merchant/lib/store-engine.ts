@@ -250,7 +250,7 @@ async function showGreeting(waConfig: { phoneNumberId: string; accessToken: stri
     body: greeting,
     footer: `Today: ${dayName}`,
     buttons: [
-      { id: 'continue', title: '   Start Shopping' },
+      { id: 'continue', title: 'Start Shopping' },
     ],
   })
 }
@@ -266,9 +266,9 @@ async function showMainMenu(waConfig: { phoneNumberId: string; accessToken: stri
     body: `Welcome to *${org.name}*!\n\nWe have *${productList.length}* products ready for you.`,
     footer: 'What would you like to do?',
     buttons: [
-      { id: 'browse', title: '   Browse Products' },
-      { id: 'view_cart', title: '   View Cart' },
-      { id: 'orders', title: '   My Orders' },
+      { id: 'browse', title: 'Browse Products' },
+      { id: 'view_cart', title: 'View Cart' },
+      { id: 'orders', title: 'My Orders' },
     ],
   })
 }
@@ -288,7 +288,7 @@ async function showCategories(waConfig: { phoneNumberId: string; accessToken: st
   await setFlowState(orgId, phone, { step: 'browsing_categories' })
 
   const rows = [
-    { id: 'back_menu', title: '   Back to Main Menu', description: 'Return to main menu' },
+    { id: 'back_menu', title: 'Back to Main Menu', description: 'Return to main menu' },
     ...cats.slice(0, 9).map(cat => ({
       id: `cat_${cat?.replace(/\s+/g, '_')}`,
       title: cat || 'General',
@@ -488,8 +488,8 @@ async function handleProductSelected(
     imageUrl: images[0] || undefined,
     body: `*${product.name}*\n${compareText}\n${subCategoryText}${description}${variantText}${typeHint}\n\n${stockText}`,
     buttons: [
-      { id: `add_${productId}`, title: '   Add to Cart' },
-      { id: 'back_category', title: '  Back to Categories' },
+      { id: `add_${productId}`, title: 'Add to Cart' },
+      { id: 'back_category', title: 'Back to Categories' },
     ],
   })
 }
@@ -637,8 +637,8 @@ async function showCart(waConfig: { phoneNumberId: string; accessToken: string }
       header: 'Your Cart',
       body: 'Your cart is empty.\n\nBrowse products and add items to get started.',
       buttons: [
-        { id: 'browse', title: '   Browse Products' },
-        { id: 'menu', title: '   Go to Menu' },
+        { id: 'browse', title: 'Browse Products' },
+        { id: 'menu', title: 'Go to Menu' },
       ],
     })
   }
@@ -666,9 +666,9 @@ async function showCart(waConfig: { phoneNumberId: string; accessToken: string }
         {
           title: 'Actions',
           rows: [
-            { id: 'checkout', title: '   Checkout', description: 'Place your order' },
-            { id: 'browse', title: '   Add More', description: 'Keep shopping' },
-            { id: 'clear_cart', title: '   Clear Cart', description: 'Remove all items' },
+            { id: 'checkout', title: 'Checkout', description: 'Place your order' },
+            { id: 'browse', title: 'Add More', description: 'Keep shopping' },
+            { id: 'clear_cart', title: 'Clear Cart', description: 'Remove all items' },
           ]
         },
         { title: 'Items', rows: editRows }
@@ -682,9 +682,9 @@ async function showCart(waConfig: { phoneNumberId: string; accessToken: string }
     body: `${orderLines}\n\n*Total: ${org.currency} ${subtotal.toLocaleString()}*`,
     footer: 'Ready to checkout?',
     buttons: [
-      { id: 'checkout', title: '   Checkout' },
-      { id: 'browse', title: '   Add More' },
-      { id: 'clear_cart', title: '   Clear Cart' },
+      { id: 'checkout', title: 'Checkout' },
+      { id: 'browse', title: 'Add More' },
+      { id: 'clear_cart', title: 'Clear Cart' },
     ],
   })
 }
@@ -719,9 +719,9 @@ async function handleCartAction(
       header: item.product_name,
       body: `What would you like to do with *${item.product_name}*?\n\nQty: ${item.qty}\nPrice: ${org.currency} ${item.price.toLocaleString()} each`,
       buttons: [
-        { id: `update_qty_${idx}`, title: '   Change Qty' },
-        { id: `remove_item_${idx}`, title: '   Remove' },
-        { id: 'cart', title: '  Back to Cart' },
+        { id: `update_qty_${idx}`, title: 'Change Qty' },
+        { id: `remove_item_${idx}`, title: 'Remove' },
+        { id: 'cart', title: 'Back to Cart' },
       ],
     })
   }
@@ -766,11 +766,11 @@ async function handleDeliveryInfo(
   
   // DEFAULT: Managed Payment (MoR) or Direct Paystack
   if (org.payment_mode === 'managed' || org.store_paystack_key_encrypted || !org.store_paystack_key_encrypted) {
-    paymentOptions.push({ id: 'pay_paystack', title: '   M-Pesa / Card' })
+    paymentOptions.push({ id: 'pay_paystack', title: 'M-Pesa / Card' })
   }
   
-  if (org.store_paypal_email) paymentOptions.push({ id: 'pay_paypal', title: '   PayPal' })
-  if (org.store_cod_enabled) paymentOptions.push({ id: 'pay_cod', title: '   Cash on Delivery' })
+  if (org.store_paypal_email) paymentOptions.push({ id: 'pay_paypal', title: 'PayPal' })
+  if (org.store_cod_enabled) paymentOptions.push({ id: 'pay_cod', title: 'Cash on Delivery' })
 
   if (paymentOptions.length === 0) {
     return await sendTextMessage(waConfig, {
@@ -889,13 +889,20 @@ async function handlePaymentSelected(
 
   // Send confirmation with direct payment button
   if (paymentLink) {
-    return await sendInteractiveCTAUrlMessage(waConfig, {
+    try {
+      const result = await sendInteractiveCTAUrlMessage(waConfig, {
+        to: phone,
+        header: 'Order Placed!',
+        body: `Order *${orderNumber}*\nTotal: *${org.currency} ${total.toLocaleString()}*\n\nTap below to pay:`,
+        footer: `Reserved for 30 minutes`,
+        url: paymentLink,
+        buttonText: 'Pay Now',
+      })
+      if (!result?.error) return result
+    } catch (_) { /* fallback to text */ }
+    return await sendTextMessage(waConfig, {
       to: phone,
-      header: '  Order Placed!',
-      body: `*Order ${orderNumber}*\nTotal: *${org.currency} ${total.toLocaleString()}*\n\nTap the button below to complete your payment securely.`,
-      footer: `Your order is reserved for 30 minutes`,
-      url: paymentLink,
-      buttonText: '   Pay Now',
+      body: `  Order *${orderNumber}* — *${org.currency} ${total.toLocaleString()}*\n\nPay here: ${paymentLink}\n\nAfter payment type *paid* to confirm.`,
     })
   }
 

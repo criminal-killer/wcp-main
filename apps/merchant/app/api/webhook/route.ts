@@ -6,6 +6,7 @@ import { verifyWebhookSignature } from '@/lib/whatsapp'
 import { redis, getFlowState, setFlowState, deleteFlowState, getCart, setCart, clearCart } from '@/lib/redis'
 import { decrypt } from '@/lib/encryption'
 import { processIncomingMessage } from '@/lib/store-engine'
+import { sendTextMessage } from '@/lib/whatsapp'
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
@@ -181,6 +182,12 @@ export async function POST(req: NextRequest) {
             })
           } catch (err) {
             console.error('Store engine error:', err)
+            try {
+              await sendTextMessage(
+                { phoneNumberId, accessToken },
+                { to: contact.phone, body: 'Something went wrong. Type *menu* to continue.' }
+              )
+            } catch (_) { /* ignore fallback errors */ }
           }
         }
       }
