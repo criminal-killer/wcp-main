@@ -487,3 +487,27 @@ export const affiliatePayoutRelations = relations(affiliate_payouts, ({ one }) =
   })
 }))
 
+// ============================================
+// ERROR LOGS (Admin error tracking)
+// ============================================
+export const errorLogs = sqliteTable('error_logs', {
+  id: text('id').primaryKey().default(sql`(lower(hex(randomblob(16))))`),
+  org_id: text('org_id').notNull().references(() => organizations.id),
+  severity: text('severity').notNull().default('high'), // 'high' | 'low'
+  category: text('category').notNull().default('general'), // e.g. 'store_engine', 'payment', 'catalog', 'webhook'
+  message: text('message').notNull(),
+  cause: text('cause'),
+  fix: text('fix'),
+  stack: text('stack'),
+  status: text('status').notNull().default('open'), // 'open' | 'investigating' | 'fixed'
+  created_at: text('created_at').notNull().default(sql`(datetime('now'))`),
+  updated_at: text('updated_at'),
+})
+
+export const errorLogsRelations = relations(errorLogs, ({ one }) => ({
+  org: one(organizations, {
+    fields: [errorLogs.org_id],
+    references: [organizations.id],
+  }),
+}))
+

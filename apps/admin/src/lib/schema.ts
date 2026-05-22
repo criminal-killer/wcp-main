@@ -107,6 +107,23 @@ export const payouts = sqliteTable('payouts', {
 })
 
 // ============================================
+// ERROR LOGS (Store/System error tracking)
+// ============================================
+export const errorLogs = sqliteTable('error_logs', {
+  id: text('id').primaryKey().default(sql`(lower(hex(randomblob(16))))`),
+  org_id: text('org_id').notNull().references(() => organizations.id),
+  severity: text('severity').notNull().default('high'),
+  category: text('category').notNull().default('general'),
+  message: text('message').notNull(),
+  cause: text('cause'),
+  fix: text('fix'),
+  stack: text('stack'),
+  status: text('status').notNull().default('open'),
+  created_at: text('created_at').notNull().default(sql`(datetime('now'))`),
+  updated_at: text('updated_at'),
+})
+
+// ============================================
 // USERS (Linked to Clerk)
 // ============================================
 export const users = sqliteTable('users', {

@@ -7,6 +7,7 @@ import { redis, getFlowState, setFlowState, deleteFlowState, getCart, setCart, c
 import { decrypt } from '@/lib/encryption'
 import { processIncomingMessage } from '@/lib/store-engine'
 import { sendTextMessage } from '@/lib/whatsapp'
+import { logError, categorizeError } from '@/lib/error-logger'
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
@@ -180,8 +181,18 @@ export async function POST(req: NextRequest) {
               message: msg,
               accessToken,
             })
-          } catch (err) {
+          } catch (err: any) {
             console.error('Store engine error:', err)
+            const info = categorizeError(err)
+            await logError({
+              org_id: org.id,
+              severity: info.severity,
+              category: info.category,
+              message: err?.message || String(err),
+              cause: info.cause,
+              fix: info.fix,
+              stack: err?.stack,
+            })
             try {
               await sendTextMessage(
                 { phoneNumberId, accessToken },
