@@ -83,7 +83,8 @@ async function sendOtpEmail(to: string, otp: string, name: string) {
   return { ok: true }
 }
 
-const OTP_SECRET = process.env.OTP_HMAC_SECRET || 'chatevo-otp-secret-change-in-production'
+const OTP_SECRET = process.env.OTP_HMAC_SECRET
+if (!OTP_SECRET) throw new Error('OTP_HMAC_SECRET environment variable is required')
 
 function signOtp(otp: string, userId: string, expiresAt: number): string {
   const payload = `${otp}:${userId}:${expiresAt}`

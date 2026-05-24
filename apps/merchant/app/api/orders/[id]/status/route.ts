@@ -9,8 +9,15 @@ import { decrypt } from '@/lib/encryption'
 const VALID_STATUSES = ['new', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded'] as const
 type OrderStatus = typeof VALID_STATUSES[number]
 
+const VALID_PAYMENT_STATUSES = ['pending', 'paid', 'failed', 'refunded'] as const
+type PaymentStatus = typeof VALID_PAYMENT_STATUSES[number]
+
 function isValidStatus(s: string): s is OrderStatus {
   return VALID_STATUSES.includes(s as OrderStatus)
+}
+
+function isValidPaymentStatus(s: string): s is PaymentStatus {
+  return VALID_PAYMENT_STATUSES.includes(s as PaymentStatus)
 }
 
 // WhatsApp notification messages
@@ -84,6 +91,10 @@ export async function PATCH(
 
   if (order_status && !isValidStatus(order_status)) {
     return NextResponse.json({ error: `Invalid order_status. Valid: ${VALID_STATUSES.join(', ')}` }, { status: 400 })
+  }
+
+  if (payment_status && !isValidPaymentStatus(payment_status)) {
+    return NextResponse.json({ error: `Invalid payment_status. Valid: ${VALID_PAYMENT_STATUSES.join(', ')}` }, { status: 400 })
   }
 
   const order = await db.query.orders.findFirst({

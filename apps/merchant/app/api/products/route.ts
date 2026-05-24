@@ -43,79 +43,89 @@ const productSchema = z.object({
 })
 
 export async function GET(req: NextRequest) {
-  const { userId } = await auth()
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  try {
+    const { userId } = await auth()
+    if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const user = await db.query.users.findFirst({ where: eq(users.clerk_id, userId) })
-  if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    const user = await db.query.users.findFirst({ where: eq(users.clerk_id, userId) })
+    if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
-  const { searchParams } = new URL(req.url)
-  const category = searchParams.get('category')
-  const search = searchParams.get('search')
+    const { searchParams } = new URL(req.url)
+    const category = searchParams.get('category')
+    const search = searchParams.get('search')
 
-  const productList = await db.select().from(products).where(
-    and(
-      eq(products.org_id, user.org_id),
-      category ? eq(products.category, category) : undefined,
+    const productList = await db.select().from(products).where(
+      and(
+        eq(products.org_id, user.org_id),
+        category ? eq(products.category, category) : undefined,
+      )
     )
-  )
 
-  const filtered = search
-    ? productList.filter(p => p.name.toLowerCase().includes(search.toLowerCase()))
-    : productList
+    const filtered = search
+      ? productList.filter(p => p.name.toLowerCase().includes(search.toLowerCase()))
+      : productList
 
-  return NextResponse.json({ data: filtered, total: filtered.length })
+    return NextResponse.json({ data: filtered, total: filtered.length })
+  } catch (error) {
+    console.error('[products]', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
 }
 
 export async function POST(req: NextRequest) {
-  const { userId } = await auth()
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  try {
+    const { userId } = await auth()
+    if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const user = await db.query.users.findFirst({ where: eq(users.clerk_id, userId) })
-  if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    const user = await db.query.users.findFirst({ where: eq(users.clerk_id, userId) })
+    if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
-  const org = await db.query.organizations.findFirst({ where: eq(organizations.id, user.org_id) })
-  if (!org) return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
+    const org = await db.query.organizations.findFirst({ where: eq(organizations.id, user.org_id) })
+    if (!org) return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
 
-  // Check plan limits
-  const existing = await db.select().from(products).where(eq(products.org_id, user.org_id))
-  const plan = (org.plan || 'free') as keyof typeof PLAN_LIMITS
-  const limit = PLAN_LIMITS[plan] || 10
+    // Check plan limits
+    const existing = await db.select().from(products).where(eq(products.org_id, user.org_id))
+    const plan = (org.plan || 'free') as keyof typeof PLAN_LIMITS
+    const limit = PLAN_LIMITS[plan] || 10
 
-  if (existing.length >= limit) {
-    return NextResponse.json({
-      error: `Product limit reached (${limit}). Upgrade your plan to add more products.`,
-      code: 'PLAN_LIMIT',
-    }, { status: 403 })
+    if (existing.length >= limit) {
+      return NextResponse.json({
+        error: `Product limit reached (${limit}). Upgrade your plan to add more products.`,
+        code: 'PLAN_LIMIT',
+      }, { status: 403 })
+    }
+
+    const body = await req.json() as Record<string, unknown>
+    const parsed = productSchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.errors[0].message }, { status: 400 })
+    }
+
+    const data = parsed.data
+    const [product] = await db.insert(products).values({
+      org_id: user.org_id,
+      name: data.name,
+      description: data.description,
+      price: data.price,
+      compare_at_price: data.compare_at_price,
+      category: data.category,
+      sub_category: data.sub_category || null,
+      images: JSON.stringify(data.images),
+      variants: JSON.stringify(data.variants),
+      inventory_count: data.inventory_count,
+      currency: org.currency || 'KES',
+      is_active: 1,
+    }).returning()
+
+    await clearProductCache(user.org_id)
+
+    syncProductToCatalog(user.org_id, product, 'CREATE').catch(e =>
+      console.error('Meta catalog sync failed:', e)
+    )
+
+    return NextResponse.json({ data: product, message: 'Product created' }, { status: 201 })
+  } catch (error) {
+    console.error('[products]', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
-
-  const body = await req.json() as Record<string, unknown>
-  const parsed = productSchema.safeParse(body)
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.errors[0].message }, { status: 400 })
-  }
-
-  const data = parsed.data
-  const [product] = await db.insert(products).values({
-    org_id: user.org_id,
-    name: data.name,
-    description: data.description,
-    price: data.price,
-    compare_at_price: data.compare_at_price,
-    category: data.category,
-    sub_category: data.sub_category || null,
-    images: JSON.stringify(data.images),
-    variants: JSON.stringify(data.variants),
-    inventory_count: data.inventory_count,
-    currency: org.currency || 'KES',
-    is_active: 1,
-  }).returning()
-
-  await clearProductCache(user.org_id)
-
-  syncProductToCatalog(user.org_id, product, 'CREATE').catch(e =>
-    console.error('Meta catalog sync failed:', e)
-  )
-
-  return NextResponse.json({ data: product, message: 'Product created' }, { status: 201 })
 }

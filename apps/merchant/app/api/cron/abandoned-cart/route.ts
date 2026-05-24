@@ -12,7 +12,10 @@ export async function POST(req: Request) {
   const authHeader = req.headers.get('authorization')
   const cronSecret = process.env.CRON_SECRET
 
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+  if (!cronSecret) {
+    return NextResponse.json({ error: 'CRON_SECRET not configured' }, { status: 500 })
+  }
+  if (authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -27,7 +30,7 @@ export async function POST(req: Request) {
   const pendingOrders = await db.select().from(orders)
     .where(and(
       eq(orders.payment_status, 'pending'),
-      eq(orders.order_status, 'pending'),
+      eq(orders.order_status, 'new'),
       lt(orders.created_at, oneHourAgo),
       gte(orders.created_at, twoHoursAgo),
     ))
@@ -36,7 +39,7 @@ export async function POST(req: Request) {
   const oldPendingOrders = await db.select().from(orders)
     .where(and(
       eq(orders.payment_status, 'pending'),
-      eq(orders.order_status, 'pending'),
+      eq(orders.order_status, 'new'),
       lt(orders.created_at, twentySixHoursAgo),
       gte(orders.created_at, twentySevenHoursAgo),
     ))

@@ -1,6 +1,6 @@
 import { db } from '@/lib/db'
 import { organizations, stores, contacts, conversations, products, orders, messages } from '@/lib/schema'
-import { eq, and } from 'drizzle-orm'
+import { eq, and, sql, desc } from 'drizzle-orm'
 import { sendTextMessage, sendInteractiveButtonMessage, sendInteractiveListMessage, sendImageMessage, sendInteractiveCTAUrlMessage } from '@/lib/whatsapp'
 import { getFlowState, setFlowState, deleteFlowState, getCart, setCart, clearCart, setCartAbandoned, clearCartAbandoned as clearCartAbandonedState } from '@/lib/redis'
 import { decrypt } from '@/lib/encryption'
@@ -170,10 +170,7 @@ export async function processIncomingMessage(ctx: EngineContext) {
       } else if (inputNorm === 'view_cart') {
         return await showCart(waConfigObj, org, store, phone, orgId)
       } else if (inputNorm === 'orders') {
-        return await sendTextMessage(waConfigObj, {
-          to: phone,
-          body: 'You do not have any active orders right now.'
-        })
+        return await showOrders(waConfigObj, org, phone, orgId, contact.id)
       }
       return await handleAiFallback(waConfigObj, org, phone, inputRaw)
 
@@ -627,6 +624,39 @@ async function handleQuantitySelected(
   return await showCart(waConfig, org, store, phone, orgId)
 }
 
+async function showOrders(waConfig: { phoneNumberId: string; accessToken: string }, org: RunnerOrg, phone: string, orgId: string, contactId: string) {
+  const recentOrders = await db.query.orders.findMany({
+    where: and(eq(orders.org_id, orgId), eq(orders.contact_id, contactId)),
+    orderBy: (orders, { desc }) => [desc(orders.created_at)],
+    limit: 5,
+  })
+
+  if (!recentOrders || recentOrders.length === 0) {
+    return await sendInteractiveButtonMessage(waConfig, {
+      to: phone,
+      header: '  My Orders',
+      body: 'You don\'t have any orders yet.\n\nStart shopping to place your first order!',
+      buttons: [{ id: 'browse', title: 'Browse Products' }],
+    })
+  }
+
+  const statusEmoji: Record<string, string> = {
+    new: '  ', confirmed: '✅', processing: '  ', shipped: '  ', delivered: '  ', cancelled: '❌', refunded: '  ',
+  }
+
+  const orderLines = recentOrders.map((o, i) => {
+    const emoji = statusEmoji[o.order_status] || '  '
+    return `${i + 1}. *${o.order_number}* — ${emoji} ${o.order_status}\n   Total: ${o.currency || 'KES'} ${o.total} · ${o.payment_status}`
+  }).join('\n\n')
+
+  return await sendInteractiveButtonMessage(waConfig, {
+    to: phone,
+    header: '  My Orders',
+    body: `Here are your recent orders:\n\n${orderLines}`,
+    buttons: [{ id: 'browse', title: 'New Order' }, { id: 'main_menu', title: 'Main Menu' }],
+  })
+}
+
 async function showCart(waConfig: { phoneNumberId: string; accessToken: string }, org: RunnerOrg, store: RunnerStore | null, phone: string, orgId: string) {
   const cart = await getCart(orgId, phone) as CartItem[] | null
   await setFlowState(orgId, phone, { step: 'cart_review' })
@@ -759,13 +789,19 @@ async function handleDeliveryInfo(
   waConfig: { phoneNumberId: string; accessToken: string }, org: RunnerOrg, store: RunnerStore | null, phone: string,
   orgId: string, convId: string, input: string, flow: FlowState, contact: RunnerContact
 ) {
-  const address = input
+  const address = input.trim()
+  if (address.length < 3) {
+    return await sendTextMessage(waConfig, {
+      to: phone,
+      body: 'Please enter a valid delivery address (at least 3 characters).',
+    })
+  }
   await setFlowState(orgId, phone, { ...flow, step: 'payment_select', delivery: address })
 
   const paymentOptions = []
   
   // DEFAULT: Managed Payment (MoR) or Direct Paystack
-  if (org.payment_mode === 'managed' || org.store_paystack_key_encrypted || !org.store_paystack_key_encrypted) {
+  if (org.payment_mode === 'managed' || org.store_paystack_key_encrypted) {
     paymentOptions.push({ id: 'pay_paystack', title: 'M-Pesa / Card' })
   }
   
@@ -877,6 +913,18 @@ async function handlePaymentSelected(
     total_orders: (contact.total_orders || 0) + 1,
     total_spent: (contact.total_spent || 0) + total,
   }).where(and(eq(contacts.id, contact.id), eq(contacts.org_id, orgId)))
+
+  // Decrement inventory for non-digital products
+  for (const item of cart) {
+    const product = await db.query.products.findFirst({
+      where: and(eq(products.id, item.product_id), eq(products.org_id, orgId))
+    })
+    if (product && product.product_type !== 'digital') {
+      await db.update(products)
+        .set({ inventory_count: sql`MAX(0, ${products.inventory_count} - ${item.qty})` })
+        .where(and(eq(products.id, item.product_id), eq(products.org_id, orgId)))
+    }
+  }
 
   // Track for abandoned cart reminders (only for pending payment orders)
   if (paymentStatus === 'pending') {

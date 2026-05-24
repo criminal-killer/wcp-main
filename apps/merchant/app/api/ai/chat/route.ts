@@ -40,13 +40,12 @@ export async function POST(req: Request) {
     const body = await req.json()
     const { message, org_id } = body
 
-    if (!userId && !org_id) return new NextResponse('Unauthorized', { status: 401 })
+    if (!userId) return new NextResponse('Unauthorized', { status: 401 })
 
-    let targetOrgId = org_id
-    if (userId) {
-      const user = await db.query.users.findFirst({ where: eq(users.clerk_id, userId) })
-      if (user) targetOrgId = user.org_id
-    }
+    let targetOrgId: string | null = null
+    const user = await db.query.users.findFirst({ where: eq(users.clerk_id, userId) })
+    if (user) targetOrgId = user.org_id
+    if (!targetOrgId) return NextResponse.json({ reply: "Organization context not found." })
 
     const org = await db.query.organizations.findFirst({ where: eq(organizations.id, targetOrgId) })
     if (!org) return NextResponse.json({ reply: "Organization context not found." })

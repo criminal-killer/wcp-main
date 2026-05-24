@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { organizations, orders } from '@/lib/schema'
-import { eq, sql } from 'drizzle-orm'
+import { eq, and, sql } from 'drizzle-orm'
 import { verifyPaystackSignature } from '@/lib/payments'
 
 export async function POST(req: NextRequest) {
@@ -15,8 +15,17 @@ export async function POST(req: NextRequest) {
   // We try to verify with Chatevo's key first (Managed), then fallback to Org's key if we can identify it.
   
   const ChatevoSecret = process.env.PAYSTACK_SECRET_KEY || ''
-  const isChatevoManaged = verifyPaystackSignature(body, signature, ChatevoSecret)
-  
+  if (!ChatevoSecret) {
+    console.error('PAYSTACK_SECRET_KEY not configured')
+    return NextResponse.json({ error: 'Server misconfiguration' }, { status: 500 })
+  }
+
+  const isValidSignature = verifyPaystackSignature(body, signature, ChatevoSecret)
+  if (!isValidSignature) {
+    console.warn(`Invalid Paystack signature for store webhook`)
+    return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
+  }
+
   const event = JSON.parse(body)
   const { data } = event
 
@@ -27,7 +36,7 @@ export async function POST(req: NextRequest) {
   // Identify the Organization and Order
   const orgId = data.metadata?.org_id
   const orderNumber = data.metadata?.order_number
-  
+
   if (!orgId || !orderNumber) {
     console.error('Missing metadata in store webhook', { orgId, orderNumber })
     return NextResponse.json({ error: 'Missing metadata' }, { status: 400 })
@@ -41,15 +50,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Org not found' }, { status: 404 })
   }
 
-  // --- Double-check signature if not verified with Chatevo key ---
-  if (!isChatevoManaged) {
-    // This might be a direct payment using the merchant's own key
-    // We would need to decrypt their key and verify. 
-    // To keep it simple for MVP, we'll focus on Chatevo-Managed mode first.
-    // In a real multi-tenant setup, you'd either use Paystack Subaccounts or multiple Webhook URLs.
-    console.warn(`Payment received for org ${orgId} but signature didn't match Chatevo secret. Assuming managed mode fallback or legacy.`)
-  }
-
   // Update Order Status
   await db.update(orders)
     .set({ 
@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
       order_status: 'confirmed',
       updated_at: new Date().toISOString()
     })
-    .where(eq(orders.order_number, orderNumber))
+    .where(and(eq(orders.order_number, orderNumber), eq(orders.org_id, orgId)))
 
   // --- Managed Balance Logic (5% Fee) ---
   if (org.payment_mode === 'managed' || !org.store_paystack_key_encrypted) {

@@ -2,7 +2,8 @@ import { auth } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
 
-const OTP_SECRET = process.env.OTP_HMAC_SECRET || 'chatevo-otp-secret-change-in-production'
+const OTP_SECRET = process.env.OTP_HMAC_SECRET
+if (!OTP_SECRET) throw new Error('OTP_HMAC_SECRET environment variable is required')
 
 // How long the "unlocked" state persists after a successful OTP verification (20 minutes)
 const UNLOCK_TTL_MS = 20 * 60 * 1000

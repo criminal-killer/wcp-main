@@ -1,3 +1,6 @@
+// Utility to find a user by email in the Turso database.
+// Uses environment variables for database connection (never hardcode credentials).
+
 import { createClient } from '@libsql/client';
 import { drizzle } from 'drizzle-orm/libsql';
 import { text, integer, sqliteTable } from 'drizzle-orm/sqlite-core';
@@ -10,10 +13,15 @@ const users = sqliteTable('users', {
 });
 
 async function main() {
-  const client = createClient({
-    url: "libsql://sella-db-criminal-dev.aws-ap-northeast-1.turso.io",
-    authToken: "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3NzQ0MjQ2MTIsImlkIjoiMDE5ZDIzY2EtZGIwMS03YjQxLTgyMTYtZTU1Y2Y4YjU1MDNiIiwicmlkIjoiMzgwNjgwMTItMjFiOS00ZjMzLTk1Y2QtNGRmMzg1M2ViYmVmIn0.EesUHsoeOXVbPQRMYgue7BxSMrEDsYobTjXWxEX1oX4XcJY2dST5PESWP9y0uVLDA1TgvsGuHNZL2je0j7CFCA",
-  });
+  const url = process.env.TURSO_DATABASE_URL;
+  const authToken = process.env.TURSO_AUTH_TOKEN;
+
+  if (!url || !authToken) {
+    console.error('Missing TURSO_DATABASE_URL or TURSO_AUTH_TOKEN environment variables.');
+    process.exit(1);
+  }
+
+  const client = createClient({ url, authToken });
   const db = drizzle(client);
 
   const allUsers = await db.select().from(users).limit(10);

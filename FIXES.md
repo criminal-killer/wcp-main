@@ -1,0 +1,298 @@
+# Chatevo Fixes Log
+
+All fixes applied from the project audit. See [AUDIT_REPORT.md](./AUDIT_REPORT.md) for the full audit.
+
+---
+
+## P0 — Critical Security Fixes (2026-05-24)
+
+### 1. Delete `/api/debug-db` endpoint
+
+**Issue:** Unauthenticated endpoint leaked messages from ALL organizations.
+**Severity:** CRITICAL
+**Files changed:**
+- `apps/merchant/app/api/debug-db/route.ts` — DELETED
+- `apps/merchant/middleware.ts` — Removed `/api/debug-db(.*)` from public routes
+**Verification:** Glob for `debug-db` returns no matches.
+
+---
+
+### 2. Fix AI Chat Authentication Bypass
+
+**Issue:** Any unauthenticated user could chat with AI by passing `org_id` in POST body.
+**Severity:** CRITICAL
+**File:** `apps/merchant/app/api/ai/chat/route.ts`
+**Change:** Removed `!userId && !org_id` check. Now requires Clerk `userId`. Org is derived from DB lookup, not request body.
+**Before:**
+```typescript
+if (!userId && !org_id) return new NextResponse('Unauthorized', { status: 401 })
+let targetOrgId = org_id
+if (userId) {
+  const user = await db.query.users.findFirst({ where: eq(users.clerk_id, userId) })
+  if (user) targetOrgId = user.org_id
+}
+```
+**After:**
+```typescript
+if (!userId) return new NextResponse('Unauthorized', { status: 401 })
+let targetOrgId: string | null = null
+const user = await db.query.users.findFirst({ where: eq(users.clerk_id, userId) })
+if (user) targetOrgId = user.org_id
+if (!targetOrgId) return NextResponse.json({ reply: "Organization context not found." })
+```
+
+---
+
+### 3. Fix Store Webhook Payment Forgery
+
+**Issue:** Failed Paystack signature verification only logged a warning and continued processing. Attacker could forge payment webhooks.
+**Severity:** CRITICAL
+**File:** `apps/merchant/app/api/payments/store-webhook/route.ts`
+**Change:** Now returns 401 on failed signature verification. Also validates that `PAYSTACK_SECRET_KEY` is configured.
+**Before:**
+```typescript
+const isChatevoManaged = verifyPaystackSignature(body, signature, ChatevoSecret)
+// ... later ...
+if (!isChatevoManaged) {
+  console.warn(`... Assuming managed mode fallback or legacy.`)
+}
+```
+**After:**
+```typescript
+if (!ChatevoSecret) {
+  console.error('PAYSTACK_SECRET_KEY not configured')
+  return NextResponse.json({ error: 'Server misconfiguration' }, { status: 500 })
+}
+const isValidSignature = verifyPaystackSignature(body, signature, ChatevoSecret)
+if (!isValidSignature) {
+  console.warn(`Invalid Paystack signature for store webhook`)
+  return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
+}
+```
+
+---
+
+### 4. Fix Cross-Tenant Order Update
+
+**Issue:** Store webhook updated orders by `order_number` only — no `org_id` filter. Two orgs with same order number = data corruption.
+**Severity:** CRITICAL
+**File:** `apps/merchant/app/api/payments/store-webhook/route.ts:61`
+**Change:** Added `eq(orders.org_id, orgId)` to WHERE clause.
+**Before:**
+```typescript
+.where(eq(orders.order_number, orderNumber))
+```
+**After:**
+```typescript
+.where(and(eq(orders.order_number, orderNumber), eq(orders.org_id, orgId)))
+```
+**Also:** Added `and` to the `drizzle-orm` import.
+
+---
+
+### 5. Remove Hardcoded OTP Secret Fallback
+
+**Issue:** Fallback `'chatevo-otp-secret-change-in-production'` was publicly known from source code. OTPs were trivially forgeable.
+**Severity:** CRITICAL
+**Files changed:**
+- `apps/merchant/app/api/auth/send-otp/route.ts:86`
+- `apps/merchant/app/api/auth/verify-otp/route.ts:5`
+- `apps/merchant/app/api/auth/otp-status/route.ts:5`
+**Change:** Removed hardcoded fallback. Now throws if `OTP_HMAC_SECRET` env var is missing.
+**Before:**
+```typescript
+const OTP_SECRET = process.env.OTP_HMAC_SECRET || 'chatevo-otp-secret-change-in-production'
+```
+**After:**
+```typescript
+const OTP_SECRET = process.env.OTP_HMAC_SECRET
+if (!OTP_SECRET) throw new Error('OTP_HMAC_SECRET environment variable is required')
+```
+**Action required:** Set `OTP_HMAC_SECRET` env var before deploying. Generate with: `openssl rand -hex 32`
+
+---
+
+### 6. Remove Hardcoded Database Credentials
+
+**Issue:** `find-user.js` contained hardcoded Turso database URL and auth token in git-tracked file.
+**Severity:** CRITICAL
+**File:** `find-user.js`
+**Change:** Now reads from `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN` env vars. Validates they exist before connecting.
+**Action required:** Rotate the exposed Turso auth token immediately.
+
+---
+
+## P1 — Broken Functionality Fixes (2026-05-24)
+
+### 7. Fix Abandoned Cart Cron
+
+**Issue:** Cron queried `order_status='pending'` but store-engine creates orders with `order_status='new'`. Zero reminders ever sent.
+**Severity:** HIGH
+**File:** `apps/merchant/app/api/cron/abandoned-cart/route.ts`
+**Change:** Changed `eq(orders.order_status, 'pending')` to `eq(orders.order_status, 'new')` in both queries (lines 30, 40).
+
+---
+
+### 8. Make `CRON_SECRET` Mandatory
+
+**Issue:** Cron endpoints had optional auth — if `CRON_SECRET` env var was missing, anyone could trigger payouts/reminders.
+**Severity:** HIGH
+**Files changed:**
+- `apps/merchant/app/api/cron/payouts/route.ts:10`
+- `apps/merchant/app/api/cron/abandoned-cart/route.ts:15`
+**Change:** Now returns 500 if `CRON_SECRET` is not configured. Auth check is mandatory.
+**Before:**
+```typescript
+if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+```
+**After:**
+```typescript
+const cronSecret = process.env.CRON_SECRET
+if (!cronSecret) {
+  return NextResponse.json({ error: 'CRON_SECRET not configured' }, { status: 500 })
+}
+if (authHeader !== `Bearer ${cronSecret}`) {
+```
+**Action required:** Set `CRON_SECRET` env var before deploying. Generate with: `openssl rand -hex 32`
+
+---
+
+### 9. Fix Always-True Payment Condition
+
+**Issue:** `org.store_paystack_key_encrypted || !org.store_paystack_key_encrypted` was always true. Paystack option shown even for merchants without it configured.
+**Severity:** HIGH
+**File:** `apps/merchant/lib/store-engine.ts:768`
+**Change:** Removed `|| !org.store_paystack_key_encrypted`.
+**Before:**
+```typescript
+if (org.payment_mode === 'managed' || org.store_paystack_key_encrypted || !org.store_paystack_key_encrypted) {
+```
+**After:**
+```typescript
+if (org.payment_mode === 'managed' || org.store_paystack_key_encrypted) {
+```
+
+---
+
+## P2 — Schema & Performance Fixes (2026-05-24)
+
+### 10. Add Database Indexes
+
+**Issue:** Merchant schema had ZERO indexes. Every WhatsApp message triggered full table scans.
+**Severity:** MEDIUM (performance)
+**File:** `apps/merchant/lib/schema.ts`
+**Indexes added:**
+- `contacts_org_phone_idx` — unique index on `(org_id, phone)`
+- `contacts_org_created_idx` — index on `(org_id, created_at)`
+- `orders_org_idx` — index on `org_id`
+- `orders_org_created_idx` — index on `(org_id, created_at)`
+- `orders_org_payment_idx` — index on `(org_id, payment_status)`
+- `orders_order_number_idx` — unique index on `order_number`
+- `products_org_active_idx` — index on `(org_id, is_active)`
+- `products_org_category_idx` — index on `(org_id, category)`
+- `conversations_org_contact_idx` — index on `(org_id, contact_id)`
+- `conversations_org_last_msg_idx` — index on `(org_id, last_message_at)`
+- `messages_conv_created_idx` — index on `(conversation_id, created_at)`
+- `messages_org_created_idx` — index on `(org_id, created_at)`
+
+### 11. Add Unique Constraints
+
+**Issue:** No unique constraint on `contacts.(org_id, phone)` or `orders.order_number`. Duplicate records possible under concurrent webhooks.
+**Severity:** MEDIUM (data integrity)
+**File:** `apps/merchant/lib/schema.ts`
+**Constraints added:**
+- `contacts_org_phone_idx` — unique on `(org_id, phone)` — prevents duplicate contacts
+- `orders_order_number_idx` — unique on `order_number` — prevents order number collisions
+
+---
+
+## P3 — Quality & Cleanup Fixes (2026-05-24)
+
+### 12. Add `payment_status` Validation
+
+**Issue:** Order update API accepted any arbitrary string for `payment_status`.
+**Severity:** MEDIUM
+**File:** `apps/merchant/app/api/orders/[id]/status/route.ts`
+**Change:** Added validation against allowed values: `pending`, `paid`, `failed`, `refunded`.
+
+---
+
+### 13. Add Delivery Address Validation
+
+**Issue:** Any single character accepted as delivery address.
+**Severity:** MEDIUM
+**File:** `apps/merchant/lib/store-engine.ts`
+**Change:** Added minimum 3-character validation. Returns error message if address is too short.
+
+---
+
+### 14. Add Inventory Decrement on Order Creation
+
+**Issue:** Stock never reduced when orders are placed.
+**Severity:** MEDIUM
+**File:** `apps/merchant/lib/store-engine.ts`
+**Change:** After order creation, iterates cart items and decrements `inventory_count` for non-digital products using `MAX(0, inventory - qty)`.
+
+---
+
+### 15. Implement Actual Order History
+
+**Issue:** "My Orders" button always returned "no active orders" — was a stub.
+**Severity:** MEDIUM
+**File:** `apps/merchant/lib/store-engine.ts`
+**Change:** Added `showOrders()` function that queries last 5 orders for the contact, displays order number, status (with emoji), total, and payment status. Added `main_menu` case to route to this function.
+
+---
+
+### 16. Add Try/Catch Error Handling to API Routes
+
+**Issue:** 16+ API routes had no error handling — unhandled exceptions produced raw 500s.
+**Severity:** MEDIUM
+**Files changed (27 handlers across 16 files):**
+- `api/auto-replies/route.ts` (GET, POST)
+- `api/contacts/route.ts` (GET)
+- `api/contacts/export/route.ts` (GET)
+- `api/conversations/route.ts` (GET, PUT)
+- `api/messages/route.ts` (GET)
+- `api/orders/route.ts` (GET)
+- `api/notifications/route.ts` (GET, PATCH)
+- `api/stores/route.ts` (GET, POST, PATCH)
+- `api/products/route.ts` (GET, POST)
+- `api/products/[id]/route.ts` (GET, PUT, DELETE)
+- `api/referrals/me/route.ts` (GET)
+- `api/settings/store/route.ts` (PUT)
+- `api/settings/payments/route.ts` (PUT)
+- `api/cron/expire-trials/route.ts` (GET)
+- `api/affiliates/me/route.ts` (GET)
+- `api/affiliates/referrals/route.ts` (GET)
+**Change:** Each handler wrapped in try/catch with `console.error('[route-name]', error)` and `{ error: 'Internal server error' }` response.
+
+---
+
+### 17. Add Error Boundaries and 404 Pages
+
+**Issue:** No global error boundary in merchant app, no 404 pages in either app.
+**Severity:** LOW
+**Files created:**
+- `apps/merchant/app/error.tsx` — Global error boundary with "Try again" button
+- `apps/merchant/app/not-found.tsx` — 404 page with "Go Home" link
+- `apps/admin/src/app/not-found.tsx` — 404 page with "Go to Dashboard" link
+
+---
+
+## Remaining Fixes (Not Yet Applied)
+
+See [AUDIT_REPORT.md](./AUDIT_REPORT.md) for the full list. Key items:
+
+- [ ] Reconcile merchant/admin schema divergence (20+ column differences)
+- [ ] Save outbound bot messages to `messages` table
+- [ ] Remove dead code (unused exports, imports, tables)
+- [ ] Add pagination to messages endpoint
+- [ ] Fix broken links (`/privacy`, `/terms`, `/demo`)
+- [ ] Switch encryption from AES-256-CBC to AES-256-GCM
+- [ ] Fix inconsistent domain names across codebase
+- [ ] Add rate limiting to public endpoints
+
+---
+
+*Last updated: 2026-05-24*

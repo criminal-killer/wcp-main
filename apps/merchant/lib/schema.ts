@@ -157,7 +157,10 @@ export const products = sqliteTable('products', {
   sort_order: integer('sort_order').default(0),
   created_at: text('created_at').default(sql`(datetime('now'))`),
   updated_at: text('updated_at').default(sql`(datetime('now'))`),
-})
+}, (table) => ({
+  orgActiveIdx: index('products_org_active_idx').on(table.org_id, table.is_active),
+  orgCategoryIdx: index('products_org_category_idx').on(table.org_id, table.category),
+}))
 
 // ============================================
 // CONTACTS (End customers)
@@ -177,7 +180,10 @@ export const contacts = sqliteTable('contacts', {
   loyalty_points: integer('loyalty_points').default(0),
   created_at: text('created_at').default(sql`(datetime('now'))`),
   updated_at: text('updated_at').default(sql`(datetime('now'))`),
-})
+}, (table) => ({
+  orgPhoneIdx: uniqueIndex('contacts_org_phone_idx').on(table.org_id, table.phone),
+  orgCreatedIdx: index('contacts_org_created_idx').on(table.org_id, table.created_at),
+}))
 
 // ============================================
 // CONVERSATIONS
@@ -193,7 +199,10 @@ export const conversations = sqliteTable('conversations', {
   last_message_preview: text('last_message_preview'),
   unread_count: integer('unread_count').default(0),
   created_at: text('created_at').default(sql`(datetime('now'))`),
-})
+}, (table) => ({
+  orgContactIdx: index('conversations_org_contact_idx').on(table.org_id, table.contact_id),
+  orgLastMsgIdx: index('conversations_org_last_msg_idx').on(table.org_id, table.last_message_at),
+}))
 
 // ============================================
 // MESSAGES
@@ -211,7 +220,10 @@ export const messages = sqliteTable('messages', {
   sent_by: text('sent_by').references(() => users.id),
   metadata: text('metadata'),
   created_at: text('created_at').default(sql`(datetime('now'))`),
-})
+}, (table) => ({
+  convCreatedIdx: index('messages_conv_created_idx').on(table.conversation_id, table.created_at),
+  orgCreatedIdx: index('messages_org_created_idx').on(table.org_id, table.created_at),
+}))
 
 // ============================================
 // ORDERS
@@ -238,7 +250,12 @@ export const orders = sqliteTable('orders', {
   notes: text('notes'),
   created_at: text('created_at').default(sql`(datetime('now'))`),
   updated_at: text('updated_at').default(sql`(datetime('now'))`),
-})
+}, (table) => ({
+  orgIdx: index('orders_org_idx').on(table.org_id),
+  orgCreatedIdx: index('orders_org_created_idx').on(table.org_id, table.created_at),
+  orgPaymentIdx: index('orders_org_payment_idx').on(table.org_id, table.payment_status),
+  orderNumberIdx: uniqueIndex('orders_order_number_idx').on(table.order_number),
+}))
 
 // ============================================
 // CARTS (Temporary, per conversation)
