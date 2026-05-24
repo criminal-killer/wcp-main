@@ -67,16 +67,8 @@ export async function POST(req: Request) {
       }
     }
 
-    // 4. Log for admin WhatsApp notification
-    const adminWhatsApp = '254762667048'
-    const message = `🎫 *New Support Ticket*\n\n` +
-      `*From:* ${user.email}\n` +
-      `*Subject:* ${subject}\n` +
-      `*Type:* ${type}\n` +
-      `*Details:* ${description}\n\n` +
-      `View in Admin Panel: ${process.env.NEXT_PUBLIC_APP_URL}/admin/tickets`
-
-    console.log(`[Ticket Notification] To admin ${adminWhatsApp}: ${message}`)
+    // TODO: Admin WhatsApp notification requires platform WhatsApp credentials (WHATSAPP_PLATFORM_ACCESS_TOKEN + WHATSAPP_PLATFORM_PHONE_ID)
+    // Merchant already receives in-app notification + email above
 
     return NextResponse.json(ticket)
   } catch (error: any) {

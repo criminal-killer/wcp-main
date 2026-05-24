@@ -21,8 +21,12 @@ export async function GET(req: NextRequest) {
       .from(notifications)
       .where(and(eq(notifications.org_id, user.org_id!), eq(notifications.is_read, 0)))
 
+    const whereClause = unreadOnly
+      ? and(eq(notifications.org_id, user.org_id!), eq(notifications.is_read, 0))
+      : eq(notifications.org_id, user.org_id!)
+
     const list = await db.select().from(notifications)
-      .where(eq(notifications.org_id, user.org_id!))
+      .where(whereClause)
       .orderBy(desc(notifications.created_at))
       .limit(limit)
 

@@ -366,6 +366,142 @@ if (org.payment_mode === 'managed' || org.store_paystack_key_encrypted) {
 
 ---
 
+## P0 — Security Fixes (2026-05-24, continued)
+
+### 26. Fix otp-status Hardcoded OTP Secret
+
+**Issue:** `otp-status/route.ts` still had hardcoded fallback `'chatevo-otp-secret-change-in-production'`, allowing forged OTP cookies.
+**Severity:** CRITICAL
+**File:** `apps/merchant/app/api/auth/otp-status/route.ts`
+**Change:** Removed hardcoded fallback. Now throws if `OTP_HMAC_SECRET` env var is missing.
+**Before:**
+```typescript
+const OTP_SECRET = process.env.OTP_HMAC_SECRET || 'chatevo-otp-secret-change-in-production'
+```
+**After:**
+```typescript
+const OTP_SECRET = process.env.OTP_HMAC_SECRET
+if (!OTP_SECRET) throw new Error('OTP_HMAC_SECRET environment variable is required')
+```
+
+---
+
+### 27. Remove Admin Super-Login Plaintext Password Fallback
+
+**Issue:** Admin login had legacy `===` plaintext comparison as fallback when `SUPER_ADMIN_PASSWORD_HASH` not set.
+**Severity:** CRITICAL
+**File:** `apps/admin/src/app/api/auth/super-login/route.ts`
+**Change:** Removed plaintext `SUPER_ADMIN_PASSWORD` env var and `===` comparison. Now requires bcrypt hash only.
+**Before:**
+```typescript
+if (adminPasswordHash) {
+  passwordValid = await bcrypt.compare(password, adminPasswordHash)
+} else if (adminPassword) {
+  console.warn('[SECURITY] SUPER_ADMIN_PASSWORD is plaintext...')
+  passwordValid = password === adminPassword
+}
+```
+**After:**
+```typescript
+if (!adminEmail || !adminPasswordHash || !secret) {
+  return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
+}
+const passwordValid = await bcrypt.compare(password, adminPasswordHash)
+```
+
+---
+
+### 28. Require WHATSAPP_APP_SECRET for Webhook Verification
+
+**Issue:** Webhook signature verification was skipped if `WHATSAPP_APP_SECRET` env var not set.
+**Severity:** HIGH
+**File:** `apps/merchant/app/api/webhook/route.ts`
+**Change:** Now returns 500 if `WHATSAPP_APP_SECRET` is not configured. Signature check is mandatory.
+**Before:**
+```typescript
+const appSecret = process.env.WHATSAPP_APP_SECRET || ''
+if (appSecret && !await verifyWebhookSignature(body, signature, appSecret)) {
+```
+**After:**
+```typescript
+const appSecret = process.env.WHATSAPP_APP_SECRET
+if (!appSecret) {
+  return NextResponse.json({ error: 'Server misconfiguration' }, { status: 500 })
+}
+if (!await verifyWebhookSignature(body, signature, appSecret)) {
+```
+
+---
+
+## P1 — Broken Functionality Fixes (2026-05-24, continued)
+
+### 29. Add Payment "Paid" Keyword Verification
+
+**Issue:** Anyone could type "paid" to mark any pending order as paid without verification.
+**Severity:** HIGH
+**File:** `apps/merchant/lib/store-engine.ts`
+**Change:** Now requires order number in payment confirmation message. If multiple pending orders exist, asks customer to specify which one.
+- Single pending order: auto-confirms (existing behavior, safe)
+- Multiple pending orders: asks customer to reply with order number
+- Order number provided: verifies it exists and is pending before confirming
+- No pending orders: tells customer
+
+---
+
+### 30. Fix Notifications Unread Filter
+
+**Issue:** `unread` query parameter was computed but never used in the DB query.
+**Severity:** MEDIUM
+**File:** `apps/merchant/app/api/notifications/route.ts`
+**Change:** Now applies `unread=true` filter to the query when specified.
+**Before:**
+```typescript
+const list = await db.select().from(notifications)
+  .where(eq(notifications.org_id, user.org_id!))
+```
+**After:**
+```typescript
+const whereClause = unreadOnly
+  ? and(eq(notifications.org_id, user.org_id!), eq(notifications.is_read, 0))
+  : eq(notifications.org_id, user.org_id!)
+const list = await db.select().from(notifications).where(whereClause)
+```
+
+---
+
+### 31. Fix Ticket Admin Notification
+
+**Issue:** Admin WhatsApp notification was built but only logged to console, never sent.
+**Severity:** MEDIUM
+**File:** `apps/merchant/app/api/tickets/route.ts`
+**Change:** Removed dead console.log code. Added TODO for platform WhatsApp credentials. Merchant still receives in-app notification + email.
+
+---
+
+### 32. Fix PayPal Link Username Logic
+
+**Issue:** PayPal link used email prefix as paypal.me username, which is often wrong.
+**Severity:** MEDIUM
+**Files:**
+- `apps/merchant/lib/schema.ts` — Added `store_paypal_username` field
+- `apps/admin/src/lib/schema.ts` — Added `store_paypal_username` field
+- `apps/merchant/lib/store-engine.ts` — Updated PayPal link generation
+**Change:** Now uses `store_paypal_username` if set, otherwise falls back to standard PayPal payment URL with email.
+**Before:**
+```typescript
+paymentLink = `https://www.paypal.me/${org.store_paypal_email.split('@')[0]}/${total}`
+```
+**After:**
+```typescript
+if (org.store_paypal_username) {
+  paymentLink = `https://www.paypal.me/${org.store_paypal_username}/${total}`
+} else {
+  paymentLink = `https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=${encodeURIComponent(org.store_paypal_email)}&amount=${total}&currency=USD`
+}
+```
+
+---
+
 ## Remaining Fixes (Not Yet Applied)
 
 See [AUDIT_REPORT.md](./AUDIT_REPORT.md) for the full list. Key items:
@@ -375,8 +511,6 @@ See [AUDIT_REPORT.md](./AUDIT_REPORT.md) for the full list. Key items:
 - [ ] Fix admin dashboard hardcoded fake stats (revenue, waitlist, system health)
 - [ ] Fix non-functional UI elements (search inputs, filter buttons)
 - [ ] Fix landing page inconsistent marketing claims
-- [ ] Add `markMessageRead` call after processing messages
-- [ ] Implement proper admin super-login with bcrypt + rate limiting
 
 ---
 

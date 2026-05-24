@@ -47,8 +47,8 @@ export default async function RevenuePage() {
               <p className="text-2xl font-black text-slate-900 italic font-serif">${Number(totalRevenue.value || 0).toLocaleString()}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 text-[10px] font-bold text-emerald-600">
-            <ArrowUpRight size={14} /> +12.5% from last month
+          <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400">
+             Monthly recurring revenue
           </div>
         </div>
 
@@ -62,8 +62,8 @@ export default async function RevenuePage() {
               <p className="text-2xl font-black text-slate-900 italic font-serif">{activeSubs.value}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 text-[10px] font-bold text-emerald-600">
-            <ArrowUpRight size={14} /> +4 new today
+          <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400">
+             Active subscriptions
           </div>
         </div>
 
@@ -74,11 +74,11 @@ export default async function RevenuePage() {
             </div>
             <div>
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Avg. LTV</p>
-              <p className="text-2xl font-black text-slate-900 italic font-serif">$342.10</p>
+              <p className="text-2xl font-black text-slate-900 italic font-serif">${activeSubs.value > 0 ? (Number(totalRevenue.value || 0) / activeSubs.value).toFixed(0) : '0'}</p>
             </div>
           </div>
           <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400">
-             Calculated across all cohorts
+             Average revenue per subscriber
           </div>
         </div>
       </div>

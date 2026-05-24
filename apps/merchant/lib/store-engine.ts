@@ -109,28 +109,66 @@ export async function processIncomingMessage(ctx: EngineContext) {
   const isPaymentConfirmation = paymentKeywords.some(kw => inputNorm.includes(kw))
 
   if (isPaymentConfirmation) {
-    const pendingOrder = await db.select().from(orders)
-      .where(and(
-        eq(orders.org_id, orgId),
-        eq(orders.contact_id, contact.id),
-        eq(orders.payment_status, 'pending')
-      ))
-      .orderBy(orders.created_at)
-      .limit(1)
+    // Look for order number in the message (e.g., ORD-XXXXX)
+    const orderMatch = inputRaw.match(/ORD-[A-Z0-9]+/i)
+    let targetOrder = null
 
-    if (pendingOrder.length > 0) {
+    if (orderMatch) {
+      // User specified an order number — find it
+      const pendingOrders = await db.select().from(orders)
+        .where(and(
+          eq(orders.org_id, orgId),
+          eq(orders.contact_id, contact.id),
+          eq(orders.payment_status, 'pending')
+        ))
+      targetOrder = pendingOrders.find(o => o.order_number?.toUpperCase() === orderMatch[0].toUpperCase())
+      if (!targetOrder) {
+        return await sendTextMessage(waConfigObj, {
+          to: phone,
+          body: `Could not find a pending order with number *${orderMatch[0]}*. Please check the order number and try again.`,
+        })
+      }
+    } else {
+      // No order number — find the single pending order, or ask for clarification
+      const pendingOrders = await db.select().from(orders)
+        .where(and(
+          eq(orders.org_id, orgId),
+          eq(orders.contact_id, contact.id),
+          eq(orders.payment_status, 'pending')
+        ))
+        .orderBy(orders.created_at)
+
+      if (pendingOrders.length === 0) {
+        // No pending orders — don't confirm anything
+        return await sendTextMessage(waConfigObj, {
+          to: phone,
+          body: 'You have no pending orders. Type *menu* to browse products.',
+        })
+      } else if (pendingOrders.length === 1) {
+        targetOrder = pendingOrders[0]
+      } else {
+        // Multiple pending orders — ask which one
+        const orderList = pendingOrders.map(o => `• *${o.order_number}* — ${org.currency} ${Number(o.total).toLocaleString()}`).join('\n')
+        return await sendTextMessage(waConfigObj, {
+          to: phone,
+          body: `You have multiple pending orders:\n${orderList}\n\nPlease reply with the order number, e.g., *paid ${pendingOrders[0].order_number}*`,
+        })
+      }
+    }
+
+    if (targetOrder) {
       await db.update(orders).set({
         payment_status: 'paid',
         order_status: 'confirmed',
         payment_reference: `manual_${Date.now()}`,
         updated_at: new Date().toISOString()
-      }).where(eq(orders.id, pendingOrder[0].id))
+      }).where(eq(orders.id, targetOrder.id))
 
       await clearCartAbandonedState(orgId, phone)
 
       return await sendTextMessage(waConfigObj, {
         to: phone,
-        body: `  Payment Confirmed!\n\nYour order *${pendingOrder[0].order_number}* has been marked as paid.\n\nWe'll process it right away! Thank you for shopping with *${org.name}*   `,
+        body: `  Payment Confirmed!\n\nYour order *${targetOrder.order_number}* has been marked as paid.\n\nWe'll process it right away! Thank you for shopping with *${org.name}*   `,
       })
     }
   }
@@ -885,7 +923,11 @@ async function handlePaymentSelected(
     }
   } else if (inputNorm === 'pay_paypal' && org.store_paypal_email) {
     paymentMethod = 'paypal'
-    paymentLink = `https://www.paypal.me/${org.store_paypal_email.split('@')[0]}/${total}`
+    if (org.store_paypal_username) {
+      paymentLink = `https://www.paypal.me/${org.store_paypal_username}/${total}`
+    } else {
+      paymentLink = `https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=${encodeURIComponent(org.store_paypal_email)}&amount=${total}&currency=USD`
+    }
   } else if (inputNorm === 'pay_cod') {
     paymentMethod = 'cod'
     paymentStatus = 'pending'

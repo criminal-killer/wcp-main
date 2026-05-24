@@ -15,6 +15,7 @@
     "@chatevo/shared": "*",
     "@clerk/nextjs": "^5.2.4",
     "@libsql/client": "^0.17.2",
+    "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
     "drizzle-orm": "^0.45.1",
     "jose": "^6.2.2",

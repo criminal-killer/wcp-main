@@ -41,6 +41,7 @@ export const organizations = sqliteTable('organizations', {
   store_paystack_key_encrypted: text('store_paystack_key_encrypted'),
   store_stripe_account_id: text('store_stripe_account_id'),
   store_paypal_email: text('store_paypal_email'),
+  store_paypal_username: text('store_paypal_username'),
   store_mpesa_till: text('store_mpesa_till'),
   store_cod_enabled: integer('store_cod_enabled').default(1),
   store_bank_details: text('store_bank_details'),

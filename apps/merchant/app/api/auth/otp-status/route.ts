@@ -2,7 +2,8 @@ import { auth } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
 
-const OTP_SECRET = process.env.OTP_HMAC_SECRET || 'chatevo-otp-secret-change-in-production'
+const OTP_SECRET = process.env.OTP_HMAC_SECRET
+if (!OTP_SECRET) throw new Error('OTP_HMAC_SECRET environment variable is required')
 
 function isTokenValid(token: string, userId: string): boolean {
   try {

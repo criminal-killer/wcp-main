@@ -5,7 +5,7 @@ import { eq, and } from 'drizzle-orm'
 import { verifyWebhookSignature } from '@/lib/whatsapp'
 import { decrypt } from '@/lib/encryption'
 import { processIncomingMessage } from '@/lib/store-engine'
-import { sendTextMessage } from '@/lib/whatsapp'
+import { sendTextMessage, markMessageRead } from '@/lib/whatsapp'
 import { logError, categorizeError } from '@/lib/error-logger'
 import { rateLimit } from '@/lib/redis'
 
@@ -31,8 +31,12 @@ export async function POST(req: NextRequest) {
   const signature = req.headers.get('x-hub-signature-256') || ''
 
   // Verify meta webhook signature
-  const appSecret = process.env.WHATSAPP_APP_SECRET || ''
-  if (appSecret && !await verifyWebhookSignature(body, signature, appSecret)) {
+  const appSecret = process.env.WHATSAPP_APP_SECRET
+  if (!appSecret) {
+    console.error('WHATSAPP_APP_SECRET not configured')
+    return NextResponse.json({ error: 'Server misconfiguration' }, { status: 500 })
+  }
+  if (!await verifyWebhookSignature(body, signature, appSecret)) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
   }
 
@@ -174,6 +178,11 @@ export async function POST(req: NextRequest) {
           message_type: msg.type,
           status: 'delivered',
         })
+
+        // Mark message as read on WhatsApp
+        try {
+          await markMessageRead({ phoneNumberId, accessToken }, msg.id)
+        } catch (_) { /* non-critical */ }
 
         // Process via store engine if bot is active
         if (conversation.is_bot_active) {
