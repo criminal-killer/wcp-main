@@ -45,7 +45,7 @@ export async function syncProductToCatalog(
 
   const accessToken = decrypt(org.wa_access_token_encrypted)
   const catalogId = org.wa_catalog_id
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || `https://${org.slug}.chatevo.app`
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || `https://${org.slug}.chatevo.com`
   const category = product.category || 'General'
   const images = JSON.parse(product.images || '[]') as string[]
 
@@ -111,7 +111,7 @@ export async function syncAllProductsToCatalog(
 
   const accessToken = decrypt(org.wa_access_token_encrypted)
   const catalogId = org.wa_catalog_id
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || `https://${org.slug}.chatevo.app`
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || `https://${org.slug}.chatevo.com`
 
   const requests = productList.map(product => {
     const images = JSON.parse(product.images || '[]') as string[]

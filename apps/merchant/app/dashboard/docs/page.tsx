@@ -61,7 +61,7 @@ const PAGES: Record<string, Page> = {
             <div className="bg-slate-900/50 rounded-xl p-5 border border-slate-800">
               <div className="text-slate-400 text-xs font-mono mb-3">{`// Webhook URL`}</div>
               <div className="flex items-center justify-between bg-slate-900 rounded-lg px-4 py-3">
-                <code className="text-emerald-400 text-sm font-mono">https://app.chatevo.io/api/webhook</code>
+                <code className="text-emerald-400 text-sm font-mono">{process.env.NEXT_PUBLIC_APP_URL || 'https://chatevo.com'}/api/webhook</code>
                 <button className="text-slate-400 hover:text-white p-1">
                   <Copy size={14} />
                 </button>

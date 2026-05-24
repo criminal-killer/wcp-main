@@ -82,7 +82,7 @@ export async function clearCart(orgId: string, phone: string) {
   }, null)
 }
 
-// Product cache helpers
+// Product cache helpers (currently unused — reserved for future use)
 export async function getCachedProducts(orgId: string) {
   return await exec(async (r) => {
     const key = `Chatevo:products:${orgId}`

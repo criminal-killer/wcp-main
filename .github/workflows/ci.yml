@@ -55,7 +55,7 @@ jobs:
       # Build-time env stubs — real values are in Vercel environment variables
       TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL || 'libsql://stub.turso.io' }}
       TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN || 'stub' }}
-      NEXT_PUBLIC_APP_URL: ${{ secrets.NEXT_PUBLIC_APP_URL || 'https://chatevo.app' }}
+      NEXT_PUBLIC_APP_URL: ${{ secrets.NEXT_PUBLIC_APP_URL || 'https://chatevo.com' }}
       NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || 'pk_test_stub' }}
       CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY || 'sk_test_stub' }}
     steps:

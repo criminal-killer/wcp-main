@@ -15,6 +15,11 @@ export const organizations = sqliteTable('organizations', {
   wa_access_token_encrypted: text('wa_access_token_encrypted'),
   wa_webhook_verified: integer('wa_webhook_verified').default(0),
 
+  // Meta Commerce Catalog
+  meta_business_id: text('meta_business_id'),
+  wa_catalog_id: text('wa_catalog_id'),
+  category_mapping: text('category_mapping'),
+
   // Business Info
   country: text('country').default('KE'),
   currency: text('currency').default('KES'),
@@ -139,25 +144,52 @@ export const users = sqliteTable('users', {
 })
 
 // ============================================
+// STORES (Multi-store support)
+// ============================================
+export const stores = sqliteTable('stores', {
+  id: text('id').primaryKey().default(sql`(lower(hex(randomblob(16))))`),
+  org_id: text('org_id').notNull().references(() => organizations.id),
+  name: text('name').notNull(),
+  slug: text('slug').notNull(),
+  store_type: text('store_type').default('physical'),
+  description: text('description'),
+  logo_url: text('logo_url'),
+  theme_color: text('theme_color').default('#25D366'),
+  wa_phone_number_id: text('wa_phone_number_id'),
+  wa_business_account_id: text('wa_business_account_id'),
+  wa_access_token_encrypted: text('wa_access_token_encrypted'),
+  currency: text('currency').default('KES'),
+  delivery_fee: real('delivery_fee').default(0),
+  is_active: integer('is_active').default(1),
+  is_default: integer('is_default').default(0),
+  default_categories: text('default_categories'),
+  created_at: text('created_at').default(sql`(datetime('now'))`),
+  updated_at: text('updated_at').default(sql`(datetime('now'))`),
+})
+
+// ============================================
 // PRODUCTS
 // ============================================
 export const products = sqliteTable('products', {
   id: text('id').primaryKey().default(sql`(lower(hex(randomblob(16))))`),
   org_id: text('org_id').notNull().references(() => organizations.id),
+  store_id: text('store_id'),
   name: text('name').notNull(),
   description: text('description'),
   price: real('price').notNull(),
   compare_at_price: real('compare_at_price'),
   currency: text('currency').default('KES'),
   category: text('category').default('General'),
+  sub_category: text('sub_category'),
+  product_type: text('product_type').default('physical'), // physical, digital, service
+  digital_content: text('digital_content'), // links/keys/files
+  service_duration: text('service_duration'), // e.g. "60 minutes" for services
   images: text('images').default('[]'),
   variants: text('variants').default('[]'),
   inventory_count: integer('inventory_count').default(0),
   color: text('color'), // for filtering
   metadata: text('metadata').default('{}'), // extra searchable attributes (JSON)
   is_active: integer('is_active').default(1),
-  type: text('type').default('physical'), // physical, digital, service
-  digital_content: text('digital_content'), // links/keys/files
   sort_order: integer('sort_order').default(0),
   created_at: text('created_at').default(sql`(datetime('now'))`),
   updated_at: text('updated_at').default(sql`(datetime('now'))`),
@@ -247,6 +279,7 @@ export const orders = sqliteTable('orders', {
   payment_status: text('payment_status').default('pending'),
   payment_reference: text('payment_reference'),
   payment_provider: text('payment_provider'),
+  payment_link: text('payment_link'),
   delivery_address: text('delivery_address'),
   delivery_zone: text('delivery_zone'),
   payment_proof: text('payment_proof'),

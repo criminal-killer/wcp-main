@@ -2,7 +2,7 @@ import { auth } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { stores, organizations, users } from '@/lib/schema'
-import { eq, and, sql } from 'drizzle-orm'
+import { eq, and } from 'drizzle-orm'
 import { PLAN_CONFIG, normalizePlan } from '@/lib/payments'
 
 // GET - List all stores for the user's org

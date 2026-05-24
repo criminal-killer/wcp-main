@@ -4,7 +4,7 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 
 const appSecret = process.env.WHATSAPP_APP_SECRET || '';
-const webhookUrl = 'https://www.chatsevo.com/api/webhook';
+const webhookUrl = 'https://chatevo.com/api/webhook';
 
 const payload = {
   object: 'whatsapp_business_account',

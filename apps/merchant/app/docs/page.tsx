@@ -121,7 +121,7 @@ export default function DocsPage() {
         <p className="text-muted-foreground mb-8 max-w-lg mx-auto font-medium">
           If you can't find what you're looking for, our support team is ready to help you set up your store.
         </p>
-        <Link href="/dashboard/settings/support" className="inline-flex items-center gap-2 bg-[#25D366] text-white px-8 py-4 rounded-full font-bold hover:-translate-y-1 hover:shadow-xl transition-all shadow-green-500/20 shadow-lg">
+        <Link href="/dashboard/settings" className="inline-flex items-center gap-2 bg-[#25D366] text-white px-8 py-4 rounded-full font-bold hover:-translate-y-1 hover:shadow-xl transition-all shadow-green-500/20 shadow-lg">
           Contact Support <ArrowRight size={18} />
         </Link>
       </section>

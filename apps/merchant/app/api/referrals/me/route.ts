@@ -25,7 +25,7 @@ export async function GET() {
     })
     if (!org) return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://chatevo.app'
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://chatevo.com'
 
     // Use referral_code if set, otherwise use org id prefix as fallback
     const code = org.referral_code || org.id.slice(0, 8).toUpperCase()

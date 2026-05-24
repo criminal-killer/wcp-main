@@ -20,7 +20,7 @@ export default async function MerchantReferralPage() {
   const org = await db.query.organizations.findFirst({ where: eq(organizations.id, user.org_id) })
   if (!org) redirect('/onboarding')
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://chatevo.app'
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://chatevo.com'
 
   // Use org.referral_code if set; generate a stable fallback from org.id
   const code = org.referral_code || org.id.slice(0, 8).toUpperCase()

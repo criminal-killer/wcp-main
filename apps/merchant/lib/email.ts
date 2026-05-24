@@ -7,7 +7,7 @@ import { Resend } from 'resend'
 
 const FROM = process.env.RESEND_FROM_EMAIL || 'Chatevo <onboarding@resend.dev>'
 const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME || 'Chatevo'
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://chatevo-app.vercel.app'
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://chatevo.com'
 
 // Lazy singleton
 let _resend: Resend | null = null

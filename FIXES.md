@@ -280,18 +280,103 @@ if (org.payment_mode === 'managed' || org.store_paystack_key_encrypted) {
 
 ---
 
+### 18. Save Outbound Bot Messages to DB
+
+**Issue:** Bot replies were never saved to `messages` table — dashboard conversation view was incomplete.
+**Severity:** MEDIUM
+**File:** `apps/merchant/app/api/webhook/route.ts`
+**Change:** After `processIncomingMessage()` returns, bot reply is now saved with `direction: 'outbound'` and the WhatsApp message ID.
+
+---
+
+### 19. Switch Encryption from CBC to GCM
+
+**Issue:** `aes-256-cbc` provides confidentiality but not integrity/authentication.
+**Severity:** MEDIUM
+**File:** `apps/merchant/lib/encryption.ts`
+**Change:** Switched to `aes-256-gcm` with auth tag. Added backward compatibility for legacy CBC-encrypted values (auto-decrypts both formats). New encryptions use GCM.
+
+---
+
+### 20. Add Pagination to Messages Endpoint
+
+**Issue:** `/api/messages` returned ALL messages in a conversation — no limit.
+**Severity:** MEDIUM
+**File:** `apps/merchant/app/api/messages/route.ts`
+**Change:** Added `limit` (default 50, max 200) and `offset` query parameters with ordering.
+
+---
+
+### 21. Reconcile Admin Schema
+
+**Issue:** Admin schema diverged from merchant — 20+ column differences sharing same DB.
+**Severity:** MEDIUM
+**File:** `apps/admin/src/lib/schema.ts`
+**Changes:**
+- Added `stores` table
+- Added `meta_business_id`, `wa_catalog_id`, `category_mapping` to organizations
+- Added `store_id`, `sub_category`, `product_type`, `service_duration` to products
+- Added `payment_link` to orders
+
+---
+
+### 22. Fix Broken Links
+
+**Issue:** Multiple links led to 404 pages.
+**Severity:** LOW
+**Files created:**
+- `apps/merchant/app/privacy/page.tsx` — Privacy policy placeholder
+- `apps/merchant/app/terms/page.tsx` — Terms of service placeholder
+- `apps/merchant/app/dashboard/contacts/[id]/page.tsx` — Redirect to contacts list
+**Files edited:**
+- `apps/merchant/app/docs/page.tsx` — Fixed "Contact Support" link
+- `apps/admin/src/app/not-authorized/page.tsx` — Fixed localhost hardcode
+
+---
+
+### 23. Fix Inconsistent Domain Names
+
+**Issue:** 4 different domains used across codebase (`chatsevo.com`, `chatevo-app.vercel.app`, `chatevo.app`, `app.chatevo.io`).
+**Severity:** LOW
+**Change:** Unified all references to `chatevo.com`. Files changed: layout.tsx, page.tsx, sitemap.ts, robots.ts, email.ts, meta-catalog.ts, referrals, docs, vercel.json, .env.example, CI workflow, admin affiliates.
+
+---
+
+### 24. Remove Dead Code
+
+**Issue:** Unused exports, imports, and dead code conditions throughout codebase.
+**Severity:** LOW
+**Changes:**
+- Removed unused `sendImageMessage` import from store-engine.ts
+- Removed 7 unused redis imports from webhook/route.ts
+- Removed dead `'  back'` condition from store-engine.ts
+- Removed unused `sql` import from stores/route.ts
+- Added comments to unused `getCachedProducts`/`setCachedProducts` in redis.ts
+
+---
+
+### 25. Add Rate Limiting
+
+**Issue:** No rate limiting on any endpoint — vulnerable to flooding.
+**Severity:** MEDIUM
+**Changes:**
+- `api/webhook/route.ts` — 100 req/60s per IP
+- `api/auth/send-otp/route.ts` — 5 req/60s per user
+- `api/affiliates/apply/route.ts` — 10 req/60s per IP
+
+---
+
 ## Remaining Fixes (Not Yet Applied)
 
 See [AUDIT_REPORT.md](./AUDIT_REPORT.md) for the full list. Key items:
 
-- [ ] Reconcile merchant/admin schema divergence (20+ column differences)
-- [ ] Save outbound bot messages to `messages` table
-- [ ] Remove dead code (unused exports, imports, tables)
-- [ ] Add pagination to messages endpoint
-- [ ] Fix broken links (`/privacy`, `/terms`, `/demo`)
-- [ ] Switch encryption from AES-256-CBC to AES-256-GCM
-- [ ] Fix inconsistent domain names across codebase
-- [ ] Add rate limiting to public endpoints
+- [ ] Remove unused schema tables (`carts`, `sequences`, `templates` in merchant)
+- [ ] Remove unused schema columns (15+ fields never queried)
+- [ ] Fix admin dashboard hardcoded fake stats (revenue, waitlist, system health)
+- [ ] Fix non-functional UI elements (search inputs, filter buttons)
+- [ ] Fix landing page inconsistent marketing claims
+- [ ] Add `markMessageRead` call after processing messages
+- [ ] Implement proper admin super-login with bcrypt + rate limiting
 
 ---
 

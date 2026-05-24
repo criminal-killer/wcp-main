@@ -13,7 +13,7 @@
     {
       "source": "/(.*)",
       "has": [{ "type": "host", "value": "chatevo-app.vercel.app" }],
-      "destination": "https://chatsevo.com/$1",
+      "destination": "https://chatevo.com/$1",
       "permanent": true
     }
   ]

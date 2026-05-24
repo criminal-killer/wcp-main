@@ -9,7 +9,7 @@ import { Resend } from 'resend'
 async function sendApprovalEmail(affiliateEmail: string, inviteUrl: string) {
   const resendApiKey = process.env.RESEND_API_KEY
   const resendFrom = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
-  const merchantAppUrl = process.env.MERCHANT_APP_URL || 'https://app.chatevo.io'
+  const merchantAppUrl = process.env.MERCHANT_APP_URL || 'https://chatevo.com'
   
   if (!resendApiKey) {
     console.error("[Affiliates] RESEND_API_KEY is not set. Skipping approval email.")
@@ -57,7 +57,7 @@ export async function approveAndInviteAffiliate(id: string) {
       .where(eq(affiliates.id, id))
 
     const client = typeof clerkClient === 'function' ? await (clerkClient as any)() : clerkClient
-    const redirectUrl = `${process.env.MERCHANT_APP_URL || 'https://app.chatevo.io'}/affiliates/invite`
+    const redirectUrl = `${process.env.MERCHANT_APP_URL || 'https://chatevo.com'}/affiliates/invite`
 
     const invitation = await client.invitations.createInvitation({
       emailAddress: affiliate.email,
@@ -95,7 +95,7 @@ export async function resendAffiliateInvite(id: string) {
     if (affiliate.status !== 'approved') return { success: false, error: "Affiliate must be approved first" }
 
     const client = typeof clerkClient === 'function' ? await (clerkClient as any)() : clerkClient
-    const redirectUrl = `${process.env.MERCHANT_APP_URL || 'https://app.chatevo.io'}/affiliates/invite`
+    const redirectUrl = `${process.env.MERCHANT_APP_URL || 'https://chatevo.com'}/affiliates/invite`
 
     const invitation = await client.invitations.createInvitation({
       emailAddress: affiliate.email,

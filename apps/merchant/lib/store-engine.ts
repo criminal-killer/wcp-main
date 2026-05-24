@@ -1,7 +1,7 @@
 import { db } from '@/lib/db'
 import { organizations, stores, contacts, conversations, products, orders, messages } from '@/lib/schema'
 import { eq, and, sql, desc } from 'drizzle-orm'
-import { sendTextMessage, sendInteractiveButtonMessage, sendInteractiveListMessage, sendImageMessage, sendInteractiveCTAUrlMessage } from '@/lib/whatsapp'
+import { sendTextMessage, sendInteractiveButtonMessage, sendInteractiveListMessage, sendInteractiveCTAUrlMessage } from '@/lib/whatsapp'
 import { getFlowState, setFlowState, deleteFlowState, getCart, setCart, clearCart, setCartAbandoned, clearCartAbandoned as clearCartAbandonedState } from '@/lib/redis'
 import { decrypt } from '@/lib/encryption'
 
@@ -495,7 +495,7 @@ async function handleProductAction(
   waConfig: { phoneNumberId: string; accessToken: string }, org: RunnerOrg, store: RunnerStore | null, phone: string,
   orgId: string, input: string, flow: FlowState
 ) {
-  if (input === 'back_category' || input === '  back') {
+  if (input === 'back_category') {
     return await handleCategorySelected(waConfig, org, store, phone, orgId, `cat_${(flow.category || '').replace(/\s+/g, '_')}`)
   }
 

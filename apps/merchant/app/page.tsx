@@ -232,16 +232,16 @@ export default function HomePage() {
         <meta property="og:site_name" content="Chatevo" />
         <meta property="og:title" content="Chatevo — WhatsApp Commerce Platform" />
         <meta property="og:description" content="Transform your WhatsApp into a high-converting storefront. Automate orders, accept M-Pesa, cards, and bank transfers." />
-        <meta property="og:url" content="https://chatsevo.com" />
-        <meta property="og:image" content="https://chatsevo.com/og-image.jpg" />
+        <meta property="og:url" content="https://chatevo.com" />
+        <meta property="og:image" content="https://chatevo.com/og-image.jpg" />
         <meta property="twitter:card" content="summary_large_image" />
         <meta property="twitter:site" content="@Chatevohq" />
         <meta property="twitter:creator" content="@Chatevohq" />
         <meta name="twitter:title" content="Chatevo — WhatsApp Commerce Platform" />
         <meta name="twitter:description" content="Transform your WhatsApp into a high-converting storefront." />
-        <meta name="twitter:image" content="https://chatsevo.com/og-image.jpg" />
+        <meta name="twitter:image" content="https://chatevo.com/og-image.jpg" />
         <meta name="theme-color" content="#006c49" />
-        <link rel="canonical" href="https://chatsevo.com" />
+        <link rel="canonical" href="https://chatevo.com" />
       </Head>
       <LiveActivity />
 

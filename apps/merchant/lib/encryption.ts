@@ -1,7 +1,9 @@
 import crypto from 'crypto'
 
-const ALGORITHM = 'aes-256-cbc'
+const ALGORITHM = 'aes-256-gcm'
 const KEY_LENGTH = 32
+const IV_LENGTH = 16
+const AUTH_TAG_LENGTH = 16
 
 function getKey(): Buffer {
   const key = process.env.ENCRYPTION_KEY!
@@ -13,19 +15,34 @@ function getKey(): Buffer {
 
 export function encrypt(text: string): string {
   const key = getKey()
-  const iv = crypto.randomBytes(16)
-  const cipher = crypto.createCipheriv(ALGORITHM, key, iv)
+  const iv = crypto.randomBytes(IV_LENGTH)
+  const cipher = crypto.createCipheriv(ALGORITHM, key, iv, { authTagLength: AUTH_TAG_LENGTH })
   const encrypted = Buffer.concat([cipher.update(text, 'utf8'), cipher.final()])
-  return iv.toString('hex') + ':' + encrypted.toString('hex')
+  const authTag = cipher.getAuthTag()
+  // Format: iv:authTag:ciphertext (all hex-encoded)
+  return iv.toString('hex') + ':' + authTag.toString('hex') + ':' + encrypted.toString('hex')
 }
 
 export function decrypt(encryptedText: string): string {
   const key = getKey()
   const parts = encryptedText.split(':')
-  if (parts.length !== 2) throw new Error('Invalid encrypted text format')
-  const iv = Buffer.from(parts[0], 'hex')
-  const encrypted = Buffer.from(parts[1], 'hex')
-  const decipher = crypto.createDecipheriv(ALGORITHM, key, iv)
-  const decrypted = Buffer.concat([decipher.update(encrypted), decipher.final()])
-  return decrypted.toString('utf8')
+  // Support both new GCM format (3 parts) and legacy CBC format (2 parts)
+  if (parts.length === 3) {
+    // New GCM format: iv:authTag:ciphertext
+    const iv = Buffer.from(parts[0], 'hex')
+    const authTag = Buffer.from(parts[1], 'hex')
+    const encrypted = Buffer.from(parts[2], 'hex')
+    const decipher = crypto.createDecipheriv(ALGORITHM, key, iv, { authTagLength: AUTH_TAG_LENGTH })
+    decipher.setAuthTag(authTag)
+    const decrypted = Buffer.concat([decipher.update(encrypted), decipher.final()])
+    return decrypted.toString('utf8')
+  } else if (parts.length === 2) {
+    // Legacy CBC format: iv:ciphertext (for backward compatibility)
+    const iv = Buffer.from(parts[0], 'hex')
+    const encrypted = Buffer.from(parts[1], 'hex')
+    const decipher = crypto.createDecipheriv('aes-256-cbc', key, iv)
+    const decrypted = Buffer.concat([decipher.update(encrypted), decipher.final()])
+    return decrypted.toString('utf8')
+  }
+  throw new Error('Invalid encrypted text format')
 }

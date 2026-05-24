@@ -3,11 +3,11 @@ import { db } from '@/lib/db'
 import { organizations, stores, contacts, conversations, messages, auto_replies, products, orders } from '@/lib/schema'
 import { eq, and } from 'drizzle-orm'
 import { verifyWebhookSignature } from '@/lib/whatsapp'
-import { redis, getFlowState, setFlowState, deleteFlowState, getCart, setCart, clearCart } from '@/lib/redis'
 import { decrypt } from '@/lib/encryption'
 import { processIncomingMessage } from '@/lib/store-engine'
 import { sendTextMessage } from '@/lib/whatsapp'
 import { logError, categorizeError } from '@/lib/error-logger'
+import { rateLimit } from '@/lib/redis'
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
@@ -22,6 +22,11 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  // Rate limit: 100 requests per 60s per IP
+  const ip = req.headers.get('x-forwarded-for') || 'unknown'
+  const allowed = await rateLimit(`rate:${ip}:webhook`, 100, 60)
+  if (!allowed) return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+
   const body = await req.text()
   const signature = req.headers.get('x-hub-signature-256') || ''
 
@@ -173,7 +178,7 @@ export async function POST(req: NextRequest) {
         // Process via store engine if bot is active
         if (conversation.is_bot_active) {
           try {
-            await processIncomingMessage({
+            const result = await processIncomingMessage({
               org,
               store,
               contact,
@@ -181,6 +186,20 @@ export async function POST(req: NextRequest) {
               message: msg,
               accessToken,
             })
+
+            // Save outbound bot reply to messages table so dashboard conversation view is complete
+            if (result && !result.error) {
+              await db.insert(messages).values({
+                org_id: org.id,
+                conversation_id: conversation.id,
+                contact_id: contact.id,
+                wa_message_id: result.id || null,
+                direction: 'outbound',
+                content: '[Bot replied]',
+                message_type: 'text',
+                status: 'sent',
+              })
+            }
           } catch (err: any) {
             console.error('Store engine error:', err)
             const info = categorizeError(err)

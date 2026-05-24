@@ -2,10 +2,16 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { affiliates } from '@/lib/schema'
 import { eq } from 'drizzle-orm'
+import { rateLimit } from '@/lib/redis'
 
 // POST /api/affiliates/apply
 // Public — no Clerk auth required. Anyone can apply.
 export async function POST(req: NextRequest) {
+  // Rate limit: 10 requests per 60s per IP
+  const ip = req.headers.get('x-forwarded-for') || 'unknown'
+  const allowed = await rateLimit(`rate:${ip}:affiliates-apply`, 10, 60)
+  if (!allowed) return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+
   try {
     const body = await req.json() as {
       name?: string

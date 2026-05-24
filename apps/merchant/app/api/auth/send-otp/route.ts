@@ -4,6 +4,7 @@ import { db } from '@/lib/db'
 import { users } from '@/lib/schema'
 import { eq } from 'drizzle-orm'
 import crypto from 'crypto'
+import { rateLimit } from '@/lib/redis'
 
 // Store OTP in-memory for edge simplicity (Redis would be better for multi-instance)
 // We use a signed HMAC to avoid needing a store — OTP is encoded in a signed cookie.
@@ -95,6 +96,10 @@ function signOtp(otp: string, userId: string, expiresAt: number): string {
 export async function POST() {
   const { userId } = await auth()
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  // Rate limit: 5 OTP requests per 60s per user (prevents email bombing)
+  const allowed = await rateLimit(`rate:${userId}:send-otp`, 5, 60)
+  if (!allowed) return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
 
   const user = await db.query.users.findFirst({ where: eq(users.clerk_id, userId) })
   if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })

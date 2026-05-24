@@ -15,6 +15,9 @@ export async function GET(req: NextRequest) {
     const conversationId = searchParams.get('conversation_id')
     if (!conversationId) return NextResponse.json({ error: 'conversation_id required' }, { status: 400 })
 
+    const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 200)
+    const offset = parseInt(searchParams.get('offset') || '0')
+
     const msgList = await db.select()
       .from(messages)
       .where(
@@ -23,6 +26,9 @@ export async function GET(req: NextRequest) {
           eq(messages.org_id, user.org_id),
         )
       )
+      .orderBy(messages.created_at)
+      .limit(limit)
+      .offset(offset)
     return NextResponse.json({ data: msgList })
   } catch (error) {
     console.error('[messages]', error)
