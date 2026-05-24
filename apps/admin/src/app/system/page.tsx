@@ -2,23 +2,45 @@ import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
 import { HardDrive, Cpu, ShieldCheck, Activity, Terminal, CheckCircle2, AlertTriangle } from "lucide-react";
 
-export default async function SystemPage() {
-  // Mock connection tests (Turso/Redis/Clerk/Resend)
-  const tursoOk = true;
-  const redisOk = true;
-  const clerkOk = true;
-  const resendOk = true;
+async function checkTurso(): Promise<boolean> {
+  try {
+    await db.select({ val: sql`1` }).from(sql`users`).limit(1);
+    return true;
+  } catch { return false; }
+}
 
-  const [dbStats] = await db.select({ 
+async function checkRedis(): Promise<boolean> {
+  const url = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
+  if (!url || !token) return false;
+  try {
+    const res = await fetch(`${url}/ping`, { headers: { Authorization: `Bearer ${token}` } });
+    return res.ok;
+  } catch { return false; }
+}
+
+function checkClerk(): boolean {
+  return !!(process.env.CLERK_SECRET_KEY && process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
+}
+
+function checkResend(): boolean {
+  return !!process.env.RESEND_API_KEY;
+}
+
+export default async function SystemPage() {
+  const [tursoOk, redisOk] = await Promise.all([checkTurso(), checkRedis()]);
+  const clerkOk = checkClerk();
+  const resendOk = checkResend();
+
+  const [dbStats] = await db.select({
     userCount: sql`count(*)`,
-    tableSize: sql`datetime('now')` // Mock for size
   }).from(sql`users`);
 
   const services = [
-    { name: "Turso (SQLite)", status: tursoOk ? "Connected" : "Error", icon: HardDrive, health: "99.9%" },
-    { name: "Clerk (Auth)", status: clerkOk ? "Operational" : "Error", icon: ShieldCheck, health: "100%" },
-    { name: "Upstash (Redis)", status: redisOk ? "Active" : "Error", icon: Activity, health: "100%" },
-    { name: "Resend (Email)", status: resendOk ? "Operational" : "Error", icon: Terminal, health: "98.2%" },
+    { name: "Turso (SQLite)", status: tursoOk ? "Connected" : "Error", icon: HardDrive },
+    { name: "Clerk (Auth)", status: clerkOk ? "Operational" : "Error", icon: ShieldCheck },
+    { name: "Upstash (Redis)", status: redisOk ? "Active" : "Error", icon: Activity },
+    { name: "Resend (Email)", status: resendOk ? "Operational" : "Error", icon: Terminal },
   ];
 
   return (
@@ -29,9 +51,15 @@ export default async function SystemPage() {
           <p className="text-xs text-slate-400 font-black uppercase tracking-[0.2em] mt-1">Environment monitoring & service health</p>
         </div>
         <div className="flex gap-2">
-           <span className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-emerald-100">
-              <CheckCircle2 size={12} /> All Systems Nominal
-           </span>
+           {tursoOk && redisOk && clerkOk && resendOk ? (
+             <span className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-emerald-100">
+                <CheckCircle2 size={12} /> All Systems Nominal
+             </span>
+           ) : (
+             <span className="flex items-center gap-1.5 px-3 py-1 bg-red-50 text-red-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-red-100">
+                <AlertTriangle size={12} /> Issues Detected
+             </span>
+           )}
         </div>
       </div>
 
@@ -47,7 +75,7 @@ export default async function SystemPage() {
                  </span>
               </div>
               <h3 className="text-sm font-bold text-slate-900">{s.name}</h3>
-              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Uptime: {s.health}</p>
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">{s.status === 'Connected' || s.status === 'Operational' || s.status === 'Active' ? 'Healthy' : 'Check required'}</p>
            </div>
          ))}
       </div>

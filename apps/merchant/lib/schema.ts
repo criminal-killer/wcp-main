@@ -73,10 +73,27 @@ export const organizations = sqliteTable('organizations', {
   ai_endpoint_url: text('ai_endpoint_url'), // for custom openai-compatible endpoints
   ai_system_prompt: text('ai_system_prompt'), // custom refinement
 
+  // Bot Configuration (admin-managed)
+  bot_menu_style: text('bot_menu_style').default('professional'),
+  bot_emojis_enabled: integer('bot_emojis_enabled').default(1),
+  bot_custom_footer: text('bot_custom_footer').default('Powered by Chatevo'),
+  bot_show_search: integer('bot_show_search').default(1),
+  bot_show_categories: integer('bot_show_categories').default(1),
+  bot_show_cart: integer('bot_show_cart').default(1),
+  bot_show_orders: integer('bot_show_orders').default(1),
+
+  // Usage Tracking
+  usage_ai_daily_count: integer('usage_ai_daily_count').default(0),
+  usage_ai_monthly_count: integer('usage_ai_monthly_count').default(0),
+  usage_last_reset_daily: text('usage_last_reset_daily').default(sql`(datetime('now'))`),
+  usage_last_reset_monthly: text('usage_last_reset_monthly').default(sql`(datetime('now'))`),
+
   // Meta
   created_at: text('created_at').default(sql`(datetime('now'))`),
   updated_at: text('updated_at').default(sql`(datetime('now'))`),
   is_active: integer('is_active').default(1),
+  is_waitlisted: integer('is_waitlisted').default(0),
+  enabled_features: text('enabled_features').default('{"ai_shopping":true,"manual_payments":true,"delivery_zones":true}'),
 })
 
 // ============================================
@@ -87,7 +104,7 @@ export const stores = sqliteTable('stores', {
   id: text('id').primaryKey().default(sql`(lower(hex(randomblob(16))))`),
   org_id: text('org_id').notNull().references(() => organizations.id),
   name: text('name').notNull(),
-  slug: text('slug').notNull().unique(),
+  slug: text('slug').notNull(),
   store_type: text('store_type').default('physical'), // physical, digital, services
   description: text('description'),
   logo_url: text('logo_url'),
@@ -97,6 +114,9 @@ export const stores = sqliteTable('stores', {
   wa_phone_number_id: text('wa_phone_number_id'),
   wa_business_account_id: text('wa_business_account_id'),
   wa_access_token_encrypted: text('wa_access_token_encrypted'),
+
+  // Status
+  is_live: integer('is_live').default(0),
 
   // Settings
   currency: text('currency').default('USD'),
@@ -132,6 +152,8 @@ export const users = sqliteTable('users', {
   role: text('role').default('owner'),
   created_at: text('created_at').default(sql`(datetime('now'))`),
   is_active: integer('is_active').default(1),
+  is_super_admin: integer('is_super_admin').default(0),
+  active_store_id: text('active_store_id'),
 })
 
 // ============================================
@@ -154,6 +176,9 @@ export const products = sqliteTable('products', {
   images: text('images').default('[]'),
   variants: text('variants').default('[]'),
   inventory_count: integer('inventory_count').default(0),
+  color: text('color'), // for filtering
+  metadata: text('metadata').default('{}'), // extra searchable attributes (JSON)
+  type: text('type'),
   is_active: integer('is_active').default(1),
   sort_order: integer('sort_order').default(0),
   created_at: text('created_at').default(sql`(datetime('now'))`),
@@ -169,6 +194,7 @@ export const products = sqliteTable('products', {
 export const contacts = sqliteTable('contacts', {
   id: text('id').primaryKey().default(sql`(lower(hex(randomblob(16))))`),
   org_id: text('org_id').notNull().references(() => organizations.id),
+  store_id: text('store_id'),
   phone: text('phone').notNull(),
   name: text('name'),
   email: text('email'),
@@ -199,6 +225,8 @@ export const conversations = sqliteTable('conversations', {
   last_message_at: text('last_message_at'),
   last_message_preview: text('last_message_preview'),
   unread_count: integer('unread_count').default(0),
+  temp_flow_state: text('temp_flow_state'), // Fallback for Redis
+  store_id: text('store_id'),
   created_at: text('created_at').default(sql`(datetime('now'))`),
 }, (table) => ({
   orgContactIdx: index('conversations_org_contact_idx').on(table.org_id, table.contact_id),
@@ -220,6 +248,7 @@ export const messages = sqliteTable('messages', {
   status: text('status').default('sent'),
   sent_by: text('sent_by').references(() => users.id),
   metadata: text('metadata'),
+  store_id: text('store_id'),
   created_at: text('created_at').default(sql`(datetime('now'))`),
 }, (table) => ({
   convCreatedIdx: index('messages_conv_created_idx').on(table.conversation_id, table.created_at),
@@ -233,6 +262,7 @@ export const orders = sqliteTable('orders', {
   id: text('id').primaryKey().default(sql`(lower(hex(randomblob(16))))`),
   org_id: text('org_id').notNull().references(() => organizations.id),
   contact_id: text('contact_id').notNull().references(() => contacts.id),
+  store_id: text('store_id'),
   order_number: text('order_number').notNull(),
   items: text('items').notNull(),
   subtotal: real('subtotal').notNull(),
@@ -246,6 +276,8 @@ export const orders = sqliteTable('orders', {
   payment_provider: text('payment_provider'),
   payment_link: text('payment_link'),
   delivery_address: text('delivery_address'),
+  delivery_zone: text('delivery_zone'),
+  payment_proof: text('payment_proof'),
   tracking_number: text('tracking_number'),
   order_status: text('order_status').default('new'),
   notes: text('notes'),
@@ -261,18 +293,6 @@ export const orders = sqliteTable('orders', {
 // ============================================
 // CARTS (Temporary, per conversation)
 // ============================================
-export const carts = sqliteTable('carts', {
-  id: text('id').primaryKey().default(sql`(lower(hex(randomblob(16))))`),
-  org_id: text('org_id').notNull().references(() => organizations.id),
-  contact_id: text('contact_id').notNull().references(() => contacts.id),
-  items: text('items').default('[]'),
-  total: real('total').default(0),
-  currency: text('currency').default('KES'),
-  expires_at: text('expires_at'),
-  created_at: text('created_at').default(sql`(datetime('now'))`),
-  updated_at: text('updated_at').default(sql`(datetime('now'))`),
-})
-
 // ============================================
 // AUTO REPLIES
 // ============================================
@@ -285,24 +305,6 @@ export const auto_replies = sqliteTable('auto_replies', {
   response: text('response').notNull(),
   is_active: integer('is_active').default(1),
   sort_order: integer('sort_order').default(0),
-  created_at: text('created_at').default(sql`(datetime('now'))`),
-})
-
-// ============================================
-// TEMPLATES (WhatsApp Message Templates)
-// ============================================
-export const templates = sqliteTable('templates', {
-  id: text('id').primaryKey().default(sql`(lower(hex(randomblob(16))))`),
-  org_id: text('org_id').notNull().references(() => organizations.id),
-  name: text('name').notNull(),
-  body: text('body').notNull(),
-  header_type: text('header_type'),
-  header_content: text('header_content'),
-  footer: text('footer'),
-  buttons: text('buttons'),
-  variables: text('variables'),
-  meta_template_id: text('meta_template_id'),
-  meta_status: text('meta_status').default('draft'),
   created_at: text('created_at').default(sql`(datetime('now'))`),
 })
 
@@ -321,7 +323,8 @@ export const payments_log = sqliteTable('payments_log', {
   status: text('status').default('pending'),
   metadata: text('metadata'),
   // Idempotency key: provider + event_id prevents double-processing on webhook retries
-  idempotency_key: text('idempotency_key').unique(),
+  // DB has partial unique index: payments_log_idempotency_idx (WHERE idempotency_key IS NOT NULL)
+  idempotency_key: text('idempotency_key'),
   created_at: text('created_at').default(sql`(datetime('now'))`),
 })
 
@@ -378,14 +381,6 @@ export const waitlist = sqliteTable('waitlist', {
 })
 
 // ============================================
-// SEQUENCES (Order number generation)
-// ============================================
-export const sequences = sqliteTable('sequences', {
-  org_id: text('org_id').primaryKey().references(() => organizations.id),
-  last_order_number: integer('last_order_number').default(0),
-})
-
-// ============================================
 // SUBSCRIPTIONS (SaaS billing)
 // ============================================
 export const subscriptions = sqliteTable('subscriptions', {
@@ -427,12 +422,15 @@ export const affiliates = sqliteTable('affiliates', {
   id: text('id').primaryKey().default(sql`(lower(hex(randomblob(16))))`),
   // clerk_id links this affiliate record to a Clerk user for dashboard auth
   clerk_id: text('clerk_id').unique(),
+  referred_by_id: text('referred_by_id'),
   name: text('name').notNull(),
+  username: text('username').unique(),
   email: text('email').notNull().unique(),
   phone: text('phone'),
   referral_code: text('referral_code').notNull().unique(),
   status: text('status').default('pending'), // pending, approved, rejected
   total_referred: integer('total_referred').default(0),
+  total_network: integer('total_network').default(0),
   total_earned: real('total_earned').default(0),
   balance: real('balance').default(0),
   payment_details: text('payment_details'), // JSON holding bank/paypal info
@@ -465,6 +463,36 @@ export const notifications = sqliteTable('notifications', {
   type: text('type').default('info'), // info, warning, success, error, system
   is_read: integer('is_read').default(0),
   action_url: text('action_url'),
+  created_at: text('created_at').default(sql`(datetime('now'))`),
+})
+
+// ============================================
+// LEADS (Admin-managed leads)
+// ============================================
+export const leads = sqliteTable('leads', {
+  id: text('id').primaryKey().default(sql`(lower(hex(randomblob(16))))`),
+  business_name: text('business_name').notNull(),
+  email: text('email'),
+  phone: text('phone'),
+  website: text('website'),
+  city: text('city'),
+  status: text('status').default('APPROVED'), // APPROVED, SENT, REJECTED
+  source: text('source').default('OSM'),
+  created_at: text('created_at').default(sql`(datetime('now'))`),
+}, (table) => ({
+  nameCityIdx: uniqueIndex('leads_name_city_idx').on(table.business_name, table.city),
+}))
+
+// ============================================
+// MARKETING POSTS
+// ============================================
+export const marketing_posts = sqliteTable('marketing_posts', {
+  id: text('id').primaryKey().default(sql`(lower(hex(randomblob(16))))`),
+  org_id: text('org_id').references(() => organizations.id),
+  content: text('content').notNull(),
+  platform: text('platform').notNull(), // fb, ig, tw
+  status: text('status').default('APPROVED'), // PENDING, APPROVED, POSTED, FAILED
+  scheduled_at: integer('scheduled_at'), // timestamp in ms
   created_at: text('created_at').default(sql`(datetime('now'))`),
 })
 

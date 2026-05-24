@@ -502,13 +502,86 @@ if (org.store_paypal_username) {
 
 ---
 
+## P2 — Schema Cleanup (2026-05-24, continued)
+
+### 33. Remove Unused Schema Tables
+
+**Issue:** `carts`, `templates`, and `sequences` tables were defined in schema but never imported or used anywhere.
+**Severity:** LOW (dead code)
+**Files:**
+- `apps/merchant/lib/schema.ts` — Removed 3 table definitions
+- `apps/admin/src/lib/schema.ts` — Removed 3 table definitions
+**Change:** Removed `carts` (lines 264-274), `templates` (lines 294-307), and `sequences` (lines 383-386) from both schemas.
+**Action required:** Run `npm run db:push` to drop the tables from the database.
+
+---
+
+## P3 — Quality Fixes (2026-05-24, continued)
+
+### 34. Fix Admin System Health Page
+
+**Issue:** All service connection tests were hardcoded to `true`. Health percentages were fake. "All Systems Nominal" always shown.
+**Severity:** MEDIUM
+**File:** `apps/admin/src/app/system/page.tsx`
+**Change:** Implemented real connection tests:
+- Turso: actual DB query to verify connection
+- Redis: HTTP ping to Upstash REST API
+- Clerk: checks if env vars are configured
+- Resend: checks if API key is configured
+- Removed fake uptime percentages
+- "All Systems Nominal" badge now dynamic based on actual status
+
+---
+
+### 35. Fix Admin Dashboard User Plan Display
+
+**Issue:** All recent signups showed "Starter" badge regardless of actual subscription plan.
+**Severity:** LOW
+**File:** `apps/admin/src/app/page.tsx`
+**Change:** Now joins `users` with `subscriptions` to show actual plan. Shows "Free" for users without subscriptions.
+**Before:**
+```typescript
+<span className="...">Starter</span>
+```
+**After:**
+```typescript
+<span className={`... ${user.plan ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-50 text-slate-400'}`}>
+  {user.plan || 'Free'}
+</span>
+```
+
+---
+
+## P2 — Schema Fixes (2026-05-24, continued)
+
+### 36. Full Schema Reconciliation (merchant + admin)
+
+**Issue:** Merchant schema was missing 20+ columns that admin schema used in the same DB. Drizzle-kit `db:push` wanted to delete them, causing data loss warnings. Also had index mismatches (`payments_log_idempotency_key_unique`, `stores_slug_unique`).
+**Severity:** HIGH
+**Files:**
+- `apps/merchant/lib/schema.ts` — Added all missing columns/tables from admin schema
+- `apps/admin/src/lib/schema.ts` — Fixed `idempotency_key` unique constraint mismatch
+**Changes:**
+- Added to `organizations`: `bot_menu_style`, `bot_emojis_enabled`, `bot_custom_footer`, `bot_show_search`, `bot_show_categories`, `bot_show_cart`, `bot_show_orders`, `usage_ai_daily_count`, `usage_ai_monthly_count`, `usage_last_reset_daily`, `usage_last_reset_monthly`, `is_waitlisted`, `enabled_features`
+- Added to `users`: `is_super_admin`, `active_store_id`
+- Added to `conversations`: `temp_flow_state`, `store_id`
+- Added to `messages`: `store_id`
+- Added to `orders`: `store_id`, `delivery_zone`, `payment_proof`
+- Added to `contacts`: `store_id`
+- Added to `products`: `color`, `metadata`, `type`
+- Added to `affiliates`: `referred_by_id`, `username`, `total_network`
+- Added to `stores`: `is_live`; removed `.unique()` from `slug` (DB doesn't have it)
+- Added tables: `leads`, `marketing_posts`
+- Removed `.unique()` from `payments_log.idempotency_key` (DB has partial unique index with different name)
+- **DB push succeeded** — no data loss
+
+---
+
 ## Remaining Fixes (Not Yet Applied)
 
 See [AUDIT_REPORT.md](./AUDIT_REPORT.md) for the full list. Key items:
 
-- [ ] Remove unused schema tables (`carts`, `sequences`, `templates` in merchant)
 - [ ] Remove unused schema columns (15+ fields never queried)
-- [ ] Fix admin dashboard hardcoded fake stats (revenue, waitlist, system health)
 - [ ] Fix non-functional UI elements (search inputs, filter buttons)
 - [ ] Fix landing page inconsistent marketing claims
 

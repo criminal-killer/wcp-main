@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { organizations, users, subscriptions } from "@/lib/schema";
-import { count, sum, desc } from "drizzle-orm";
+import { count, sum, desc, sql } from "drizzle-orm";
 import { Users, Store, DollarSign, UserPlus, TrendingUp } from "lucide-react";
 
 export default async function AdminDashboard() {
@@ -27,7 +27,16 @@ export default async function AdminDashboard() {
     };
   });
 
-  const recentUsers = await db.select().from(users).orderBy(desc(users.created_at)).limit(5);
+  const recentUsers = await db.select({
+    id: users.id,
+    name: users.name,
+    email: users.email,
+    created_at: users.created_at,
+    plan: subscriptions.plan,
+  }).from(users)
+    .leftJoin(subscriptions, sql`${users.org_id} = ${subscriptions.org_id}`)
+    .orderBy(desc(users.created_at))
+    .limit(5);
 
   const metrics = [
     { title: "Total Users", value: totalUsers.value, icon: Users, color: "text-blue-600", bg: "bg-blue-50" },
@@ -84,7 +93,9 @@ export default async function AdminDashboard() {
                 </div>
                 <div className="text-right">
                   <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest italic">{new Date(user.created_at || "").toLocaleDateString()}</p>
-                  <span className="text-[9px] bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full font-black uppercase tracking-widest border border-emerald-100">Starter</span>
+                  <span className={`text-[9px] px-2 py-0.5 rounded-full font-black uppercase tracking-widest border ${user.plan ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-slate-50 text-slate-400 border-slate-100'}`}>
+                    {user.plan || 'Free'}
+                  </span>
                 </div>
               </div>
             ))}

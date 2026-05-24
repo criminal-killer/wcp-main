@@ -301,21 +301,6 @@ export const orders = sqliteTable('orders', {
 }))
 
 // ============================================
-// CARTS (Temporary, per conversation)
-// ============================================
-export const carts = sqliteTable('carts', {
-  id: text('id').primaryKey().default(sql`(lower(hex(randomblob(16))))`),
-  org_id: text('org_id').notNull().references(() => organizations.id),
-  contact_id: text('contact_id').notNull().references(() => contacts.id),
-  items: text('items').default('[]'),
-  total: real('total').default(0),
-  currency: text('currency').default('KES'),
-  expires_at: text('expires_at'),
-  created_at: text('created_at').default(sql`(datetime('now'))`),
-  updated_at: text('updated_at').default(sql`(datetime('now'))`),
-})
-
-// ============================================
 // AUTO REPLIES
 // ============================================
 export const auto_replies = sqliteTable('auto_replies', {
@@ -327,24 +312,6 @@ export const auto_replies = sqliteTable('auto_replies', {
   response: text('response').notNull(),
   is_active: integer('is_active').default(1),
   sort_order: integer('sort_order').default(0),
-  created_at: text('created_at').default(sql`(datetime('now'))`),
-})
-
-// ============================================
-// TEMPLATES (WhatsApp Message Templates)
-// ============================================
-export const templates = sqliteTable('templates', {
-  id: text('id').primaryKey().default(sql`(lower(hex(randomblob(16))))`),
-  org_id: text('org_id').notNull().references(() => organizations.id),
-  name: text('name').notNull(),
-  body: text('body').notNull(),
-  header_type: text('header_type'),
-  header_content: text('header_content'),
-  footer: text('footer'),
-  buttons: text('buttons'),
-  variables: text('variables'),
-  meta_template_id: text('meta_template_id'),
-  meta_status: text('meta_status').default('draft'),
   created_at: text('created_at').default(sql`(datetime('now'))`),
 })
 
@@ -362,7 +329,8 @@ export const payments_log = sqliteTable('payments_log', {
   currency: text('currency').notNull(),
   status: text('status').default('pending'),
   metadata: text('metadata'),
-  idempotency_key: text('idempotency_key').unique(),
+  // DB has partial unique index: payments_log_idempotency_idx (WHERE idempotency_key IS NOT NULL)
+  idempotency_key: text('idempotency_key'),
   created_at: text('created_at').default(sql`(datetime('now'))`),
 })
 
@@ -415,14 +383,6 @@ export const waitlist = sqliteTable('waitlist', {
   migrated: integer('migrated').default(0),
   migrated_at: text('migrated_at'),
   created_at: text('created_at').default(sql`(datetime('now'))`),
-})
-
-// ============================================
-// SEQUENCES (Order number generation)
-// ============================================
-export const sequences = sqliteTable('sequences', {
-  org_id: text('org_id').primaryKey().references(() => organizations.id),
-  last_order_number: integer('last_order_number').default(0),
 })
 
 // ============================================
