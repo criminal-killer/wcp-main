@@ -736,17 +736,128 @@ serverExternalPackages: ['@libsql/client', 'drizzle-orm', 'libsql'],
 
 ---
 
+## P1 — Error Monitoring System (2026-05-24, continued)
+
+### 50. Implement Error Monitoring with Auto-Notifications
+
+**Issue:** Error logging existed but was only wired into the webhook route. No auto-notifications for merchants or admin when server errors occurred.
+**Severity:** HIGH
+**Files:**
+- `apps/merchant/lib/notifications.ts` — NEW: `notifyErrorOccurred()` creates in-app notification for merchant + sends email to admin via Resend
+- `apps/merchant/lib/error-logger.ts` — Updated: imports `notifyErrorOccurred` from `@/lib/notifications`, calls it for high-severity server-side errors after DB insert
+**Change:** When a high-severity server error is logged, the system automatically:
+1. Creates an in-app notification for the affected merchant ("We've detected an issue...")
+2. Sends an email to admin (ADMIN_EMAIL env var) with error details, cause, and suggested fix
+
+---
+
+### 51. Add Source Field to Error Logs Schema
+
+**Issue:** No way to distinguish server-side errors (which need auto-notification) from client-side errors (log only).
+**Severity:** MEDIUM
+**Files:**
+- `apps/merchant/lib/schema.ts` — Added `source` field to `errorLogs` table
+- `apps/admin/src/lib/schema.ts` — Added `source` field to `errorLogs` table
+**Change:** Added `source: text('source').notNull().default('server')` — values: `server`, `client`. Server-side errors trigger auto-notifications. Client-side errors are logged for tracking only.
+
+---
+
+### 52. Wire Error Logging into All Merchant API Routes
+
+**Issue:** Only webhook route had error logging. 20+ other API routes had catch blocks that only did `console.error`.
+**Severity:** HIGH
+**Files changed (20+ routes):**
+- `api/auto-replies/route.ts`, `api/contacts/route.ts`, `api/contacts/export/route.ts`
+- `api/conversations/route.ts`, `api/messages/route.ts`, `api/messages/send/route.ts`
+- `api/orders/route.ts`, `api/orders/[id]/status/route.ts`, `api/notifications/route.ts`
+- `api/stores/route.ts`, `api/products/route.ts`, `api/products/[id]/route.ts`
+- `api/referrals/me/route.ts`, `api/settings/store/route.ts`, `api/settings/payments/route.ts`
+- `api/affiliates/me/route.ts`, `api/affiliates/referrals/route.ts`, `api/affiliates/apply/route.ts`
+- `api/tickets/route.ts`, `api/ai/chat/route.ts`, `api/payments/store-webhook/route.ts`
+**Change:** Each catch block now calls `logError()` with `categorizeError()` to auto-categorize severity, cause, and fix suggestions.
+
+---
+
+## P2 — Admin Panel Overhaul (2026-05-24, continued)
+
+### 53. Create Admin Management API Routes
+
+**Issue:** Admin panel had no API routes for managing merchant data. All pages were read-only.
+**Severity:** HIGH
+**Files created:**
+- `apps/admin/src/app/api/users/route.ts` — GET (list/search/filter with org join) + PATCH (suspend/activate org, change plan)
+- `apps/admin/src/app/api/organizations/route.ts` — GET (list with product/order/error stats) + PATCH (suspend/activate/change_plan/update)
+- `apps/admin/src/app/api/products/route.ts` — GET (list/search/filter by org/category) + PATCH (activate/deactivate)
+- `apps/admin/src/app/api/orders/route.ts` — GET (list/search/filter by status/payment) + PATCH (update order_status/payment_status)
+- `apps/admin/src/app/api/stores/route.ts` — GET (list by org) + PATCH (activate/deactivate)
+**All routes have admin auth check:** `user.role !== 'admin'` → 403.
+
+---
+
+### 54. Redesign Admin Users Page with Full Management
+
+**Issue:** Users page had no search, no filter, no management actions — just a static table.
+**Severity:** HIGH
+**Files:**
+- `apps/admin/src/app/users/page.tsx` — Converted from server component to thin wrapper
+- `apps/admin/src/app/users/users-client.tsx` — NEW: client component with search (name/email/org), plan filter, action menu (view org, suspend/activate, change plan per dropdown)
+
+---
+
+### 55. Create Admin Organizations Page
+
+**Issue:** No page existed to manage organizations across the platform.
+**Severity:** HIGH
+**Files created:**
+- `apps/admin/src/app/organizations/page.tsx` — Server component: fetches orgs with product/order/error stats
+- `apps/admin/src/app/organizations/organizations-client.tsx` — Card grid: search, plan filter, WA status, error badges, action menu (view details, suspend/activate, change plan)
+- `apps/admin/src/app/organizations/[id]/page.tsx` — Detail page: stats grid, products table, orders table, AI settings, WhatsApp status
+
+---
+
+### 56. Create Admin Orders Page
+
+**Issue:** No page existed to view/manage orders across all organizations.
+**Severity:** MEDIUM
+**Files created:**
+- `apps/admin/src/app/orders/page.tsx` — Thin wrapper for OrdersClient
+- `apps/admin/src/app/orders/orders-client.tsx` — Table with search (order#/customer/phone), status filter, payment filter, color-coded badges
+
+---
+
+### 57. Create Admin Products Page
+
+**Issue:** No page existed to view/manage products across all organizations.
+**Severity:** MEDIUM
+**Files created:**
+- `apps/admin/src/app/products/page.tsx` — Server component: fetches products with org join
+- `apps/admin/src/app/products/products-client.tsx` — Table with search, store filter, category filter, status filter, activate/deactivate toggle
+
+---
+
+### 58. Update Admin Sidebar and Dashboard
+
+**Issue:** Sidebar had no links to new pages. Dashboard had no error visibility. "View All" button had no handler.
+**Severity:** MEDIUM
+**Files:**
+- `apps/admin/src/app/layout.tsx` — Updated sidebar: added Organizations, Products, Orders links. Promoted Error Logs from System subsection to main nav. Added icons: Store, Package, AlertCircle, ShoppingBag.
+- `apps/admin/src/app/page.tsx` — Added error stats banner (shows open/high-severity errors, links to error logs). Fixed "View All" button to link to /users.
+- `apps/admin/src/app/system/error-logs/page.tsx` — Enhanced with source/severity filters, stats row
+- `apps/admin/src/app/system/error-logs/error-filter.tsx` — NEW: client component for source + severity filter buttons
+- `apps/admin/src/app/system/error-logs/error-card.tsx` — Added SourceBadge (server/client)
+
+---
+
 ## Remaining Fixes (Not Yet Applied)
 
 See [AUDIT_REPORT.md](./AUDIT_REPORT.md) for the full list. Key items:
 
 - [ ] Remove unused schema columns (admin-managed fields from reconciliation — skipping to avoid breaking admin app)
-- [ ] Admin users search + filter — no handlers
+- [ ] Admin system Quick Actions (Clear Cache, Backup DB, Flush Logs, Panic Mode) — no handlers
 - [ ] Admin waitlist Export CSV / Migrate All — no handlers
-- [ ] Admin system Quick Actions — no handlers
-- [ ] Admin View All button — no handler
-- [ ] SQL-level search filtering for contacts/orders
-- [ ] loading.tsx / Suspense boundaries
+- [ ] SQL-level search filtering for contacts/orders (currently filters in JavaScript after fetching all rows)
+- [ ] loading.tsx / Suspense boundaries for dashboard pages
+- [ ] Committed build artifacts (.next/, tsconfig.tsbuildinfo) — need to add to .gitignore and remove from git
 
 ---
 
