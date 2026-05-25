@@ -47,7 +47,6 @@ export default function OrdersTable({ orders, currency }: { orders: Order[]; cur
 
   return (
     <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
-      {/* Filters */}
       <div className="px-5 py-4 border-b border-border/50 flex items-center gap-3 flex-wrap">
         <input
           type="text"
@@ -58,9 +57,7 @@ export default function OrdersTable({ orders, currency }: { orders: Order[]; cur
         />
         <button
           onClick={() => setStatusFilter(null)}
-          className={`text-xs px-3 py-1.5 rounded-full border transition-colors capitalize ${
-            !statusFilter ? 'bg-[#25D366] text-white border-[#25D366]' : 'border-border text-muted-foreground hover:border-[#25D366] hover:text-[#25D366]'
-          }`}
+          className={`text-xs px-3 py-1.5 rounded-full border transition-colors capitalize ${!statusFilter ? 'bg-[#25D366] text-white border-[#25D366]' : 'border-border text-muted-foreground hover:border-[#25D366] hover:text-[#25D366]'}`}
         >
           All
         </button>
@@ -68,9 +65,7 @@ export default function OrdersTable({ orders, currency }: { orders: Order[]; cur
           <button
             key={status}
             onClick={() => setStatusFilter(statusFilter === status ? null : status)}
-            className={`text-xs px-3 py-1.5 rounded-full border transition-colors capitalize ${
-              statusFilter === status ? 'bg-[#25D366] text-white border-[#25D366]' : 'border-border text-muted-foreground hover:border-[#25D366] hover:text-[#25D366]'
-            }`}
+            className={`text-xs px-3 py-1.5 rounded-full border transition-colors capitalize ${statusFilter === status ? 'bg-[#25D366] text-white border-[#25D366]' : 'border-border text-muted-foreground hover:border-[#25D366] hover:text-[#25D366]'}`}
           >
             {status}
           </button>
@@ -98,7 +93,7 @@ export default function OrdersTable({ orders, currency }: { orders: Order[]; cur
                 </td>
               </tr>
             ) : (
-              filtered.map((order) => (
+              filtered.map(order => (
                 <tr key={order.id} className="hover:bg-secondary transition-colors">
                   <td className="px-5 py-3">
                     <p className="font-semibold text-foreground text-sm">{order.order_number}</p>

@@ -6,6 +6,8 @@ import { Search, Filter, Download, UserCheck, Mail, Database, Users } from "luci
 export default async function WaitlistPage() {
   const allEntries = await db.select().from(waitlist).orderBy(desc(waitlist.created_at));
   const [totalCount] = await db.select({ value: count() }).from(waitlist);
+  const interestedCount = allEntries.filter(e => e.pricing_willingness && e.pricing_willingness !== 'unknown').length;
+  const responseRate = allEntries.length > 0 ? Math.round((interestedCount / allEntries.length) * 100) : 0;
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -38,7 +40,7 @@ export default async function WaitlistPage() {
         <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
             <div>
                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Beta Interested</p>
-               <p className="text-2xl font-black text-slate-900 italic font-serif">42</p>
+               <p className="text-2xl font-black text-slate-900 italic font-serif">{interestedCount}</p>
             </div>
             <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center">
                <UserCheck size={24} />
@@ -47,7 +49,7 @@ export default async function WaitlistPage() {
         <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
             <div>
                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Responses</p>
-               <p className="text-2xl font-black text-slate-900 italic font-serif">85%</p>
+               <p className="text-2xl font-black text-slate-900 italic font-serif">{responseRate}%</p>
             </div>
             <div className="w-12 h-12 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center">
                <Mail size={24} />

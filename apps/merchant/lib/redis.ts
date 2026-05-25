@@ -82,21 +82,6 @@ export async function clearCart(orgId: string, phone: string) {
   }, null)
 }
 
-// Product cache helpers (currently unused — reserved for future use)
-export async function getCachedProducts(orgId: string) {
-  return await exec(async (r) => {
-    const key = `Chatevo:products:${orgId}`
-    return await r.get(key)
-  }, null)
-}
-
-export async function setCachedProducts(orgId: string, products: unknown) {
-  const key = `Chatevo:products:${orgId}`
-  await exec(async (r) => {
-    await r.setex(key, 300, JSON.stringify(products)) // 5 min TTL
-  }, null)
-}
-
 export async function clearProductCache(orgId: string) {
   const key = `Chatevo:products:${orgId}`
   await exec(async (r) => {

@@ -38,6 +38,7 @@ export default function ContactsTable({ contacts, currency }: { contacts: Contac
           className="flex-1 border border-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#25D366]"
         />
       </div>
+
       <table className="w-full">
         <thead className="bg-secondary border-b border-border text-xs font-semibold text-muted-foreground uppercase tracking-wider">
           <tr>
@@ -58,7 +59,7 @@ export default function ContactsTable({ contacts, currency }: { contacts: Contac
               </td>
             </tr>
           ) : (
-            filtered.map((contact) => {
+            filtered.map(contact => {
               const tags = JSON.parse(contact.tags || '[]') as string[]
               return (
                 <tr key={contact.id} className="hover:bg-secondary transition-colors">
@@ -79,7 +80,7 @@ export default function ContactsTable({ contacts, currency }: { contacts: Contac
                   </td>
                   <td className="px-5 py-3">
                     <div className="flex gap-1 flex-wrap">
-                      {tags.map((tag) => (
+                      {tags.map(tag => (
                         <span key={tag} className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
                           {tag}
                         </span>

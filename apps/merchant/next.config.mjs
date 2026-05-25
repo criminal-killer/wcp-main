@@ -1,13 +1,14 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    images: {
-        remotePatterns: [
-            {
-                protocol: 'https',
-                hostname: 'img.clerk.com',
-            },
-        ],
-    },
-};
+  images: {
+    remotePatterns: [
+      { protocol: 'https', hostname: '**' },
+    ],
+  },
+  // Turso/libsql must run in Node.js runtime, not Edge
+  serverExternalPackages: ['@libsql/client', 'drizzle-orm', 'libsql'],
+  // Transpile local workspace packages
+  transpilePackages: ['@chatevo/db', '@chatevo/shared'],
+}
 
-export default nextConfig;
+export default nextConfig

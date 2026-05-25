@@ -3,8 +3,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { users, organizations } from '@/lib/schema'
 import { eq } from 'drizzle-orm'
-import { encrypt } from '@/lib/encryption'
-
 // Store Info
 export async function PUT(req: NextRequest) {
   try {

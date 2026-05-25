@@ -643,11 +643,110 @@ if (org.store_paypal_username) {
 
 ---
 
+## P3 — Quality Fixes (2026-05-24, continued)
+
+### 43. Fix Store PATCH Missing org_id in WHERE Clause
+
+**Issue:** Store PATCH endpoint only filtered by `stores.id` — TOCTOU race condition. Another org could update a store by guessing its ID.
+**Severity:** MEDIUM (security)
+**File:** `apps/merchant/app/api/stores/route.ts:134`
+**Change:** Added `eq(stores.org_id, user.org_id)` to the UPDATE WHERE clause.
+**Before:**
+```typescript
+await db.update(stores).set(updateData).where(eq(stores.id, body.store_id))
+```
+**After:**
+```typescript
+await db.update(stores).set(updateData).where(and(eq(stores.id, body.store_id), eq(stores.org_id, user.org_id)))
+```
+
+---
+
+### 44. Fix Conversation Update Missing org_id
+
+**Issue:** Conversation update in message send only filtered by `conversation_id` — no org scope.
+**Severity:** MEDIUM (security)
+**File:** `apps/merchant/app/api/messages/send/route.ts:75`
+**Change:** Added `eq(conversations.org_id, user.org_id)` to the WHERE clause.
+**Before:**
+```typescript
+.where(eq(conversations.id, conversation_id))
+```
+**After:**
+```typescript
+.where(and(eq(conversations.id, conversation_id), eq(conversations.org_id, user.org_id)))
+```
+
+---
+
+### 45. Fix Out-of-Stock Bypass on add_ Action
+
+**Issue:** No inventory check when processing `add_` action — crafted button IDs could add out-of-stock items to cart.
+**Severity:** MEDIUM
+**File:** `apps/merchant/lib/store-engine.ts`
+**Change:** Added inventory check before variant selection in `handleProductAction`. Non-digital products with `inventory_count === 0` are now blocked with an out-of-stock message.
+
+---
+
+### 46. Remove Unreachable Greeting Continue Check
+
+**Issue:** `case 'greeting':` in the flow switch had `if (inputNorm === 'continue')` check that was unreachable — `continue` input is caught earlier at line 183 before the switch runs.
+**Severity:** LOW (dead code)
+**File:** `apps/merchant/lib/store-engine.ts`
+**Change:** Removed the unreachable `continue` check from the greeting case.
+
+---
+
+### 47. Fix Admin Waitlist Fake Stats
+
+**Issue:** "Beta Interested" was hardcoded to 42 and "Responses" was hardcoded to 85%.
+**Severity:** LOW
+**File:** `apps/admin/src/app/waitlist/page.tsx`
+**Change:** Now computes `interestedCount` from entries with non-null `pricing_willingness` and `responseRate` as percentage of total entries. Revenue page was already using real DB data (sum/count from subscriptions).
+
+---
+
+### 48. Remove Dead Code — Unused Redis Functions and Imports
+
+**Issue:** `getCachedProducts` and `setCachedProducts` in redis.ts were exported but never called. `encrypt` import in settings/store/route.ts was unused.
+**Severity:** LOW
+**Files:**
+- `apps/merchant/lib/redis.ts` — Removed `getCachedProducts`, `setCachedProducts`, and `clearProductCache`
+- `apps/merchant/app/api/settings/store/route.ts` — Removed unused `encrypt` import
+
+---
+
+### 49. Fix Conflicting next.config Files
+
+**Issue:** Both `next.config.js` (CommonJS) and `next.config.mjs` (ESM) existed. `.mjs` wins, so `serverComponentsExternalPackages` and `transpilePackages` from `.js` were silently ignored. Also used deprecated `experimental.serverComponentsExternalPackages`.
+**Severity:** MEDIUM (config)
+**Files:**
+- `apps/merchant/next.config.js` — DELETED
+- `apps/merchant/next.config.mjs` — Updated: moved to `serverExternalPackages` (non-experimental), kept `transpilePackages`
+**Before (next.config.mjs):**
+```typescript
+experimental: {
+  serverComponentsExternalPackages: ['@libsql/client', 'drizzle-orm', 'libsql'],
+},
+```
+**After:**
+```typescript
+serverExternalPackages: ['@libsql/client', 'drizzle-orm', 'libsql'],
+```
+
+---
+
 ## Remaining Fixes (Not Yet Applied)
 
 See [AUDIT_REPORT.md](./AUDIT_REPORT.md) for the full list. Key items:
 
 - [ ] Remove unused schema columns (admin-managed fields from reconciliation — skipping to avoid breaking admin app)
+- [ ] Admin users search + filter — no handlers
+- [ ] Admin waitlist Export CSV / Migrate All — no handlers
+- [ ] Admin system Quick Actions — no handlers
+- [ ] Admin View All button — no handler
+- [ ] SQL-level search filtering for contacts/orders
+- [ ] loading.tsx / Suspense boundaries
 
 ---
 

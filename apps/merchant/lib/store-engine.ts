@@ -197,9 +197,6 @@ export async function processIncomingMessage(ctx: EngineContext) {
 
   switch (step) {
     case 'greeting':
-      if (inputNorm === 'continue') {
-        return await showMainMenu(waConfigObj, org, store, phone, orgId)
-      }
       return await showGreeting(waConfigObj, org, store, phone, orgId)
 
     case 'main_menu':
@@ -544,6 +541,11 @@ async function handleProductAction(
       where: storeCondition,
     })
     if (!product) return await sendTextMessage(waConfig, { to: phone, body: '  Product not found.' })
+
+    // Block out-of-stock for non-digital products
+    if (product.inventory_count === 0 && product.product_type !== 'digital') {
+      return await sendTextMessage(waConfig, { to: phone, body: `*${product.name}* is currently out of stock.\n\nType *menu* to browse other products.` })
+    }
 
     const variants = JSON.parse(product.variants || '[]') as Array<{ type: string; options: Array<{ name: string; price?: number }> }>
     if (variants.length > 0) {

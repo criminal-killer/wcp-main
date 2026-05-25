@@ -33,7 +33,6 @@ export default function ProductsTable({ products }: { products: Product[] }) {
 
   return (
     <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
-      {/* Filters */}
       <div className="px-5 py-4 border-b border-border/50 flex items-center gap-3">
         <input
           type="text"
@@ -73,7 +72,7 @@ export default function ProductsTable({ products }: { products: Product[] }) {
               </td>
             </tr>
           ) : (
-            filtered.map((product) => {
+            filtered.map(product => {
               const images = JSON.parse(product.images || '[]') as string[]
               return (
                 <tr key={product.id} className="hover:bg-secondary transition-colors">
@@ -106,21 +105,16 @@ export default function ProductsTable({ products }: { products: Product[] }) {
                   </td>
                   <td className="px-5 py-3">
                     <span className={`text-sm font-medium ${(product.inventory_count || 0) === 0 ? 'text-red-600' : 'text-muted-foreground'}`}>
-                      {product.inventory_count === 0 ? '⚠️ Out of Stock' : `${product.inventory_count} in stock`}
+                      {product.inventory_count === 0 ? 'Out of Stock' : `${product.inventory_count} in stock`}
                     </span>
                   </td>
                   <td className="px-5 py-3">
-                    <span className={`text-xs px-2 py-1 rounded-full font-medium ${
-                      product.is_active ? 'bg-green-100 text-green-700' : 'bg-secondary/50 text-muted-foreground'
-                    }`}>
+                    <span className={`text-xs px-2 py-1 rounded-full font-medium ${product.is_active ? 'bg-green-100 text-green-700' : 'bg-secondary/50 text-muted-foreground'}`}>
                       {product.is_active ? 'Active' : 'Inactive'}
                     </span>
                   </td>
                   <td className="px-5 py-3 text-right">
-                    <Link
-                      href={`/dashboard/products/${product.id}`}
-                      className="text-sm text-[#25D366] font-medium hover:underline"
-                    >
+                    <Link href={`/dashboard/products/${product.id}`} className="text-sm text-[#25D366] font-medium hover:underline">
                       Edit
                     </Link>
                   </td>

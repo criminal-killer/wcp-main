@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
       last_message_preview: content.slice(0, 100),
       is_bot_active: 0, // Switch to human mode when agent replies
     })
-    .where(eq(conversations.id, conversation_id))
+    .where(and(eq(conversations.id, conversation_id), eq(conversations.org_id, user.org_id)))
 
   return NextResponse.json({ data: msg, message: 'Message sent' })
 }

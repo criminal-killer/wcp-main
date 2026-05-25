@@ -131,7 +131,7 @@ export async function PATCH(req: NextRequest) {
       updateData.is_default = 1
     }
 
-    await db.update(stores).set(updateData).where(eq(stores.id, body.store_id))
+    await db.update(stores).set(updateData).where(and(eq(stores.id, body.store_id), eq(stores.org_id, user.org_id)))
 
     return NextResponse.json({ success: true })
   } catch (error) {
