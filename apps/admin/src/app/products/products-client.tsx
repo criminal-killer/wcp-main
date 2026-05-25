@@ -27,8 +27,8 @@ export function ProductsClient({ initialData }: { initialData: Product[] }) {
   const [loadingId, setLoadingId] = useState<string | null>(null)
 
   // Get unique org names and categories for filters
-  const orgs = Array.from(new Set(products.map(p => p.org_name).filter(Boolean) as string[]))
-  const categories = Array.from(new Set(products.map(p => p.category).filter(Boolean) as string[]))
+  const orgs = products.map(p => p.org_name).filter((v): v is string => !!v).filter((v, i, a) => a.indexOf(v) === i)
+  const categories = products.map(p => p.category).filter((v): v is string => !!v).filter((v, i, a) => a.indexOf(v) === i)
 
   const filtered = products.filter(p => {
     const q = searchTerm.toLowerCase()
