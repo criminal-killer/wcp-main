@@ -22,6 +22,22 @@ type Page = {
   sections: Section[]
 }
 
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false)
+  return (
+    <button
+      onClick={() => {
+        navigator.clipboard.writeText(text)
+        setCopied(true)
+        setTimeout(() => setCopied(false), 2000)
+      }}
+      className="text-slate-400 hover:text-white p-1"
+    >
+      {copied ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
+    </button>
+  )
+}
+
 // Docs content following code.claude.com style
 const PAGES: Record<string, Page> = {
   'quickstart': {
@@ -62,9 +78,7 @@ const PAGES: Record<string, Page> = {
               <div className="text-slate-400 text-xs font-mono mb-3">{`// Webhook URL`}</div>
               <div className="flex items-center justify-between bg-slate-900 rounded-lg px-4 py-3">
                 <code className="text-emerald-400 text-sm font-mono">{process.env.NEXT_PUBLIC_APP_URL || 'https://chatevo.com'}/api/webhook</code>
-                <button className="text-slate-400 hover:text-white p-1">
-                  <Copy size={14} />
-                </button>
+                <CopyButton text={`${process.env.NEXT_PUBLIC_APP_URL || 'https://chatevo.com'}/api/webhook`} />
               </div>
             </div>
             <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4">
@@ -323,7 +337,8 @@ export default function DocsPage() {
     'overview': true,
     'connect-wa': true,
   })
-
+  const pageIds = Object.keys(PAGES)
+  const currentIndex = pageIds.indexOf(activePage)
   const page = PAGES[activePage] || PAGES['quickstart']
 
   function toggleSection(sectionId: string) {
@@ -468,11 +483,19 @@ export default function DocsPage() {
 
           {/* Footer Navigation */}
           <div className="mt-12 pt-8 border-t border-slate-800 flex items-center justify-between">
-            <button className="text-xs font-medium text-slate-400 hover:text-white transition-colors flex items-center gap-2">
+            <button
+              onClick={() => currentIndex > 0 && setActivePage(pageIds[currentIndex - 1])}
+              disabled={currentIndex <= 0}
+              className={`text-xs font-medium transition-colors flex items-center gap-2 ${currentIndex <= 0 ? 'text-slate-600 cursor-not-allowed' : 'text-slate-400 hover:text-white'}`}
+            >
               <ArrowRight size={14} className="rotate-180" />
               Previous
             </button>
-            <button className="text-xs font-medium text-emerald-400 hover:text-emerald-300 transition-colors flex items-center gap-2">
+            <button
+              onClick={() => currentIndex < pageIds.length - 1 && setActivePage(pageIds[currentIndex + 1])}
+              disabled={currentIndex >= pageIds.length - 1}
+              className={`text-xs font-medium transition-colors flex items-center gap-2 ${currentIndex >= pageIds.length - 1 ? 'text-slate-600 cursor-not-allowed' : 'text-emerald-400 hover:text-emerald-300'}`}
+            >
               Next
               <ArrowRight size={14} />
             </button>

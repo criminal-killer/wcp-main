@@ -38,6 +38,17 @@ export default function InboxClient({
   const [replyText, setReplyText] = useState('')
   const [sending, setSending] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [search, setSearch] = useState('')
+
+  const filteredConversations = conversations.filter(conv => {
+    if (!search) return true
+    const q = search.toLowerCase()
+    return (
+      (conv.contact_name || '').toLowerCase().includes(q) ||
+      (conv.contact_phone || '').includes(q) ||
+      (conv.last_message_preview || '').toLowerCase().includes(q)
+    )
+  })
 
   async function selectConv(conv: Conversation) {
     setSelected(conv)
@@ -85,11 +96,17 @@ export default function InboxClient({
           <input
             type="text"
             placeholder="Search conversations..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
             className="w-full border border-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#25D366]"
           />
         </div>
         <div className="flex-1 overflow-y-auto">
-          {conversations.map(conv => (
+          {filteredConversations.length === 0 ? (
+            <div className="p-4 text-center text-muted-foreground text-sm">
+              {search ? 'No conversations match your search' : 'No conversations yet'}
+            </div>
+          ) : filteredConversations.map(conv => (
             <button
               key={conv.id}
               onClick={() => selectConv(conv)}

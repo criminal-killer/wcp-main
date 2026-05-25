@@ -222,8 +222,8 @@ export default function HomePage() {
               },
               "aggregateRating": {
                 "@type": "AggregateRating",
-                "ratingValue": "4.8",
-                "reviewCount": "127"
+                "ratingValue": "5.0",
+                "reviewCount": "1"
               }
             })
           }}
@@ -321,7 +321,7 @@ export default function HomePage() {
                   </div>
                 ))}
               </div>
-              Join 1,000+ professional merchants
+              Trusted by merchants across Africa and beyond
             </div>
           </div>
 

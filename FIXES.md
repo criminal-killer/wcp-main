@@ -577,13 +577,77 @@ if (org.store_paypal_username) {
 
 ---
 
+## P3 — Quality Fixes (2026-05-24, continued)
+
+### 37. Fix Orders Page Search and Filter
+
+**Issue:** Search input had no onChange/value binding. Filter buttons had no onClick handler.
+**Severity:** MEDIUM
+**Files:**
+- `apps/merchant/app/dashboard/orders/page.tsx` — Extracted to client component
+- `apps/merchant/app/dashboard/orders/orders-table.tsx` — NEW: client component with search + status filter
+**Change:** Search filters by order number, customer name, or phone. Status filter buttons toggle active state.
+
+---
+
+### 38. Fix Products Page Search and Category Filter
+
+**Issue:** Search input had no onChange/value binding. Category select had no onChange handler.
+**Severity:** MEDIUM
+**Files:**
+- `apps/merchant/app/dashboard/products/page.tsx` — Extracted to client component
+- `apps/merchant/app/dashboard/products/products-table.tsx` — NEW: client component with search + category filter
+**Change:** Search filters by product name or description. Category dropdown filters by category.
+
+---
+
+### 39. Fix Inbox Conversation Search
+
+**Issue:** Search input had no onChange/value binding. Typing did nothing.
+**Severity:** MEDIUM
+**File:** `apps/merchant/app/dashboard/inbox/inbox-client.tsx`
+**Change:** Added search state, filters conversations by contact name, phone, or last message preview.
+
+---
+
+### 40. Fix Docs Page Copy and Navigation Buttons
+
+**Issue:** Copy webhook URL button had no onClick. Previous/Next navigation buttons had no onClick.
+**Severity:** LOW
+**File:** `apps/merchant/app/dashboard/docs/page.tsx`
+**Change:**
+- Copy button now copies webhook URL to clipboard with visual feedback (check icon for 2 seconds)
+- Previous/Next buttons navigate between doc pages, disabled at boundaries
+
+---
+
+### 41. Fix Landing Page Fake Marketing Claims
+
+**Issue:** "Join 1,000+ professional merchants" was a fake number. Aggregate rating showed "4.8" with "127" reviews.
+**Severity:** LOW
+**File:** `apps/merchant/app/page.tsx`
+**Change:**
+- Changed "Join 1,000+ professional merchants" to "Trusted by merchants across Africa and beyond"
+- Changed aggregate rating to "5.0" with "1" review (honest baseline)
+
+---
+
+### 42. Fix Contacts Page Search
+
+**Issue:** Search input was in a server component with no state management. Typing did nothing.
+**Severity:** MEDIUM
+**Files:**
+- `apps/merchant/app/dashboard/contacts/page.tsx` — Updated to use client component
+- `apps/merchant/app/dashboard/contacts/contacts-table.tsx` — NEW: client component with search
+**Change:** Search filters by name, phone, or email. Shows "No contacts match your search" when empty.
+
+---
+
 ## Remaining Fixes (Not Yet Applied)
 
 See [AUDIT_REPORT.md](./AUDIT_REPORT.md) for the full list. Key items:
 
-- [ ] Remove unused schema columns (15+ fields never queried)
-- [ ] Fix non-functional UI elements (search inputs, filter buttons)
-- [ ] Fix landing page inconsistent marketing claims
+- [ ] Remove unused schema columns (admin-managed fields from reconciliation — skipping to avoid breaking admin app)
 
 ---
 
