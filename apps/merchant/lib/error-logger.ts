@@ -20,18 +20,38 @@ interface ErrorLogInput {
 
 export async function logError(input: ErrorLogInput) {
   try {
-    await db.insert(errorLogs).values({
-      org_id: input.org_id,
-      severity: input.severity || 'high',
-      category: input.category || 'general',
-      source: input.source || 'server',
-      message: input.message.slice(0, 1000),
-      cause: input.cause?.slice(0, 2000),
-      fix: input.fix?.slice(0, 2000),
-      stack: input.stack?.slice(0, 5000),
-      status: 'open',
-      created_at: new Date().toISOString(),
-    })
+    // Try inserting with source column first; fall back without it if DB hasn't been migrated yet
+    try {
+      await db.insert(errorLogs).values({
+        org_id: input.org_id,
+        severity: input.severity || 'high',
+        category: input.category || 'general',
+        source: input.source || 'server',
+        message: input.message.slice(0, 1000),
+        cause: input.cause?.slice(0, 2000),
+        fix: input.fix?.slice(0, 2000),
+        stack: input.stack?.slice(0, 5000),
+        status: 'open',
+        created_at: new Date().toISOString(),
+      })
+    } catch (innerErr: any) {
+      if (innerErr?.message?.includes('no column named source')) {
+        // DB doesn't have source column yet — insert without it
+        await db.insert(errorLogs).values({
+          org_id: input.org_id,
+          severity: input.severity || 'high',
+          category: input.category || 'general',
+          message: input.message.slice(0, 1000),
+          cause: input.cause?.slice(0, 2000),
+          fix: input.fix?.slice(0, 2000),
+          stack: input.stack?.slice(0, 5000),
+          status: 'open',
+          created_at: new Date().toISOString(),
+        })
+      } else {
+        throw innerErr
+      }
+    }
 
     // Auto-notify for high-severity server-side errors
     if (input.severity === 'high' && input.source !== 'client') {

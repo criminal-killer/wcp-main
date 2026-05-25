@@ -208,6 +208,14 @@ export async function POST(req: NextRequest) {
                 message_type: 'text',
                 status: 'sent',
               })
+            } else if (result?.error) {
+              // Bot returned an error — send fallback text to user
+              try {
+                await sendTextMessage(
+                  { phoneNumberId, accessToken },
+                  { to: contact.phone, body: 'Sorry, something went wrong. Type *menu* to continue shopping.' }
+                )
+              } catch (_) { /* ignore */ }
             }
           } catch (err: any) {
             console.error('Store engine error:', err)

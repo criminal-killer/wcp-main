@@ -224,6 +224,13 @@ export async function processIncomingMessage(ctx: EngineContext) {
       return await handleProductSelected(waConfigObj, org, store, phone, orgId, inputRaw, flow)
 
     case 'product_detail':
+      // Handle text-based fallback when interactive buttons fail
+      if (inputNorm === '1' || inputNorm === 'add') {
+        return await handleProductAction(waConfigObj, org, store, phone, orgId, `add_${flow.product_id}`, flow)
+      }
+      if (inputNorm === '0' || inputNorm === 'back') {
+        return await showCategories(waConfigObj, org, store, phone, orgId)
+      }
       return await handleProductAction(waConfigObj, org, store, phone, orgId, inputRaw, flow)
 
     case 'variant_select':
@@ -422,7 +429,7 @@ async function handleCategorySelected(waConfig: { phoneNumberId: string; accessT
   const rows = productList.map(p => ({
     id: `prod_${p.id}`,
     title: p.name.slice(0, 24),
-    description: `${org.currency} ${p.price.toLocaleString()}${p.inventory_count === 0 ? ' (Out of Stock)' : ''}`,
+    description: `${org.currency} ${(p.price ?? 0).toLocaleString()}${p.inventory_count === 0 ? ' (Out of Stock)' : ''}`,
   }))
 
   return await sendInteractiveListMessage(waConfig, {
@@ -472,7 +479,7 @@ async function handleSubCategorySelected(waConfig: { phoneNumberId: string; acce
   const rows = productList.map(p => ({
     id: `prod_${p.id}`,
     title: p.name.slice(0, 24),
-    description: `${org.currency} ${p.price.toLocaleString()}${p.inventory_count === 0 ? ' (Out of Stock)' : ''}`,
+    description: `${org.currency} ${(p.price ?? 0).toLocaleString()}${p.inventory_count === 0 ? ' (Out of Stock)' : ''}`,
   }))
 
   return await sendInteractiveListMessage(waConfig, {
@@ -509,8 +516,8 @@ async function handleProductSelected(
     : `${product.inventory_count} in stock`
 
   const compareText = product.compare_at_price
-    ? `*${org.currency} ${product.price.toLocaleString()}* ~(was ${org.currency} ${product.compare_at_price.toLocaleString()})~`
-    : `*${org.currency} ${product.price.toLocaleString()}*`
+    ? `*${org.currency} ${(product.price ?? 0).toLocaleString()}* ~(was ${org.currency} ${(product.compare_at_price ?? 0).toLocaleString()})~`
+    : `*${org.currency} ${(product.price ?? 0).toLocaleString()}*`
 
   const description = product.description ? `\n${product.description}` : ''
   const subCategoryText = product.sub_category 
@@ -536,15 +543,27 @@ async function handleProductSelected(
     })
   }
 
-  return await sendInteractiveButtonMessage(waConfig, {
+  const imageUrl = images[0] && typeof images[0] === 'string' && images[0].startsWith('http') ? images[0] : undefined
+
+  const result = await sendInteractiveButtonMessage(waConfig, {
     to: phone,
-    imageUrl: images[0] || undefined,
+    imageUrl,
     body: `*${product.name}*\n${compareText}\n${subCategoryText}${description}${variantText}${typeHint}\n\n${stockText}`,
     buttons: [
       { id: `add_${productId}`, title: 'Add to Cart' },
       { id: 'back_category', title: 'Back to Categories' },
     ],
   })
+
+  // Fallback: if interactive message fails (e.g., bad image), send as text
+  if (result?.error) {
+    return await sendTextMessage(waConfig, {
+      to: phone,
+      body: `*${product.name}*\n\n${compareText}\n${subCategoryText}${description}${variantText}${typeHint}\n\n${stockText}\n\nReply:\n*1* — Add to Cart\n*0* — Back to Menu`,
+    })
+  }
+
+  return result
 }
 
 async function handleProductAction(
@@ -573,7 +592,7 @@ async function handleProductAction(
       await setFlowState(orgId, phone, { ...flow, step: 'variant_select', product_id: productId, base_price: product.price })
       const rows = variants[0].options.map(opt => {
         const price = opt.price ?? product.price
-        const priceText = opt.price ? ` — ${org.currency} ${opt.price.toLocaleString()}` : ` — ${org.currency} ${price.toLocaleString()}`
+        const priceText = opt.price ? ` — ${org.currency} ${(opt.price ?? 0).toLocaleString()}` : ` — ${org.currency} ${(price ?? 0).toLocaleString()}`
         return {
           id: `var_${opt.name.replace(/\s+/g, '_')}`,
           title: `${opt.name}${priceText}`,
@@ -593,7 +612,7 @@ async function handleProductAction(
     await setFlowState(orgId, phone, { ...flow, step: 'quantity_select', product_id: productId, variant: undefined, variant_price: product.price })
     return await sendInteractiveButtonMessage(waConfig, {
       to: phone,
-      body: `How many *${product.name}*?\n\n*${org.currency} ${product.price.toLocaleString()}* each`,
+      body: `How many *${product.name}*?\n\n*${org.currency} ${(product.price ?? 0).toLocaleString()}* each`,
       buttons: [
         { id: 'qty_1', title: '1' },
         { id: 'qty_2', title: '2' },
@@ -734,14 +753,14 @@ async function showCart(waConfig: { phoneNumberId: string; accessToken: string }
     })
   }
 
-  const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0)
+  const subtotal = cart.reduce((s, i) => s + (i.price ?? 0) * i.qty, 0)
   const itemCount = cart.reduce((s, i) => s + i.qty, 0)
-  const orderLines = cart.map((i, idx) => `*${idx + 1}.* ${i.product_name} x${i.qty} = ${org.currency} ${(i.price * i.qty).toLocaleString()}`).join('\n')
+  const orderLines = cart.map((i, idx) => `*${idx + 1}.* ${i.product_name} x${i.qty} = ${org.currency} ${((i.price ?? 0) * i.qty).toLocaleString()}`).join('\n')
 
   const editRows = cart.length <= 10 ? cart.map((i, idx) => ({
     id: `edit_item_${idx}`,
     title: `${idx + 1}. ${i.product_name}`,
-    description: `${i.qty} x ${org.currency} ${i.price.toLocaleString()}`,
+    description: `${i.qty} x ${org.currency} ${(i.price ?? 0).toLocaleString()}`,
   })) : []
 
   if (editRows.length > 0) {
@@ -806,7 +825,7 @@ async function handleCartAction(
     return await sendInteractiveButtonMessage(waConfig, {
       to: phone,
       header: item.product_name,
-      body: `What would you like to do with *${item.product_name}*?\n\nQty: ${item.qty}\nPrice: ${org.currency} ${item.price.toLocaleString()} each`,
+      body: `What would you like to do with *${item.product_name}*?\n\nQty: ${item.qty}\nPrice: ${org.currency} ${(item.price ?? 0).toLocaleString()} each`,
       buttons: [
         { id: `update_qty_${idx}`, title: 'Change Qty' },
         { id: `remove_item_${idx}`, title: 'Remove' },
@@ -936,7 +955,7 @@ async function handlePaymentSelected(
     })
   }
 
-  const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0)
+  const subtotal = cart.reduce((s, i) => s + (i.price ?? 0) * i.qty, 0)
   const deliveryFee = org.delivery_fee || 0
   const total = subtotal + deliveryFee
 
