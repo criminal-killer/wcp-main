@@ -3,6 +3,7 @@ import { db } from '@/lib/db'
 import { organizations, orders } from '@/lib/schema'
 import { eq, and, sql } from 'drizzle-orm'
 import { verifyPaystackSignature } from '@/lib/payments'
+import { logError, categorizeError } from '@/lib/error-logger'
 
 export async function POST(req: NextRequest) {
   const body = await req.text()

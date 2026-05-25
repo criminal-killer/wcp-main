@@ -5,6 +5,7 @@ import { users, messages, conversations, organizations, contacts } from '@/lib/s
 import { eq, and } from 'drizzle-orm'
 import { sendTextMessage } from '@/lib/whatsapp'
 import { decrypt } from '@/lib/encryption'
+import { logError, categorizeError } from '@/lib/error-logger'
 
 export async function POST(req: NextRequest) {
   const { userId } = await auth()

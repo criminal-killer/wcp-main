@@ -28,6 +28,13 @@ function CategoryBadge({ category }: { category: string }) {
   return <span className={`text-[10px] font-black ${cls} px-2 py-0.5 rounded-full uppercase tracking-wider`}>{category}</span>
 }
 
+function SourceBadge({ source }: { source: string }) {
+  if (source === 'server') {
+    return <span className="text-[10px] font-black text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full uppercase tracking-wider">Server</span>
+  }
+  return <span className="text-[10px] font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full uppercase tracking-wider">Client</span>
+}
+
 export function ErrorLogCard({ log }: { log: any }) {
   const [status, setStatus] = useState(log.status)
   const [copied, setCopied] = useState(false)
@@ -60,6 +67,7 @@ export function ErrorLogCard({ log }: { log: any }) {
           <div className="flex items-center gap-2 flex-wrap mb-2">
             <SeverityBadge severity={log.severity} />
             <CategoryBadge category={log.category} />
+            <SourceBadge source={log.source || 'server'} />
             <StatusBadge status={status} />
             {log.org_name && (
               <span className="text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded-full">

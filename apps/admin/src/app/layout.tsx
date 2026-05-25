@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { ClerkProvider, SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
-import { LayoutDashboard, Users, CreditCard, Settings, LifeBuoy, Zap, Bell, ShieldCheck, ShieldAlert, Activity } from "lucide-react";
+import { LayoutDashboard, Users, CreditCard, Settings, LifeBuoy, Zap, Bell, ShieldCheck, ShieldAlert, Activity, Store, Package, AlertCircle, ShoppingBag } from "lucide-react";
 import Link from "next/link";
 import { cookies, headers } from "next/headers";
 import { jwtVerify } from "jose";
@@ -111,13 +111,25 @@ export default async function RootLayout({
             <LayoutDashboard size={18} /> Overview
           </Link>
           <Link href="/users" className={`flex items-center gap-3 px-4 py-3 text-sm font-bold ${isSuper ? 'text-slate-400 hover:text-white hover:bg-white/5' : 'text-slate-600 hover:bg-slate-50'} rounded-xl transition-all`}>
-            <Users size={18} /> User Management
+            <Users size={18} /> Users
+          </Link>
+          <Link href="/organizations" className={`flex items-center gap-3 px-4 py-3 text-sm font-bold ${isSuper ? 'text-slate-400 hover:text-white hover:bg-white/5' : 'text-slate-600 hover:bg-slate-50'} rounded-xl transition-all`}>
+            <Store size={18} /> Organizations
+          </Link>
+          <Link href="/products" className={`flex items-center gap-3 px-4 py-3 text-sm font-bold ${isSuper ? 'text-slate-400 hover:text-white hover:bg-white/5' : 'text-slate-600 hover:bg-slate-50'} rounded-xl transition-all`}>
+            <Package size={18} /> Products
+          </Link>
+          <Link href="/orders" className={`flex items-center gap-3 px-4 py-3 text-sm font-bold ${isSuper ? 'text-slate-400 hover:text-white hover:bg-white/5' : 'text-slate-600 hover:bg-slate-50'} rounded-xl transition-all`}>
+            <ShoppingBag size={18} /> Orders
           </Link>
           <Link href="/revenue" className={`flex items-center gap-3 px-4 py-3 text-sm font-bold ${isSuper ? 'text-slate-400 hover:text-white hover:bg-white/5' : 'text-slate-600 hover:bg-slate-50'} rounded-xl transition-all`}>
             <CreditCard size={18} /> Revenue
           </Link>
-          <Link href="/waitlist" className={`flex items-center gap-3 px-4 py-3 text-sm font-bold ${isSuper ? 'text-slate-400 hover:text-white hover:bg-white/5' : 'text-slate-600 hover:bg-slate-50'} rounded-xl transition-all`}>
-            <Zap size={18} /> Waitlist
+          <Link href="/system/error-logs" className={`flex items-center gap-3 px-4 py-3 text-sm font-bold ${isSuper ? 'text-slate-400 hover:text-white hover:bg-white/5' : 'text-slate-600 hover:bg-slate-50'} rounded-xl transition-all`}>
+            <AlertCircle size={18} /> Error Logs
+          </Link>
+          <Link href="/affiliates" className={`flex items-center gap-3 px-4 py-3 text-sm font-bold ${isSuper ? 'text-slate-400 hover:text-white hover:bg-white/5' : 'text-slate-600 hover:bg-slate-50'} rounded-xl transition-all`}>
+            <ShieldCheck size={18} /> Affiliates
           </Link>
           <Link href="/tickets" className={`flex items-center gap-3 px-4 py-3 text-sm font-bold ${isSuper ? 'text-slate-400 hover:text-white hover:bg-white/5' : 'text-slate-600 hover:bg-slate-50'} rounded-xl transition-all`}>
             <LifeBuoy size={18} /> Support Tickets
@@ -125,8 +137,8 @@ export default async function RootLayout({
           <Link href="/notifications" className={`flex items-center gap-3 px-4 py-3 text-sm font-bold ${isSuper ? 'text-slate-400 hover:text-white hover:bg-white/5' : 'text-slate-600 hover:bg-slate-50'} rounded-xl transition-all`}>
             <Bell size={18} /> Notifications
           </Link>
-          <Link href="/affiliates" className={`flex items-center gap-3 px-4 py-3 text-sm font-bold ${isSuper ? 'text-slate-400 hover:text-white hover:bg-white/5' : 'text-slate-600 hover:bg-slate-50'} rounded-xl transition-all`}>
-            <ShieldCheck size={18} /> Affiliates
+          <Link href="/waitlist" className={`flex items-center gap-3 px-4 py-3 text-sm font-bold ${isSuper ? 'text-slate-400 hover:text-white hover:bg-white/5' : 'text-slate-600 hover:bg-slate-50'} rounded-xl transition-all`}>
+            <Zap size={18} /> Waitlist
           </Link>
           <Link href="/team" className={`flex items-center gap-3 px-4 py-3 text-sm font-bold ${isSuper ? 'text-slate-400 hover:text-white hover:bg-white/5' : 'text-slate-600 hover:bg-slate-50'} rounded-xl transition-all`}>
             <ShieldAlert size={18} /> Team

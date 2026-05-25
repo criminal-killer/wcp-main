@@ -5,6 +5,7 @@ import { users, orders, contacts, organizations } from '@/lib/schema'
 import { eq, and } from 'drizzle-orm'
 import { sendTextMessage } from '@/lib/whatsapp'
 import { decrypt } from '@/lib/encryption'
+import { logError, categorizeError } from '@/lib/error-logger'
 
 const VALID_STATUSES = ['new', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded'] as const
 type OrderStatus = typeof VALID_STATUSES[number]

@@ -3,6 +3,7 @@ import { db } from '@/lib/db'
 import { affiliates } from '@/lib/schema'
 import { eq } from 'drizzle-orm'
 import { rateLimit } from '@/lib/redis'
+import { logError, categorizeError } from '@/lib/error-logger'
 
 // POST /api/affiliates/apply
 // Public — no Clerk auth required. Anyone can apply.
@@ -63,6 +64,7 @@ export async function POST(req: NextRequest) {
     })
   } catch (err: unknown) {
     console.error('[affiliates/apply] Error:', err)
+    try { const info = categorizeError(err instanceof Error ? err : new Error(String(err))); await logError({ org_id: 'unknown', severity: info.severity, category: info.category, message: err instanceof Error ? err.message : String(err), cause: info.cause, fix: info.fix, stack: err instanceof Error ? err.stack : undefined }) } catch { /* */ }
     return NextResponse.json({ error: 'Failed to submit application. Please try again.' }, { status: 500 })
   }
 }

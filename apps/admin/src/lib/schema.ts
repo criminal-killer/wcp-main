@@ -125,6 +125,7 @@ export const errorLogs = sqliteTable('error_logs', {
   fix: text('fix'),
   stack: text('stack'),
   status: text('status').notNull().default('open'),
+  source: text('source').notNull().default('server'), // server, client
   created_at: text('created_at').notNull().default(sql`(datetime('now'))`),
   updated_at: text('updated_at'),
 })

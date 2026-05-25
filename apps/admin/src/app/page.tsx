@@ -1,7 +1,8 @@
 import { db } from "@/lib/db";
-import { organizations, users, subscriptions } from "@/lib/schema";
-import { count, sum, desc, sql } from "drizzle-orm";
-import { Users, Store, DollarSign, UserPlus, TrendingUp } from "lucide-react";
+import { organizations, users, subscriptions, errorLogs } from "@/lib/schema";
+import { count, sum, desc, sql, eq } from "drizzle-orm";
+import { Users, Store, DollarSign, UserPlus, TrendingUp, AlertCircle } from "lucide-react";
+import Link from "next/link";
 
 export default async function AdminDashboard() {
   // Fetch Metrics
@@ -9,6 +10,11 @@ export default async function AdminDashboard() {
   const [totalStores] = await db.select({ value: count() }).from(organizations);
   const [totalSubscriptions] = await db.select({ value: count() }).from(subscriptions);
   const [activeMRR] = await db.select({ value: sum(subscriptions.amount) }).from(subscriptions);
+
+  // Error stats
+  const [totalErrors] = await db.select({ value: count() }).from(errorLogs);
+  const [openErrors] = await db.select({ value: count() }).from(errorLogs).where(eq(errorLogs.status, 'open'));
+  const [highSeverityOpen] = await db.select({ value: count() }).from(errorLogs).where(sql`${errorLogs.status} = 'open' AND ${errorLogs.severity} = 'high'`);
 
   // Fetch Subscription Distribution
   const planCounts = await db.select({ plan: subscriptions.plan, count: count() }).from(subscriptions).groupBy(subscriptions.plan);
@@ -70,6 +76,30 @@ export default async function AdminDashboard() {
         ))}
       </div>
 
+      {/* Error Stats Banner */}
+      {(Number(openErrors.value) > 0 || Number(highSeverityOpen.value) > 0) && (
+        <Link href="/system/error-logs" className="block">
+          <div className={`rounded-2xl border-2 p-5 flex items-center justify-between transition-all hover:shadow-md ${Number(highSeverityOpen.value) > 0 ? 'bg-red-50 border-red-200' : 'bg-amber-50 border-amber-200'}`}>
+            <div className="flex items-center gap-4">
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${Number(highSeverityOpen.value) > 0 ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-600'}`}>
+                <AlertCircle size={24} />
+              </div>
+              <div>
+                <p className="text-sm font-black text-slate-900">
+                  {Number(highSeverityOpen.value) > 0
+                    ? `${highSeverityOpen.value} high-severity error${Number(highSeverityOpen.value) > 1 ? 's' : ''} need attention`
+                    : `${openErrors.value} open error${Number(openErrors.value) > 1 ? 's' : ''} logged`}
+                </p>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">
+                  {totalErrors.value} total errors · Click to view error logs
+                </p>
+              </div>
+            </div>
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">View All →</span>
+          </div>
+        </Link>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Recent Signups */}
         <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
@@ -77,7 +107,7 @@ export default async function AdminDashboard() {
             <h2 className="font-bold text-slate-900 flex items-center gap-2 italic font-serif">
               <UserPlus size={18} className="text-primary not-italic" /> Recent Signups
             </h2>
-            <button className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline">View All</button>
+            <Link href="/users" className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline">View All</Link>
           </div>
           <div className="divide-y divide-slate-50">
             {recentUsers.map((user: any) => (

@@ -5,6 +5,7 @@ import { db } from '@/lib/db'
 import { users, organizations, products } from '@/lib/schema'
 import { eq, and } from 'drizzle-orm'
 import { decrypt } from '@/lib/encryption'
+import { logError, categorizeError } from '@/lib/error-logger'
 
 const GENERAL_SYSTEM_PROMPT = `You are Chatevo AI, a friendly and helpful assistant for merchants using the Chatevo WhatsApp Commerce platform.
 
@@ -115,8 +116,9 @@ export async function POST(req: Request) {
 
   } catch (error: any) {
     console.error('AI Chat Error:', error)
-    return NextResponse.json({ 
-      reply: "I'm experiencing a high volume of requests. Please try again or contact support at mazaoedu@gmail.com" 
+    try { const info = categorizeError(error instanceof Error ? error : new Error(String(error))); await logError({ org_id: 'unknown', severity: info.severity, category: info.category, message: error instanceof Error ? error.message : String(error), cause: info.cause, fix: info.fix, stack: error instanceof Error ? error.stack : undefined }) } catch { /* */ }
+    return NextResponse.json({
+      reply: "I'm experiencing a high volume of requests. Please try again or contact support at mazaoedu@gmail.com"
     })
   }
 }

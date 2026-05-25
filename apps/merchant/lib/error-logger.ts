@@ -1,14 +1,20 @@
 import { db } from '@/lib/db'
-import { errorLogs } from '@/lib/schema'
+import { errorLogs, organizations, notifications } from '@/lib/schema'
+import { eq } from 'drizzle-orm'
+import { sendEmail } from '@/lib/email'
+import { sendTextMessage } from '@/lib/whatsapp'
+import { decrypt } from '@/lib/encryption'
 
 type ErrorSeverity = 'high' | 'low'
 type ErrorCategory = 'store_engine' | 'payment' | 'catalog' | 'webhook' | 'general'
 type ErrorStatus = 'open' | 'investigating' | 'fixed'
+type ErrorSource = 'server' | 'client'
 
 interface ErrorLogInput {
   org_id: string
   severity?: ErrorSeverity
   category?: ErrorCategory
+  source?: ErrorSource
   message: string
   cause?: string
   fix?: string
@@ -21,6 +27,7 @@ export async function logError(input: ErrorLogInput) {
       org_id: input.org_id,
       severity: input.severity || 'high',
       category: input.category || 'general',
+      source: input.source || 'server',
       message: input.message.slice(0, 1000),
       cause: input.cause?.slice(0, 2000),
       fix: input.fix?.slice(0, 2000),
@@ -28,8 +35,80 @@ export async function logError(input: ErrorLogInput) {
       status: 'open',
       created_at: new Date().toISOString(),
     })
+
+    // Auto-notify for high-severity server-side errors
+    if (input.severity === 'high' && input.source !== 'client') {
+      await autoNotify(input).catch(err => {
+        console.error('[error-logger] Auto-notify failed:', err)
+      })
+    }
   } catch (dbErr) {
     console.error('Failed to save error log:', dbErr)
+  }
+}
+
+async function autoNotify(input: ErrorLogInput) {
+  const org = await db.query.organizations.findFirst({
+    where: eq(organizations.id, input.org_id),
+  })
+  if (!org) return
+
+  const errorSummary = input.message.slice(0, 200)
+  const causeText = input.cause ? `\nCause: ${input.cause.slice(0, 200)}` : ''
+  const fixText = input.fix ? `\nSuggested fix: ${input.fix.slice(0, 200)}` : ''
+
+  // 1. In-app notification to merchant
+  await db.insert(notifications).values({
+    org_id: input.org_id,
+    title: 'System Error Detected',
+    message: `We detected an issue with your store: ${errorSummary}. Our team has been notified and is working on a fix.`,
+    type: 'error',
+    is_read: 0,
+    action_url: '/dashboard',
+  }).catch(err => console.error('[error-logger] Notification insert failed:', err))
+
+  // 2. Email to admin
+  const adminEmail = process.env.ADMIN_EMAIL || process.env.SUPER_ADMIN_EMAIL
+  if (adminEmail) {
+    const categoryLabel = (input.category || 'general').toUpperCase()
+    await sendEmail({
+      to: adminEmail,
+      subject: `[Chatevo Alert] ${categoryLabel} Error - ${org.name}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background: #dc2626; padding: 20px; border-radius: 8px 8px 0 0;">
+            <h1 style="color: white; margin: 0; font-size: 20px;">Server Error Alert</h1>
+          </div>
+          <div style="background: #f9f9f9; padding: 24px; border-radius: 0 0 8px 8px;">
+            <p><strong>Organization:</strong> ${org.name} (${input.org_id})</p>
+            <p><strong>Category:</strong> ${categoryLabel}</p>
+            <p><strong>Severity:</strong> ${input.severity || 'high'}</p>
+            <hr style="border: none; border-top: 1px solid #ddd; margin: 16px 0;" />
+            <p><strong>Error:</strong> ${errorSummary}</p>
+            ${input.cause ? `<p><strong>Cause:</strong> ${input.cause.slice(0, 500)}</p>` : ''}
+            ${input.fix ? `<p><strong>Fix:</strong> ${input.fix.slice(0, 500)}</p>` : ''}
+            ${input.stack ? `<details><summary>Stack Trace</summary><pre style="font-size: 11px; background: #eee; padding: 12px; border-radius: 4px; overflow-x: auto;">${input.stack.slice(0, 2000)}</pre></details>` : ''}
+            <hr style="border: none; border-top: 1px solid #ddd; margin: 16px 0;" />
+            <p style="font-size: 12px; color: #666;">View in admin: <a href="${process.env.ADMIN_URL || 'https://admin-chatevo.vercel.app'}/system/error-logs">Error Logs</a></p>
+          </div>
+        </div>
+      `,
+    }).catch(err => console.error('[error-logger] Admin email failed:', err))
+  }
+
+  // 3. WhatsApp to merchant (if they have credentials)
+  if (org.wa_phone_number_id && org.wa_access_token_encrypted) {
+    // Find the org owner to get their phone for notification
+    // We send to the org's WhatsApp number as a system message
+    // This is a self-notification — we use the same channel
+    try {
+      const accessToken = decrypt(org.wa_access_token_encrypted)
+      // We can't send to ourselves via the same WhatsApp API, so we skip WhatsApp self-notification
+      // Instead, the in-app notification + email covers it
+      void accessToken // suppress unused warning
+    } catch {
+      // Decrypt failed — skip WhatsApp
+    }
   }
 }
 

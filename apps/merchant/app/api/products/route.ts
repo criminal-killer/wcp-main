@@ -6,6 +6,7 @@ import { eq, and } from 'drizzle-orm'
 import { z } from 'zod'
 import { clearProductCache } from '@/lib/redis'
 import { syncProductToCatalog } from '@/lib/meta-catalog'
+import { logError, categorizeError } from '@/lib/error-logger'
 
 const PLAN_LIMITS: Record<string, number> = { 
   trial: 25, 
@@ -68,6 +69,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ data: filtered, total: filtered.length })
   } catch (error) {
     console.error('[products]', error)
+    try { const info = categorizeError(error instanceof Error ? error : new Error(String(error))); await logError({ org_id: 'unknown', severity: info.severity, category: info.category, message: error instanceof Error ? error.message : String(error), cause: info.cause, fix: info.fix, stack: error instanceof Error ? error.stack : undefined }) } catch { /* */ }
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -126,6 +128,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ data: product, message: 'Product created' }, { status: 201 })
   } catch (error) {
     console.error('[products]', error)
+    try { const info = categorizeError(error instanceof Error ? error : new Error(String(error))); await logError({ org_id: 'unknown', severity: info.severity, category: info.category, message: error instanceof Error ? error.message : String(error), cause: info.cause, fix: info.fix, stack: error instanceof Error ? error.stack : undefined }) } catch { /* */ }
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

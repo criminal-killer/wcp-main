@@ -3,6 +3,7 @@ import { auth } from '@clerk/nextjs/server'
 import { db } from '@/lib/db'
 import { users, organizations } from '@/lib/schema'
 import { eq } from 'drizzle-orm'
+import { logError, categorizeError } from '@/lib/error-logger'
 
 export const dynamic = 'force-dynamic'
 
@@ -44,6 +45,7 @@ export async function GET() {
     })
   } catch (error) {
     console.error('[referrals/me]', error)
+    try { const info = categorizeError(error instanceof Error ? error : new Error(String(error))); await logError({ org_id: 'unknown', severity: info.severity, category: info.category, message: error instanceof Error ? error.message : String(error), cause: info.cause, fix: info.fix, stack: error instanceof Error ? error.stack : undefined }) } catch { /* */ }
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

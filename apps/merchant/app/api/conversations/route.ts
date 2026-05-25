@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { users, conversations, contacts } from '@/lib/schema'
 import { eq, and, desc } from 'drizzle-orm'
+import { logError, categorizeError } from '@/lib/error-logger'
 
 export async function GET(req: NextRequest) {
   try {
@@ -36,6 +37,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ data: list, total: list.length })
   } catch (error) {
     console.error('[conversations]', error)
+    try { const info = categorizeError(error instanceof Error ? error : new Error(String(error))); await logError({ org_id: 'unknown', severity: info.severity, category: info.category, message: error instanceof Error ? error.message : String(error), cause: info.cause, fix: info.fix, stack: error instanceof Error ? error.stack : undefined }) } catch { /* */ }
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -58,6 +60,7 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ message: 'Conversation updated' })
   } catch (error) {
     console.error('[conversations]', error)
+    try { const info = categorizeError(error instanceof Error ? error : new Error(String(error))); await logError({ org_id: 'unknown', severity: info.severity, category: info.category, message: error instanceof Error ? error.message : String(error), cause: info.cause, fix: info.fix, stack: error instanceof Error ? error.stack : undefined }) } catch { /* */ }
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

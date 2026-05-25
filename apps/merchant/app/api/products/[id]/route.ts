@@ -5,6 +5,7 @@ import { users, products } from '@/lib/schema'
 import { eq, and } from 'drizzle-orm'
 import { syncProductToCatalog } from '@/lib/meta-catalog'
 import { clearProductCache } from '@/lib/redis'
+import { logError, categorizeError } from '@/lib/error-logger'
 
 // ============================================
 // GET /api/products/[id] — Get a single product
@@ -29,6 +30,7 @@ export async function GET(
     return NextResponse.json({ data: product })
   } catch (error) {
     console.error('[products/[id]]', error)
+    try { const info = categorizeError(error instanceof Error ? error : new Error(String(error))); await logError({ org_id: 'unknown', severity: info.severity, category: info.category, message: error instanceof Error ? error.message : String(error), cause: info.cause, fix: info.fix, stack: error instanceof Error ? error.stack : undefined }) } catch { /* */ }
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -97,6 +99,7 @@ export async function PUT(
     return NextResponse.json({ success: true, product_id: params.id })
   } catch (error) {
     console.error('[products/[id]]', error)
+    try { const info = categorizeError(error instanceof Error ? error : new Error(String(error))); await logError({ org_id: 'unknown', severity: info.severity, category: info.category, message: error instanceof Error ? error.message : String(error), cause: info.cause, fix: info.fix, stack: error instanceof Error ? error.stack : undefined }) } catch { /* */ }
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -129,6 +132,7 @@ export async function DELETE(
     return NextResponse.json({ success: true, message: 'Product deleted.' })
   } catch (error) {
     console.error('[products/[id]]', error)
+    try { const info = categorizeError(error instanceof Error ? error : new Error(String(error))); await logError({ org_id: 'unknown', severity: info.severity, category: info.category, message: error instanceof Error ? error.message : String(error), cause: info.cause, fix: info.fix, stack: error instanceof Error ? error.stack : undefined }) } catch { /* */ }
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

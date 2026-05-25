@@ -4,6 +4,7 @@ import { db } from '@/lib/db'
 import { support_tickets, users, organizations, notifications } from '@/lib/schema'
 import { eq } from 'drizzle-orm'
 import { sendEmail } from '@/lib/email'
+import { logError, categorizeError } from '@/lib/error-logger'
 
 export async function POST(req: Request) {
   try {
@@ -73,6 +74,7 @@ export async function POST(req: Request) {
     return NextResponse.json(ticket)
   } catch (error: any) {
     console.error('Ticket creation error:', error)
+    try { const info = categorizeError(error instanceof Error ? error : new Error(String(error))); await logError({ org_id: 'unknown', severity: info.severity, category: info.category, message: error instanceof Error ? error.message : String(error), cause: info.cause, fix: info.fix, stack: error instanceof Error ? error.stack : undefined }) } catch { /* */ }
     return new NextResponse(error.message || 'Internal Server Error', { status: 500 })
   }
 }

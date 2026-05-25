@@ -4,6 +4,7 @@ import { db } from '@/lib/db'
 import { stores, organizations, users } from '@/lib/schema'
 import { eq, and } from 'drizzle-orm'
 import { PLAN_CONFIG, normalizePlan } from '@/lib/payments'
+import { logError, categorizeError } from '@/lib/error-logger'
 
 // GET - List all stores for the user's org
 export async function GET() {
@@ -21,6 +22,7 @@ export async function GET() {
     return NextResponse.json({ data: storeList })
   } catch (error) {
     console.error('[stores]', error)
+    try { const info = categorizeError(error instanceof Error ? error : new Error(String(error))); await logError({ org_id: 'unknown', severity: info.severity, category: info.category, message: error instanceof Error ? error.message : String(error), cause: info.cause, fix: info.fix, stack: error instanceof Error ? error.stack : undefined }) } catch { /* */ }
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -82,6 +84,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ data: store })
   } catch (error) {
     console.error('[stores]', error)
+    try { const info = categorizeError(error instanceof Error ? error : new Error(String(error))); await logError({ org_id: 'unknown', severity: info.severity, category: info.category, message: error instanceof Error ? error.message : String(error), cause: info.cause, fix: info.fix, stack: error instanceof Error ? error.stack : undefined }) } catch { /* */ }
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -136,6 +139,7 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('[stores]', error)
+    try { const info = categorizeError(error instanceof Error ? error : new Error(String(error))); await logError({ org_id: 'unknown', severity: info.severity, category: info.category, message: error instanceof Error ? error.message : String(error), cause: info.cause, fix: info.fix, stack: error instanceof Error ? error.stack : undefined }) } catch { /* */ }
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
