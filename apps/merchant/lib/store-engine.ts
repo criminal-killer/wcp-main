@@ -1,7 +1,7 @@
 import { db } from '@/lib/db'
 import { organizations, stores, contacts, conversations, products, orders, messages } from '@/lib/schema'
 import { eq, and, sql, desc } from 'drizzle-orm'
-import { sendTextMessage, sendInteractiveButtonMessage, sendInteractiveListMessage, sendInteractiveCTAUrlMessage } from '@/lib/whatsapp'
+import { sendTextMessage, sendInteractiveButtonMessage, sendInteractiveListMessage, sendInteractiveCTAUrlMessage, sendCarouselMessage, sendCatalogMessage } from '@/lib/whatsapp'
 import { getFlowState, setFlowState, deleteFlowState, getCart, setCart, clearCart, setCartAbandoned, clearCartAbandoned as clearCartAbandonedState } from '@/lib/redis'
 import { decrypt } from '@/lib/encryption'
 
@@ -16,6 +16,7 @@ type InboundMessage = {
     type: string
     button_reply?: { id: string; title: string }
     list_reply?: { id: string; title: string }
+    product_item?: { product_retailer_id: string }
   }
 }
 
@@ -62,11 +63,17 @@ function waTitle(s: string, max = 24): string {
   return chars.length > max ? chars.slice(0, max).join('') + '…' : s
 }
 
+/** Check if org has Meta Commerce Catalog configured */
+function hasCatalog(org: RunnerOrg): boolean {
+  return !!(org.wa_catalog_id && org.meta_business_id)
+}
+
 function parseInput(msg: InboundMessage): string {
   return (
     msg.text?.body?.trim() ||
     msg.interactive?.button_reply?.id ||
     msg.interactive?.list_reply?.id ||
+    msg.interactive?.product_item?.product_retailer_id ||
     ''
   )
 }
@@ -433,6 +440,28 @@ async function handleCategorySelected(waConfig: { phoneNumberId: string; accessT
 
   await setFlowState(orgId, phone, { step: 'browsing_products', category, store_id: store?.id })
 
+  // Use carousel with images when catalog is configured
+  if (hasCatalog(org)) {
+    const cards = productList.slice(0, 10).map(p => {
+      const images = JSON.parse(p.images || '[]') as string[]
+      const price = (p.price ?? 0).toLocaleString()
+      return {
+        id: `prod_${p.id}`,
+        title: waTitle(p.name),
+        description: `${org.currency} ${price}${p.description ? `\n${p.description.slice(0, 100)}` : ''}${p.inventory_count === 0 ? '\n*Out of Stock*' : ''}`,
+        imageUrl: images[0] && images[0].startsWith('http') ? images[0] : undefined,
+        buttonTitle: 'View',
+      }
+    })
+    return await sendCarouselMessage(waConfig, {
+      to: phone,
+      body: `   ${category || 'Products'} — ${productList.length} items`,
+      cards,
+      footer: 'Tap a product to view details',
+    })
+  }
+
+  // Fallback: list message (no images)
   const rows = productList.map(p => ({
     id: `prod_${p.id}`,
     title: waTitle(p.name),
@@ -483,6 +512,28 @@ async function handleSubCategorySelected(waConfig: { phoneNumberId: string; acce
 
   await setFlowState(orgId, phone, { step: 'browsing_products', category, sub_category: subCategory, store_id: store?.id })
 
+  // Use carousel with images when catalog is configured
+  if (hasCatalog(org)) {
+    const cards = productList.slice(0, 10).map(p => {
+      const images = JSON.parse(p.images || '[]') as string[]
+      const price = (p.price ?? 0).toLocaleString()
+      return {
+        id: `prod_${p.id}`,
+        title: waTitle(p.name),
+        description: `${org.currency} ${price}${p.description ? `\n${p.description.slice(0, 100)}` : ''}${p.inventory_count === 0 ? '\n*Out of Stock*' : ''}`,
+        imageUrl: images[0] && images[0].startsWith('http') ? images[0] : undefined,
+        buttonTitle: 'View',
+      }
+    })
+    return await sendCarouselMessage(waConfig, {
+      to: phone,
+      body: `   ${subCategory || category} — ${productList.length} items`,
+      cards,
+      footer: 'Tap a product to view details',
+    })
+  }
+
+  // Fallback: list message (no images)
   const rows = productList.map(p => ({
     id: `prod_${p.id}`,
     title: waTitle(p.name),

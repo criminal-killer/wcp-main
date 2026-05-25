@@ -190,6 +190,100 @@ export async function sendInteractiveListMessage(
   return sendWhatsAppRequest(credentials, payload)
 }
 
+export async function sendCarouselMessage(
+  credentials: WhatsAppCredentials,
+  { to, body, cards, header, footer }: {
+    to: string
+    body: string
+    cards: Array<{
+      id: string
+      title: string
+      description: string
+      imageUrl?: string
+      buttonTitle?: string
+    }>
+    header?: string
+    footer?: string
+  }
+) {
+  const payload: Record<string, unknown> = {
+    to,
+    messaging_product: 'whatsapp',
+    type: 'interactive',
+    interactive: {
+      type: 'carousel',
+      body: { text: body },
+      cards: cards.map((card) => {
+        const cardObj: Record<string, unknown> = {
+          body: { text: card.description },
+          action: {
+            buttons: [
+              {
+                type: 'reply',
+                reply: { id: card.id, title: (card.buttonTitle || 'View').slice(0, 20) },
+              },
+            ],
+          },
+        }
+        if (card.imageUrl) {
+          cardObj.header = { type: 'image', image: { link: card.imageUrl } }
+        }
+        return cardObj
+      }),
+    },
+  }
+  if (header) {
+    (payload.interactive as Record<string, unknown>).header = { type: 'text', text: header }
+  }
+  if (footer) {
+    (payload.interactive as Record<string, unknown>).footer = { text: footer }
+  }
+  return sendWhatsAppRequest(credentials, payload)
+}
+
+export async function sendCatalogMessage(
+  credentials: WhatsAppCredentials,
+  { to, body, footer }: { to: string; body: string; footer?: string }
+) {
+  const payload: Record<string, unknown> = {
+    to,
+    messaging_product: 'whatsapp',
+    type: 'interactive',
+    interactive: {
+      type: 'catalog',
+      body: { text: body },
+      action: { name: 'catalog_message' },
+    },
+  }
+  if (footer) {
+    (payload.interactive as Record<string, unknown>).footer = { text: footer }
+  }
+  return sendWhatsAppRequest(credentials, payload)
+}
+
+export async function sendSingleProductMessage(
+  credentials: WhatsAppCredentials,
+  { to, body, catalogId, productId, footer }: { to: string; body: string; catalogId: string; productId: string; footer?: string }
+) {
+  const payload: Record<string, unknown> = {
+    to,
+    messaging_product: 'whatsapp',
+    type: 'interactive',
+    interactive: {
+      type: 'product',
+      body: { text: body },
+      action: {
+        catalog_id: catalogId,
+        product_retailer_id: productId,
+      },
+    },
+  }
+  if (footer) {
+    (payload.interactive as Record<string, unknown>).footer = { text: footer }
+  }
+  return sendWhatsAppRequest(credentials, payload)
+}
+
 export async function markMessageRead(
   credentials: WhatsAppCredentials,
   waMessageId: string

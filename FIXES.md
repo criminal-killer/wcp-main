@@ -1,7 +1,7 @@
 # Chatevo Fixes Applied
 
 **Last updated:** 2026-05-25
-**Total fixes:** 87
+**Total fixes:** 91
 
 ---
 
@@ -141,6 +141,10 @@
 | 85 | Webhook: handle undefined result from processIncomingMessage | `api/webhook/route.ts` | ✅ |
 | 86 | Webhook: wrap categorizeError in try/catch to prevent fallback failure | `api/webhook/route.ts` | ✅ |
 | 87 | WhatsApp row title truncation (max 24 chars) | `lib/store-engine.ts` (7 locations + waTitle helper) | ✅ |
+| 88 | sendCarouselMessage added | `lib/whatsapp.ts` | ✅ |
+| 89 | sendCatalogMessage + sendSingleProductMessage added | `lib/whatsapp.ts` | ✅ |
+| 90 | Carousel flow: handleCategorySelected + handleSubCategorySelected | `lib/store-engine.ts` | ✅ |
+| 91 | Webhook: product_item type + parseInput handler | `api/webhook/route.ts` + `lib/store-engine.ts` | ✅ |
 
 ---
 

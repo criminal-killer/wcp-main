@@ -61,6 +61,7 @@ export async function POST(req: NextRequest) {
               type: string
               button_reply?: { id: string; title: string }
               list_reply?: { id: string; title: string }
+              product_item?: { product_retailer_id: string }
             }
           }>
           contacts?: Array<{ profile: { name: string }; wa_id: string }>
@@ -176,7 +177,7 @@ export async function POST(req: NextRequest) {
           contact_id: contact.id,
           wa_message_id: msg.id,
           direction: 'inbound',
-          content: msg.text?.body || msg.interactive?.button_reply?.title || msg.interactive?.list_reply?.title || '',
+          content: msg.text?.body || msg.interactive?.button_reply?.title || msg.interactive?.list_reply?.title || (msg.interactive?.product_item ? '[Product Selected]' : '') || '',
           message_type: msg.type,
           status: 'delivered',
         })
