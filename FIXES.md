@@ -848,6 +848,91 @@ serverExternalPackages: ['@libsql/client', 'drizzle-orm', 'libsql'],
 
 ---
 
+## P1 — WhatsApp Bot Flow Fixes (2026-05-25)
+
+### 59. Fix 4-Button Quantity Selectors (Exceeds WhatsApp 3-Button Limit)
+
+**Issue:** All quantity selection screens showed 4 buttons (1, 2, 3, 5) but WhatsApp interactive button messages allow MAXIMUM 3 buttons. The Meta API silently rejected these messages — user tapped "Add to Cart" and got NO response, appearing "stuck."
+**Severity:** CRITICAL (primary cause of "flow gets stuck")
+**File:** `apps/merchant/lib/store-engine.ts`
+**Change:** Reduced all quantity selectors from 4 buttons to 3: `["1", "2", "3"]`. Affected 3 locations: product quantity select (line 576), variant quantity select (line 623), edit cart quantity (line 803).
+
+---
+
+### 60. Fix Payment Screen Accepting Any Text as COD Order
+
+**Issue:** `handlePaymentSelected()` defaulted `paymentMethod = 'cod'`. If user sent ANY text that wasn't a recognized payment option (like "back", "menu", or a question), a Cash on Delivery order was silently created. User would accidentally place unwanted orders.
+**Severity:** CRITICAL
+**File:** `apps/merchant/lib/store-engine.ts` (`handlePaymentSelected`)
+**Change:** Added validation — only `pay_paystack`, `pay_paypal`, `pay_cod` accepted. Any other text returns: "Please choose a payment method from the options above."
+
+---
+
+### 61. Fix Payment Link Failure Creating Orphan Order
+
+**Issue:** If Paystack payment link generation threw an error, the order was still created with `payment_method: 'paystack'` but no payment link. User saw a COD-style confirmation for a Paystack order with no way to pay.
+**Severity:** HIGH
+**File:** `apps/merchant/lib/store-engine.ts` (`handlePaymentSelected`, Paystack catch block)
+**Change:** Now returns an error message instead of creating the order: "Payment link generation failed. Please try again."
+
+---
+
+### 62. Fix "menu" Clearing Cart (Destructive Reset)
+
+**Issue:** `['hi', 'hello', 'hey', 'start', 'menu', '0', '00']` all triggered `clearCart()`. A user typing "menu" to navigate back lost all cart items. This is why users felt things "reset" unexpectedly.
+**Severity:** HIGH
+**File:** `apps/merchant/lib/store-engine.ts` (processIncomingMessage, line 177-181)
+**Change:** Split into two groups:
+- `hi/hello/hey/start` → clears cart + flow state + shows greeting (fresh start)
+- `menu/0/00` → clears only flow state + shows main menu (cart preserved)
+
+---
+
+### 63. Fix Delivery Info Screen Having No Escape Route
+
+**Issue:** In `delivery_info` state, ALL text input (3+ chars) was treated as a delivery address. Typing "back", "menu", "browse", or any question became the delivery address, then the flow proceeded to payment with a garbage address.
+**Severity:** HIGH
+**File:** `apps/merchant/lib/store-engine.ts` (`handleDeliveryInfo`)
+**Change:** Added escape handling before address validation: `back` → main menu, `cart` → cart review, `menu` → main menu, `cancel` → clear cart + end session. Address too short now suggests "Type *back* to go back."
+
+---
+
+### 64. Fix "Main Menu" Button Not Handled
+
+**Issue:** `showOrders()` displayed a "Main Menu" button with `id: 'main_menu'`. When tapped, the `main_menu` case didn't handle `main_menu` input, so it fell through to `handleAiFallback()`. The AI then generated a nonsensical response to "main_menu".
+**Severity:** MEDIUM
+**File:** `apps/merchant/lib/store-engine.ts` (switch `case 'main_menu':`)
+**Change:** Added `else if (inputNorm === 'main_menu')` handler that calls `showMainMenu()`.
+
+---
+
+### 65. Fix AI Fallback Broken (Server Auth Issue)
+
+**Issue:** `handleAiFallback()` sent an HTTP POST to `/api/ai/chat` with `{ org_id: org.id }`. But that endpoint requires Clerk `userId` from `auth()`. The webhook/server has no Clerk session, so every AI fallback call returned 401. Any unrecognized input in the bot got a generic error instead of an AI response.
+**Severity:** HIGH
+**File:** `apps/merchant/lib/store-engine.ts` (`handleAiFallback`)
+**Change:** Replaced HTTP fetch with direct Groq SDK call (server-side, no auth needed). Builds a context-aware system prompt with org name and currency. Falls back to a generic "Type *Hi* for the menu" message on error.
+
+---
+
+### 66. Fix showOrders Not Setting Flow State
+
+**Issue:** `showOrders()` didn't call `setFlowState()`. After viewing orders, tapping "New Order" (id: `browse`) would be handled by whatever flow state was previously set (e.g., `cart_review`), not `main_menu`. Buttons after the orders page routed to wrong handlers.
+**Severity:** MEDIUM
+**File:** `apps/merchant/lib/store-engine.ts` (`showOrders`)
+**Change:** Added `await setFlowState(orgId, phone, { step: 'main_menu' })` at the start.
+
+---
+
+### 67. Remove Duplicate setFlowState in showCart
+
+**Issue:** `showCart()` called `setFlowState(orgId, phone, { step: 'cart_review' })` twice (lines 723 and 747). Wasteful double Redis write.
+**Severity:** LOW
+**File:** `apps/merchant/lib/store-engine.ts` (`showCart`)
+**Change:** Removed the second `setFlowState` call.
+
+---
+
 ## Remaining Fixes (Not Yet Applied)
 
 See [AUDIT_REPORT.md](./AUDIT_REPORT.md) for the full list. Key items:
@@ -861,4 +946,4 @@ See [AUDIT_REPORT.md](./AUDIT_REPORT.md) for the full list. Key items:
 
 ---
 
-*Last updated: 2026-05-24*
+*Last updated: 2026-05-25*

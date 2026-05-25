@@ -173,11 +173,17 @@ export async function processIncomingMessage(ctx: EngineContext) {
     }
   }
 
-  // === FLOW RESET ===
-  if (['hi', 'hello', 'hey', 'start', 'menu', '0', '00'].includes(inputNorm)) {
+  // === FRESH START — clears cart ===
+  if (['hi', 'hello', 'hey', 'start'].includes(inputNorm)) {
     await clearCart(orgId, phone)
     await deleteFlowState(orgId, phone)
     return await showGreeting(waConfigObj, org, store, phone, orgId)
+  }
+
+  // === NAVIGATION — preserves cart ===
+  if (['menu', '0', '00'].includes(inputNorm)) {
+    await deleteFlowState(orgId, phone)
+    return await showMainMenu(waConfigObj, org, store, phone, orgId)
   }
 
   if (inputNorm === 'continue' || inputNorm === 'continue_to_menu') {
@@ -206,6 +212,8 @@ export async function processIncomingMessage(ctx: EngineContext) {
         return await showCart(waConfigObj, org, store, phone, orgId)
       } else if (inputNorm === 'orders') {
         return await showOrders(waConfigObj, org, phone, orgId, contact.id)
+      } else if (inputNorm === 'main_menu') {
+        return await showMainMenu(waConfigObj, org, store, phone, orgId)
       }
       return await handleAiFallback(waConfigObj, org, phone, inputRaw)
 
@@ -247,15 +255,28 @@ export async function processIncomingMessage(ctx: EngineContext) {
 
 async function handleAiFallback(waConfig: { phoneNumberId: string; accessToken: string }, org: RunnerOrg, phone: string, input: string) {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/ai/chat`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: input, org_id: org.id })
+    const Groq = (await import('groq-sdk')).default
+    const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
+
+    let context = `You are a helpful WhatsApp store assistant for "${org.name}". Currency: ${org.currency || 'KES'}. Be concise (1-3 sentences). If the question is unrelated to shopping, gently redirect to browsing products.`
+    if (org.ai_system_prompt) context += '\n' + org.ai_system_prompt
+
+    const completion = await groq.chat.completions.create({
+      messages: [{ role: 'system', content: context }, { role: 'user', content: input }],
+      model: 'llama-3.3-70b-versatile',
+      max_tokens: 200,
     })
-    const data = await response.json()
-    return await sendTextMessage(waConfig, { to: phone, body: data.reply || 'Sorry, I didn\'t catch that. Type *Hi* for the menu.' })
+    const reply = completion.choices[0]?.message?.content || ''
+    return await sendTextMessage(waConfig, {
+      to: phone,
+      body: reply || 'Sorry, I didn\'t catch that. Type *Hi* for the menu.',
+    })
   } catch (err) {
-    return await showMainMenu(waConfig, org, null, phone, org.id)
+    console.error('[ai-fallback]', err)
+    return await sendTextMessage(waConfig, {
+      to: phone,
+      body: 'Sorry, I didn\'t catch that. Type *Hi* for the menu.',
+    })
   }
 }
 
@@ -577,7 +598,6 @@ async function handleProductAction(
         { id: 'qty_1', title: '1' },
         { id: 'qty_2', title: '2' },
         { id: 'qty_3', title: '3' },
-        { id: 'qty_5', title: '5' },
       ],
     })
   }
@@ -624,7 +644,6 @@ async function handleVariantSelected(
       { id: 'qty_1', title: '1' },
       { id: 'qty_2', title: '2' },
       { id: 'qty_3', title: '3' },
-      { id: 'qty_5', title: '5' },
     ],
   })
 }
@@ -665,6 +684,8 @@ async function handleQuantitySelected(
 }
 
 async function showOrders(waConfig: { phoneNumberId: string; accessToken: string }, org: RunnerOrg, phone: string, orgId: string, contactId: string) {
+  await setFlowState(orgId, phone, { step: 'main_menu' })
+
   const recentOrders = await db.query.orders.findMany({
     where: and(eq(orders.org_id, orgId), eq(orders.contact_id, contactId)),
     orderBy: (orders, { desc }) => [desc(orders.created_at)],
@@ -722,8 +743,6 @@ async function showCart(waConfig: { phoneNumberId: string; accessToken: string }
     title: `${idx + 1}. ${i.product_name}`,
     description: `${i.qty} x ${org.currency} ${i.price.toLocaleString()}`,
   })) : []
-
-  await setFlowState(orgId, phone, { step: 'cart_review' })
 
   if (editRows.length > 0) {
     return await sendInteractiveListMessage(waConfig, {
@@ -805,7 +824,6 @@ async function handleCartAction(
         { id: 'eqty_1', title: '1' },
         { id: 'eqty_2', title: '2' },
         { id: 'eqty_3', title: '3' },
-        { id: 'eqty_5', title: '5' },
       ],
     })
   }
@@ -829,11 +847,24 @@ async function handleDeliveryInfo(
   waConfig: { phoneNumberId: string; accessToken: string }, org: RunnerOrg, store: RunnerStore | null, phone: string,
   orgId: string, convId: string, input: string, flow: FlowState, contact: RunnerContact
 ) {
+  const inputNorm = input.toLowerCase()
+
+  // Allow escape from delivery_info
+  if (['back', 'menu', 'cart', 'cancel'].includes(inputNorm)) {
+    if (inputNorm === 'cancel') {
+      await clearCart(orgId, phone)
+      await deleteFlowState(orgId, phone)
+      return await sendTextMessage(waConfig, { to: phone, body: '   Session ended. Type *Hi* to start again.' })
+    }
+    if (inputNorm === 'cart') return await showCart(waConfig, org, store, phone, orgId)
+    return await showMainMenu(waConfig, org, store, phone, orgId)
+  }
+
   const address = input.trim()
   if (address.length < 3) {
     return await sendTextMessage(waConfig, {
       to: phone,
-      body: 'Please enter a valid delivery address (at least 3 characters).',
+      body: 'Please enter a valid delivery address (at least 3 characters).\n\nType *back* to go back.',
     })
   }
   await setFlowState(orgId, phone, { ...flow, step: 'payment_select', delivery: address })
@@ -896,6 +927,15 @@ async function handlePaymentSelected(
     return await showMainMenu(waConfig, org, store, phone, orgId)
   }
 
+  // Only accept known payment options — reject any other text
+  const validPaymentInputs = ['pay_paystack', 'pay_paypal', 'pay_cod']
+  if (!validPaymentInputs.includes(inputNorm)) {
+    return await sendTextMessage(waConfig, {
+      to: phone,
+      body: 'Please choose a payment method from the options above.\n\nType *menu* to go back to shopping.',
+    })
+  }
+
   const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0)
   const deliveryFee = org.delivery_fee || 0
   const total = subtotal + deliveryFee
@@ -922,6 +962,10 @@ async function handlePaymentSelected(
       })
     } catch (err) {
       console.error('Paystack payment link error:', err)
+      return await sendTextMessage(waConfig, {
+        to: phone,
+        body: '  Payment link generation failed. Please try again or choose a different payment method.\n\nType *cart* to go back to your cart.',
+      })
     }
   } else if (inputNorm === 'pay_paypal' && org.store_paypal_email) {
     paymentMethod = 'paypal'
