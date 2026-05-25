@@ -4,6 +4,8 @@ import { db } from '@/lib/db'
 import { users } from '@/lib/schema'
 import { eq } from 'drizzle-orm'
 
+export const dynamic = 'force-dynamic'
+
 interface ClerkWebhookEvent {
   type: string
   data: {

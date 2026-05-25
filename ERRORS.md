@@ -41,9 +41,9 @@ Dynamic server usage: Route /api/affiliates/me couldn't be rendered statically b
 
 **What's happening:** All API routes using Clerk `auth()` (which calls `headers()`) are being statically rendered during Vercel's build phase. The `headers()` function is a dynamic server function that can't be used in static rendering.
 
-**Affected routes (28):** contacts, orders, messages, conversations, products, stores, affiliates, settings, auth, notifications, ai/chat, tickets, onboarding, referrals
+**Affected routes (37):** All API routes including cron/expire-trials, cron/abandoned-cart, cron/payouts, webhook (WhatsApp), payments/webhook/paystack, payments/webhook/stripe, payments/store-webhook, webhooks/clerk
 
-**Fix applied:** Added `export const dynamic = 'force-dynamic'` as the first line of every API route file. This tells Next.js to always render these routes dynamically.
+**Fix applied:** Added `export const dynamic = 'force-dynamic'` to all 37 API route files. Every route using `req.headers` or `headers()` now has force-dynamic.
 
 **Fix needed:** Rebuild and redeploy after the fix is committed.
 

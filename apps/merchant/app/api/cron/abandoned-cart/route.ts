@@ -8,6 +8,9 @@ import { decrypt } from '@/lib/encryption'
 
 // This endpoint should be called by a cron job (e.g. every 15 minutes)
 // Protect with a secret header: Authorization: Bearer CRON_SECRET
+
+export const dynamic = 'force-dynamic'
+
 export async function POST(req: Request) {
   const authHeader = req.headers.get('authorization')
   const cronSecret = process.env.CRON_SECRET

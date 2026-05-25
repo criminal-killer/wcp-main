@@ -9,6 +9,8 @@ const REFERRAL_GOAL = 10
 const FIRST_COMMISSION_RATE = 0.40
 const RECURRING_COMMISSION_RATE = 0.10
 
+export const dynamic = 'force-dynamic'
+
 export async function POST(req: NextRequest) {
   const body = await req.text()
   const signature = req.headers.get('x-paystack-signature') || ''

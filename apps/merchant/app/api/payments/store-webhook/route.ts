@@ -5,6 +5,8 @@ import { eq, and, sql } from 'drizzle-orm'
 import { verifyPaystackSignature } from '@/lib/payments'
 import { logError, categorizeError } from '@/lib/error-logger'
 
+export const dynamic = 'force-dynamic'
+
 export async function POST(req: NextRequest) {
   const body = await req.text()
   const signature = req.headers.get('x-paystack-signature') || ''

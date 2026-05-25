@@ -1,7 +1,7 @@
 # Chatevo Fixes Applied
 
 **Last updated:** 2026-05-25
-**Total fixes:** 76
+**Total fixes:** 83
 
 ---
 
@@ -130,6 +130,13 @@
 ---
 
 | 76 | Null-safe price formatting (E-007) | `lib/store-engine.ts` (10 locations) | ✅ |
+| 77 | force-dynamic on cron/expire-trials | `api/cron/expire-trials/route.ts` | ✅ |
+| 78 | force-dynamic on cron/abandoned-cart | `api/cron/abandoned-cart/route.ts` | ✅ |
+| 79 | force-dynamic on cron/payouts | `api/cron/payouts/route.ts` | ✅ |
+| 80 | force-dynamic on webhook (WhatsApp) | `api/webhook/route.ts` | ✅ |
+| 81 | force-dynamic on payments/webhook/paystack | `api/payments/webhook/paystack/route.ts` | ✅ |
+| 82 | force-dynamic on payments/webhook/stripe | `api/payments/webhook/stripe/route.ts` | ✅ |
+| 83 | force-dynamic on webhooks/clerk | `api/webhooks/clerk/route.ts` | ✅ |
 
 ---
 

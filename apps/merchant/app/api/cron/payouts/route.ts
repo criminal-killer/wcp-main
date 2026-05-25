@@ -4,6 +4,8 @@ import { organizations, payouts } from '@/lib/schema'
 import { eq, gt, sql } from 'drizzle-orm'
 import { initiatePaystackTransfer } from '@/lib/payments'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(req: NextRequest) {
   // Security: Check for CRON_SECRET to prevent manual triggers if needed
   const authHeader = req.headers.get('authorization')
