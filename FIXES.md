@@ -1,7 +1,7 @@
 # Chatevo Fixes Applied
 
 **Last updated:** 2026-05-25
-**Total fixes:** 86
+**Total fixes:** 87
 
 ---
 
@@ -140,6 +140,7 @@
 | 84 | Product selection: body truncation + try/catch fallback | `lib/store-engine.ts` (handleProductSelected) | ✅ |
 | 85 | Webhook: handle undefined result from processIncomingMessage | `api/webhook/route.ts` | ✅ |
 | 86 | Webhook: wrap categorizeError in try/catch to prevent fallback failure | `api/webhook/route.ts` | ✅ |
+| 87 | WhatsApp row title truncation (max 24 chars) | `lib/store-engine.ts` (7 locations + waTitle helper) | ✅ |
 
 ---
 

@@ -55,6 +55,13 @@ const waConfig = (org: RunnerOrg, accessToken: string, store: RunnerStore | null
   accessToken,
 })
 
+/** Truncate a string to WhatsApp's 24-char row title limit */
+function waTitle(s: string, max = 24): string {
+  // Array.from handles multi-byte chars (emojis, accented) correctly
+  const chars = Array.from(s)
+  return chars.length > max ? chars.slice(0, max).join('') + '…' : s
+}
+
 function parseInput(msg: InboundMessage): string {
   return (
     msg.text?.body?.trim() ||
@@ -351,7 +358,7 @@ async function showCategories(waConfig: { phoneNumberId: string; accessToken: st
     { id: 'back_menu', title: 'Back to Main Menu', description: 'Return to main menu' },
     ...cats.slice(0, 9).map(cat => ({
       id: `cat_${cat?.replace(/\s+/g, '_')}`,
-      title: cat || 'General',
+      title: waTitle(cat || 'General'),
       description: `Browse ${cat} products`,
     }))
   ]
@@ -407,10 +414,10 @@ async function handleCategorySelected(waConfig: { phoneNumberId: string; accessT
   if (subCats.length > 0) {
     await setFlowState(orgId, phone, { step: 'browsing_subcategories', category, store_id: store?.id })
     const rows = [
-      { id: `sub_all_${category.replace(/\s+/g, '_')}`, title: `All ${category}`, description: 'View all products' },
+      { id: `sub_all_${category.replace(/\s+/g, '_')}`, title: waTitle(`All ${category}`), description: 'View all products' },
       ...subCats.slice(0, 9).map(sc => ({
         id: `sub_${sc.replace(/\s+/g, '_')}`,
-        title: sc,
+        title: waTitle(sc),
         description: `Browse ${sc}`,
       }))
     ]
@@ -428,7 +435,7 @@ async function handleCategorySelected(waConfig: { phoneNumberId: string; accessT
 
   const rows = productList.map(p => ({
     id: `prod_${p.id}`,
-    title: p.name.slice(0, 24),
+    title: waTitle(p.name),
     description: `${org.currency} ${(p.price ?? 0).toLocaleString()}${p.inventory_count === 0 ? ' (Out of Stock)' : ''}`,
   }))
 
@@ -478,7 +485,7 @@ async function handleSubCategorySelected(waConfig: { phoneNumberId: string; acce
 
   const rows = productList.map(p => ({
     id: `prod_${p.id}`,
-    title: p.name.slice(0, 24),
+    title: waTitle(p.name),
     description: `${org.currency} ${(p.price ?? 0).toLocaleString()}${p.inventory_count === 0 ? ' (Out of Stock)' : ''}`,
   }))
 
@@ -613,7 +620,7 @@ async function handleProductAction(
         const priceText = opt.price ? ` — ${org.currency} ${(opt.price ?? 0).toLocaleString()}` : ` — ${org.currency} ${(price ?? 0).toLocaleString()}`
         return {
           id: `var_${opt.name.replace(/\s+/g, '_')}`,
-          title: `${opt.name}${priceText}`,
+          title: waTitle(`${opt.name}${priceText}`),
           description: `Choose this option`,
         }
       })
@@ -777,7 +784,7 @@ async function showCart(waConfig: { phoneNumberId: string; accessToken: string }
 
   const editRows = cart.length <= 10 ? cart.map((i, idx) => ({
     id: `edit_item_${idx}`,
-    title: `${idx + 1}. ${i.product_name}`,
+    title: waTitle(`${idx + 1}. ${i.product_name}`),
     description: `${i.qty} x ${org.currency} ${(i.price ?? 0).toLocaleString()}`,
   })) : []
 
