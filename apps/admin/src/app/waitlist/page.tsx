@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { waitlist } from "@/lib/schema";
 import { count, desc } from "drizzle-orm";
 import { Search, Filter, Download, UserCheck, Mail, Database, Users } from "lucide-react";
+import { WaitlistActions } from "./waitlist-client";
 
 export default async function WaitlistPage() {
   const allEntries = await db.select().from(waitlist).orderBy(desc(waitlist.created_at));
@@ -16,14 +17,7 @@ export default async function WaitlistPage() {
           <h1 className="text-3xl font-serif font-black text-slate-900 italic tracking-tight">Waitlist & Leads</h1>
           <p className="text-xs text-slate-400 font-black uppercase tracking-[0.2em] mt-1">Manage early adopter migration</p>
         </div>
-        <div className="flex gap-4">
-           <button className="flex items-center gap-2 px-6 py-2 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all">
-              <Download size={16} /> Export CSV
-           </button>
-           <button className="flex items-center gap-2 px-6 py-2 bg-primary text-white rounded-xl text-sm font-bold hover:opacity-90 transition-all shadow-lg shadow-emerald-100">
-              <UserCheck size={16} /> Migrate All
-           </button>
-        </div>
+        <WaitlistActions entries={allEntries} />
       </div>
 
       {/* Stats */}

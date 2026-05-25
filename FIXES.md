@@ -933,16 +933,73 @@ serverExternalPackages: ['@libsql/client', 'drizzle-orm', 'libsql'],
 
 ---
 
+## P3 — Remaining Cleanup (2026-05-25)
+
+### 68. Wire Admin System Quick Actions
+
+**Issue:** Quick Actions (Clear Cache, Flush Logs, Panic Mode) were buttons with no onClick handlers.
+**Severity:** MEDIUM
+**Files:**
+- `apps/admin/src/app/api/system/actions/route.ts` — NEW: POST API with super-admin auth. Supports `clear_cache` (flush Upstash Redis), `flush_logs` (delete resolved errors older than 30 days), `panic_mode` (disable/re-enable all orgs)
+- `apps/admin/src/app/system/quick-actions.tsx` — NEW: client component with loading states, confirmation dialog for panic mode, result feedback
+- `apps/admin/src/app/system/page.tsx` — Replaced static buttons with `<QuickActions />` component
+
+---
+
+### 69. Wire Admin Waitlist Export CSV and Migrate All
+
+**Issue:** Export CSV and Migrate All buttons had no onClick handlers.
+**Severity:** MEDIUM
+**Files:**
+- `apps/admin/src/app/waitlist/waitlist-client.tsx` — NEW: client component with `exportCSV()` (generates CSV blob and triggers download) and `migrateAll()` (calls POST `/api/waitlist/migrate`)
+- `apps/admin/src/app/waitlist/page.tsx` — Replaced static buttons with `<WaitlistActions entries={allEntries} />`
+
+---
+
+### 70. SQL-Level Search Filtering for Contacts
+
+**Issue:** `/api/contacts` fetched ALL rows then filtered in JavaScript — O(n) for every request.
+**Severity:** MEDIUM (performance)
+**File:** `apps/merchant/app/api/contacts/route.ts`
+**Change:** Moved search filtering to SQL WHERE clause using `like()` on `contacts.name`, `contacts.phone`, `contacts.email`. Tag filtering remains in JS (requires JSON parsing). Added `or` import from drizzle-orm.
+
+---
+
+### 71. SQL-Level Search Filtering for Orders
+
+**Issue:** `/api/orders` fetched ALL rows then filtered in JavaScript — O(n) for every request.
+**Severity:** MEDIUM (performance)
+**File:** `apps/merchant/app/api/orders/route.ts`
+**Change:** Moved search filtering to SQL WHERE clause using `like()` on `orders.order_number`, `contacts.name`, `contacts.phone`. Status filtering was already SQL-level. Added `or` import from drizzle-orm.
+
+---
+
+### 72. Add Loading States to Dashboard Pages
+
+**Issue:** Dashboard pages had no loading.tsx — users saw blank screens during data fetch.
+**Severity:** LOW
+**Files created:**
+- `apps/merchant/app/dashboard/loading.tsx` — Global dashboard loading spinner
+- `apps/merchant/app/dashboard/orders/loading.tsx` — "Loading orders..." spinner
+- `apps/merchant/app/dashboard/contacts/loading.tsx` — "Loading contacts..." spinner
+- `apps/merchant/app/dashboard/products/loading.tsx` — "Loading products..." spinner
+- `apps/merchant/app/dashboard/inbox/loading.tsx` — "Loading conversations..." spinner
+
+---
+
+### 73. Remove Tracked Build Artifact
+
+**Issue:** `wacommerce/phase-2-app/tsconfig.tsbuildinfo` (1.4MB) was tracked in git.
+**Severity:** LOW
+**Change:** `git rm --cached` to untrack. `.gitignore` already has `*.tsbuildinfo` rule.
+
+---
+
 ## Remaining Fixes (Not Yet Applied)
 
 See [AUDIT_REPORT.md](./AUDIT_REPORT.md) for the full list. Key items:
 
 - [ ] Remove unused schema columns (admin-managed fields from reconciliation — skipping to avoid breaking admin app)
-- [ ] Admin system Quick Actions (Clear Cache, Backup DB, Flush Logs, Panic Mode) — no handlers
-- [ ] Admin waitlist Export CSV / Migrate All — no handlers
-- [ ] SQL-level search filtering for contacts/orders (currently filters in JavaScript after fetching all rows)
-- [ ] loading.tsx / Suspense boundaries for dashboard pages
-- [ ] Committed build artifacts (.next/, tsconfig.tsbuildinfo) — need to add to .gitignore and remove from git
 
 ---
 

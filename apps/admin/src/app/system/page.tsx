@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
 import { HardDrive, Cpu, ShieldCheck, Activity, Terminal, CheckCircle2, AlertTriangle } from "lucide-react";
+import { QuickActions } from "./quick-actions";
 
 async function checkTurso(): Promise<boolean> {
   try {
@@ -111,27 +112,7 @@ export default async function SystemPage() {
          </div>
 
          {/* Maintenance Actions */}
-         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-8">
-            <h2 className="font-bold text-slate-900 mb-6 italic font-serif">Quick Actions</h2>
-            <div className="grid grid-cols-2 gap-4">
-               <button className="p-4 bg-slate-50 border border-slate-100 rounded-2xl text-left hover:bg-slate-100 transition-all group">
-                  <p className="text-xs font-black uppercase tracking-widest text-slate-400 group-hover:text-primary transition-colors">Clear Cache</p>
-                  <p className="text-[9px] text-slate-400 font-medium mt-1">Reset Upstash Redis keys</p>
-               </button>
-               <button className="p-4 bg-slate-50 border border-slate-100 rounded-2xl text-left hover:bg-slate-100 transition-all group">
-                  <p className="text-xs font-black uppercase tracking-widest text-slate-400 group-hover:text-primary transition-colors">Backup DB</p>
-                  <p className="text-[9px] text-slate-400 font-medium mt-1">Export Turso snapshot</p>
-               </button>
-               <button className="p-4 bg-slate-50 border border-slate-100 rounded-2xl text-left hover:bg-slate-100 transition-all group">
-                  <p className="text-xs font-black uppercase tracking-widest text-slate-400 group-hover:text-primary transition-colors">Flush Logs</p>
-                  <p className="text-[9px] text-slate-400 font-medium mt-1">Clear system transaction logs</p>
-               </button>
-               <button className="p-4 bg-red-50 border border-red-100 rounded-2xl text-left hover:bg-red-100 transition-all group">
-                  <p className="text-xs font-black uppercase tracking-widest text-red-600">Panic Mode</p>
-                  <p className="text-[9px] text-red-400 font-medium mt-1 uppercase tracking-tighter">Disable all store checkouts</p>
-               </button>
-            </div>
-         </div>
+         <QuickActions />
       </div>
     </div>
   );

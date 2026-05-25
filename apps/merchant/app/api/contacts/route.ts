@@ -2,7 +2,7 @@ import { auth } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { users, contacts } from '@/lib/schema'
-import { eq, and, desc } from 'drizzle-orm'
+import { eq, and, desc, like, or } from 'drizzle-orm'
 import { logError, categorizeError } from '@/lib/error-logger'
 
 export async function GET(req: NextRequest) {
@@ -16,18 +16,23 @@ export async function GET(req: NextRequest) {
     const search = searchParams.get('search')
     const tag = searchParams.get('tag')
 
+    const conditions = [eq(contacts.org_id, user.org_id)]
+
+    if (search) {
+      const pattern = `%${search}%`
+      conditions.push(or(
+        like(contacts.name, pattern),
+        like(contacts.phone, pattern),
+        like(contacts.email, pattern)
+      )!)
+    }
+
     let list = await db.select()
       .from(contacts)
-      .where(eq(contacts.org_id, user.org_id))
+      .where(and(...conditions))
       .orderBy(desc(contacts.created_at))
       .limit(1000)
 
-    if (search) {
-      list = list.filter(c =>
-        c.name?.toLowerCase().includes(search.toLowerCase()) ||
-        c.phone.includes(search)
-      )
-    }
     if (tag) {
       list = list.filter(c => {
         const tags = JSON.parse(c.tags || '[]') as string[]
