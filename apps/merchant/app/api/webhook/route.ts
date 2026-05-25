@@ -210,8 +210,9 @@ export async function POST(req: NextRequest) {
                 message_type: 'text',
                 status: 'sent',
               })
-            } else if (result?.error) {
-              // Bot returned an error — send fallback text to user
+            } else {
+              // Bot returned an error, null, or undefined — always send a fallback
+              console.error('[webhook] Bot returned error or no result:', result)
               try {
                 await sendTextMessage(
                   { phoneNumberId, accessToken },
@@ -221,16 +222,21 @@ export async function POST(req: NextRequest) {
             }
           } catch (err: any) {
             console.error('Store engine error:', err)
-            const info = categorizeError(err)
-            await logError({
-              org_id: org.id,
-              severity: info.severity,
-              category: info.category,
-              message: err?.message || String(err),
-              cause: info.cause,
-              fix: info.fix,
-              stack: err?.stack,
-            })
+            try {
+              const info = categorizeError(err)
+              await logError({
+                org_id: org.id,
+                severity: info.severity,
+                category: info.category,
+                message: err?.message || String(err),
+                cause: info.cause,
+                fix: info.fix,
+                stack: err?.stack,
+              })
+            } catch (logErr) {
+              console.error('[webhook] Failed to log error:', logErr)
+            }
+            // ALWAYS send fallback to user — this is the last line of defense
             try {
               await sendTextMessage(
                 { phoneNumberId, accessToken },

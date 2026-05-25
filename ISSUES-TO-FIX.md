@@ -23,3 +23,7 @@
 - Duplicate setFlowState in showCart → Removed
 
 See FIXES.md #59-#67 for full details.
+
+### 5. Product selection silent failure ✅ FIXED (2026-05-25)
+**Root cause:** After tapping a product from the list, `handleProductSelected` sent an interactive button message. If the body exceeded WhatsApp's 1024 char limit, the API silently dropped it. No fallback text was sent. Additionally, the webhook handler skipped the fallback when `processIncomingMessage` returned undefined.
+**Fix:** Body truncated to 900 chars, entire send wrapped in try/catch with text fallback, webhook handles undefined results, catch block hardened. (Fixes #84-#86)

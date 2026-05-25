@@ -508,20 +508,25 @@ async function handleProductSelected(
 
   if (!product) return await sendTextMessage(waConfig, { to: phone, body: '  Product not found.' })
 
-  const images = JSON.parse(product.images || '[]') as string[]
-  const variants = JSON.parse(product.variants || '[]') as Array<{ type: string; options: Array<{ name: string; price?: number }> }>
+  let images: string[] = []
+  let variants: Array<{ type: string; options: Array<{ name: string; price?: number }> }> = []
+  try {
+    images = JSON.parse(product.images || '[]')
+    variants = JSON.parse(product.variants || '[]')
+  } catch (_) { /* malformed JSON — use empty arrays */ }
 
   const stockText = product.inventory_count === 0
     ? '*Out of Stock*'
     : `${product.inventory_count} in stock`
 
+  const price = (product.price ?? 0).toLocaleString()
   const compareText = product.compare_at_price
-    ? `*${org.currency} ${(product.price ?? 0).toLocaleString()}* ~(was ${org.currency} ${(product.compare_at_price ?? 0).toLocaleString()})~`
-    : `*${org.currency} ${(product.price ?? 0).toLocaleString()}*`
+    ? `*${org.currency} ${price}* ~(was ${org.currency} ${(product.compare_at_price ?? 0).toLocaleString()})~`
+    : `*${org.currency} ${price}*`
 
   const description = product.description ? `\n${product.description}` : ''
-  const subCategoryText = product.sub_category 
-    ? `${product.category} > ${product.sub_category}` 
+  const subCategoryText = product.sub_category
+    ? `${product.category} > ${product.sub_category}`
     : product.category
   const variantText = variants.length > 0
     ? `\n\n*Options:* ${variants.map(v => `${v.type}: ${v.options.map(o => o.name).join(', ')}`).join(' | ')}`
@@ -534,36 +539,49 @@ async function handleProductSelected(
     ? '\n\n*Service:* We will contact to schedule'
     : ''
 
+  // Truncate body to WhatsApp's 1024 char limit for interactive messages
+  const bodyMax = 900 // leave room for stockText + formatting
+  const truncatedDesc = description.length > bodyMax ? description.slice(0, bodyMax) + '...' : description
+  const bodyText = `*${product.name}*\n${compareText}\n${subCategoryText}${truncatedDesc}${variantText}${typeHint}\n\n${stockText}`
+
   await setFlowState(orgId, phone, { step: 'product_detail', product_id: productId, category: flow.category, product_type: productType })
 
   if (product.inventory_count === 0 && productType !== 'digital') {
     return await sendTextMessage(waConfig, {
       to: phone,
-      body: `*${product.name}*\n\n${compareText}\n${subCategoryText}${description}${variantText}${typeHint}\n\n${stockText}\n\nType *menu* to go back.`,
+      body: `${bodyText}\n\nType *menu* to go back.`,
     })
   }
 
   const imageUrl = images[0] && typeof images[0] === 'string' && images[0].startsWith('http') ? images[0] : undefined
 
-  const result = await sendInteractiveButtonMessage(waConfig, {
-    to: phone,
-    imageUrl,
-    body: `*${product.name}*\n${compareText}\n${subCategoryText}${description}${variantText}${typeHint}\n\n${stockText}`,
-    buttons: [
-      { id: `add_${productId}`, title: 'Add to Cart' },
-      { id: 'back_category', title: 'Back to Categories' },
-    ],
-  })
-
-  // Fallback: if interactive message fails (e.g., bad image), send as text
-  if (result?.error) {
+  // Always try interactive first, then text fallback — guarantee a response
+  try {
+    const result = await sendInteractiveButtonMessage(waConfig, {
+      to: phone,
+      imageUrl,
+      body: bodyText,
+      buttons: [
+        { id: `add_${productId}`, title: 'Add to Cart' },
+        { id: 'back_category', title: 'Back to Categories' },
+      ],
+    })
+    if (result?.error) {
+      // WhatsApp rejected the interactive message — send text fallback
+      return await sendTextMessage(waConfig, {
+        to: phone,
+        body: `${bodyText}\n\nReply:\n*1* — Add to Cart\n*0* — Back to Menu`,
+      })
+    }
+    return result
+  } catch (err) {
+    console.error('[handleProductSelected] send failed:', err)
+    // Final fallback — text message with numbered options
     return await sendTextMessage(waConfig, {
       to: phone,
-      body: `*${product.name}*\n\n${compareText}\n${subCategoryText}${description}${variantText}${typeHint}\n\n${stockText}\n\nReply:\n*1* — Add to Cart\n*0* — Back to Menu`,
+      body: `${bodyText}\n\nReply:\n*1* — Add to Cart\n*0* — Back to Menu`,
     })
   }
-
-  return result
 }
 
 async function handleProductAction(

@@ -1,7 +1,7 @@
 # Chatevo Fixes Applied
 
 **Last updated:** 2026-05-25
-**Total fixes:** 83
+**Total fixes:** 86
 
 ---
 
@@ -137,6 +137,9 @@
 | 81 | force-dynamic on payments/webhook/paystack | `api/payments/webhook/paystack/route.ts` | ✅ |
 | 82 | force-dynamic on payments/webhook/stripe | `api/payments/webhook/stripe/route.ts` | ✅ |
 | 83 | force-dynamic on webhooks/clerk | `api/webhooks/clerk/route.ts` | ✅ |
+| 84 | Product selection: body truncation + try/catch fallback | `lib/store-engine.ts` (handleProductSelected) | ✅ |
+| 85 | Webhook: handle undefined result from processIncomingMessage | `api/webhook/route.ts` | ✅ |
+| 86 | Webhook: wrap categorizeError in try/catch to prevent fallback failure | `api/webhook/route.ts` | ✅ |
 
 ---
 
