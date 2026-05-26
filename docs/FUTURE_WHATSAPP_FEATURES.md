@@ -1,99 +1,117 @@
-steps fo# Future Enhancements - WhatsApp Rich Features
+# WhatsApp Features — Implemented & Future
 
-## Overview
-Some advanced WhatsApp features require Meta Business Account setup. This document outlines what's possible and what's needed.
+## Implemented (Live)
 
----
+### Interactive Buttons
+- Browse, cart, checkout, quantity selection
+- Image headers on product detail messages
 
-## Available Now (No Extra Setup)
-- ✅ Interactive Buttons (browse, cart, checkout)
-- ✅ List Messages (categories, products, variants)
-- ✅ Image Messages (product photos)
-- ✅ Two-step Greeting Flow
-- ✅ Quantity Selection
-- ✅ Order Confirmation
+### Interactive List Messages
+- Category browsing, product selection, variant selection, cart editing
+- Row titles auto-truncated to 24 chars (`waTitle()` helper)
 
----
+### Product Carousels (with Meta Catalog)
+- Up to 10 scrollable product cards with images, prices, descriptions
+- Auto-enabled when `wa_catalog_id` + `meta_business_id` are set
+- Falls back to list messages when catalog not configured
+- **Setup guide:** [docs/SETUP_META_CATALOG.md](./SETUP_META_CATALOG.md)
 
-## Requires Meta Commerce Catalog
+### Two-step Greeting Flow
+- "Hi" → greeting card → "Start Shopping" → main menu
 
-### 1. Product Carousel Messages
-**What it does:** Shows up to 10 products in a horizontal scrollable card format with images.
+### Cart & Checkout Flow
+- Add to cart → quantity select → cart review → delivery info → payment
 
-**Requirements:**
-- WhatsApp Business Account
-- Meta Commerce Manager Catalog
-- Products added to catalog
-
-**API:** `type: "interactive"` with `type: "carousel"`
-
-### 2. Single-Product Messages
-**What it does:** Shows a single product with image, price, and "View" button that opens in WhatsApp.
-
-**Requirements:**
-- WhatsApp Business Account
-- Catalog with products
-
-**API:** `type: "interactive"` with `type: "product"`
-
-### 3. Multi-Product Messages
-**What it does:** Shows up to 30 products in sections within a single message.
-
-**Requirements:**
-- WhatsApp Business Account
-- Connected Product Catalog
+### AI Fallback
+- Unrecognized messages → Groq AI response
 
 ---
 
-## Requires WhatsApp Flows (Meta Business Suite)
+## Future Enhancements
 
-### What are Flows?
-WhatsApp Flows enable multi-screen structured interactions within WhatsApp - no external browser needed.
+### 1. Subscription Expiry Redirect
+**Status:** Not implemented — documented for future development
 
-### Flow Types:
-1. **Appointment Booking** - Schedule services
-2. **Lead Generation** - Collect customer info
-3. **Product Browsing** - Browse products in a flow
-4. **Surveys & Feedback** - Get customer feedback
-5. **Delivery Address** - Structured address collection (better than text)
+**What it does:** When a merchant's trial or paid subscription expires, the WhatsApp bot should:
+1. Stop showing the full shopping flow
+2. Send a message to the owner: "Your Chatevo subscription has expired. Renew to keep your store active."
+3. Include a CTA button linking to the pricing page: `[Renew Plan]` → `https://chatevo.com/pricing`
+4. For customers messaging the store: "This store is temporarily unavailable. Please check back later."
 
-### Setup Steps:
-1. Go to **Meta Business Suite** → **WhatsApp** → ** Flows**
-2. Click **Create Flow**
-3. Choose a template or start from scratch
-4. Design screens using Meta's Flow Builder
-5. Test and publish
-6. Get the **Flow Name** or **Flow ID**
+**Implementation notes:**
+- Check `organizations.subscription_status` and `organizations.trial_ends_at` in `processIncomingMessage`
+- If expired → send expiry message with CTA URL instead of processing the flow
+- Use `sendInteractiveCTAUrlMessage` for the "Renew Plan" button
+- Don't implement yet — user wants WhatsApp flow stable first
 
-### How to Use in Chatevo:
-Once you have a Flow, add the Flow Name to Chatevo settings. The bot will send a Flow message with a CTA button.
+### 2. WhatsApp Flows (Multi-Screen Forms)
+**Status:** Not implemented
+
+WhatsApp Flows enable structured multi-screen interactions within WhatsApp:
+- Appointment booking
+- Lead generation forms
+- Structured address collection (better than free-text)
+- Product browsing in a flow
+
+**Setup:** Meta Business Suite → WhatsApp → Flows
+
+### 3. Template Messages (HSM)
+**Status:** Not implemented
+
+Pre-approved message templates for:
+- Order confirmations
+- Shipping updates
+- Abandoned cart reminders
+- Promotional broadcasts
+
+**Requirement:** Templates must be approved by Meta before sending.
+
+### 4. Media Messages
+**Status:** Not implemented
+
+Send images, videos, documents:
+- Product photos as standalone images
+- Invoice PDFs
+- Video product demos
+
+### 5. Location Messages
+**Status:** Not implemented
+
+- Store location sharing
+- Delivery tracking with map
+
+### 6. Contact Cards
+**Status:** Not implemented
+
+- Share business contact info
+- Agent contact cards
 
 ---
 
-## Quick Wins (Easy Setup)
+## Architecture Notes
 
-### 1. Embedded Store Link
-Add a "Visit Website" button that opens your web store in WhatsApp browser.
+### How Carousels Work (Implemented)
 
-**Already Works:** Just add your store URL to settings.
+```
+User taps category
+  → handleCategorySelected()
+  → if hasCatalog(org): sendCarouselMessage() with product images
+  → else: sendInteractiveListMessage() with text rows
 
-### 2. Rich Product Images
-Products already send images via `sendImageMessage()`. Make sure your product images are high quality.
+User taps carousel card
+  → WhatsApp sends interactive.product_item.product_retailer_id
+  → parseInput() extracts "prod_XXX"
+  → handleProductSelected() shows product detail with buttons
+```
 
----
+### How Subscription Expiry Would Work (Future)
 
-## Priority Recommendation
-
-1. **Now:** Use the improved flow (buttons + lists + images)
-2. **Next:** Set up Meta Commerce Catalog for product carousels
-3. **Later:** Create WhatsApp Flows in Meta Business Suite for delivery address
-
----
-
-## Questions to Ask Merchants
-1. Do you have a Meta Business Account?
-2. Have you created a Commerce Manager catalog?
-3. Do you want to create WhatsApp Flows for specific use cases?
-
----
-Generated: 2026-05-20
+```
+User sends any message
+  → processIncomingMessage()
+  → check org.subscription_status and org.trial_ends_at
+  → if expired:
+    → sendInteractiveCTAUrlMessage("Renew Plan", "https://chatevo.com/pricing")
+    → return (don't process flow)
+  → else: continue normal flow
+```

@@ -37,6 +37,20 @@ Run `node scripts/sync-env.mjs` to propagate root `.env.local` into each app.
 | `WHATSAPP_VERIFY_TOKEN` | merchant | You choose this string | Must match Meta webhook config |
 | `WHATSAPP_APP_SECRET` | merchant | Meta Developers → App → Settings → Basic | **SECRET** |
 
+### Meta Commerce Catalog (Database Fields)
+
+These are stored in the `organizations` table, not as env vars. Set them in **Settings → WhatsApp** in the dashboard.
+
+| Field | Where to Get | Notes |
+|-------|--------------|-------|
+| `meta_business_id` | [business.facebook.com](https://business.facebook.com) → Business Settings → Business Info | Your Meta Business Manager ID |
+| `wa_catalog_id` | Commerce Manager → Catalog → Settings | Numeric catalog ID |
+| `category_mapping` | You define this | JSON mapping of your categories to Google Product Category IDs |
+
+**Why:** When `wa_catalog_id` and `meta_business_id` are both set, the WhatsApp bot sends product carousels with images instead of text-only lists.
+
+**Setup guide:** [docs/SETUP_META_CATALOG.md](./SETUP_META_CATALOG.md)
+
 ---
 
 ## Payments — Stripe (Global)

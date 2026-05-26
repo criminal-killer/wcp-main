@@ -78,3 +78,4 @@ Meta needs to verify your webhook URL:
 
 - [Add Products](../guides/product-management.md) →
 - [Set Up Payments](../guides/payment-setup.md) →
+- [Set Up Product Carousels](../SETUP_META_CATALOG.md) — show product images in WhatsApp
