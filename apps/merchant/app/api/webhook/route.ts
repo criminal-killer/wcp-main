@@ -250,10 +250,12 @@ export async function POST(req: NextRequest) {
               console.error('[webhook] Failed to log error:', logErr)
             }
             // ALWAYS send fallback to user — this is the last line of defense
+            const errMsg = err?.message || String(err)
+            const safeMsg = errMsg.length > 200 ? errMsg.slice(0, 200) + '...' : errMsg
             try {
               await sendTextMessage(
                 { phoneNumberId, accessToken },
-                { to: contact.phone, body: 'Something went wrong. Type *menu* to continue.' }
+                { to: contact.phone, body: `Something went wrong: ${safeMsg}. Type *menu* to continue.` }
               )
             } catch (_) { /* ignore fallback errors */ }
           }
