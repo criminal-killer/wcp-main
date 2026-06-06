@@ -212,12 +212,24 @@ export async function POST(req: NextRequest) {
                 status: 'sent',
               })
             } else {
-              // Bot returned an error, null, or undefined — always send a fallback
-              console.error('[webhook] Bot returned error or no result:', result)
+              const errorMsg = result?.error || 'Unknown error'
+              console.error('[webhook] Bot returned error:', errorMsg)
               try {
+                const info = categorizeError(new Error(errorMsg))
+                await logError({
+                  org_id: org.id,
+                  severity: info.severity,
+                  category: info.category,
+                  message: errorMsg,
+                  cause: info.cause,
+                  fix: info.fix,
+                })
+              } catch (_) { /* ignore logging errors */ }
+              try {
+                const safeMsg = errorMsg.length > 200 ? errorMsg.slice(0, 200) + '...' : errorMsg
                 await sendTextMessage(
                   { phoneNumberId, accessToken },
-                  { to: contact.phone, body: 'Sorry, something went wrong. Type *menu* to continue shopping.' }
+                  { to: contact.phone, body: `Sorry, something went wrong: ${safeMsg}. Type *menu* to continue shopping.` }
                 )
               } catch (_) { /* ignore */ }
             }
