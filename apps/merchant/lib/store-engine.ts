@@ -831,7 +831,7 @@ async function handleQuantitySelected(
     variant: flow.variant,
   })
 
-  await setFlowState(orgId, phone, { step: 'cart_review' })
+  await setFlowState(orgId, phone, { ...flow, step: 'cart_review' })
   return await showCart(waConfig, org, store, phone, orgId)
 }
 
@@ -874,6 +874,7 @@ async function showCart(waConfig: { phoneNumberId: string; accessToken: string }
   const cart = await getCart(orgId, phone) as CartItem[] | null
 
   if (!cart || cart.length === 0) {
+    await deleteFlowState(orgId, phone)
     return await sendInteractiveButtonMessage(waConfig, {
       to: phone,
       header: 'Your Cart',
@@ -884,6 +885,10 @@ async function showCart(waConfig: { phoneNumberId: string; accessToken: string }
       ],
     })
   }
+
+  // Set flow to cart_review so checkout button routes correctly from any entry point
+  const currentFlow = await getFlowState(orgId, phone) as FlowState | null
+  await setFlowState(orgId, phone, { ...(currentFlow || {}), step: 'cart_review' })
 
   const subtotal = cart.reduce((s, i) => s + (i.price ?? 0) * i.qty, 0)
   const itemCount = cart.reduce((s, i) => s + i.qty, 0)
@@ -943,7 +948,7 @@ async function handleCartAction(
     return await showCategories(waConfig, org, store, phone, orgId)
   }
   if (inputNorm === 'checkout') {
-    await setFlowState(orgId, phone, { step: 'delivery_info' })
+    await setFlowState(orgId, phone, { ...flow, step: 'delivery_info' })
     return await sendTextMessage(waConfig, {
       to: phone,
       body: '   *Delivery Details*\n\nPlease send your delivery address:\n\n_(e.g. "123 Main Street, Nairobi")_',
@@ -1105,7 +1110,7 @@ async function handlePaymentSelected(
   const deliveryFee = org.delivery_fee || 0
   const total = subtotal + deliveryFee
 
-  const orderNumber = `ORD-${Date.now().toString(36).toUpperCase()}`
+  const orderNumber = `ORD-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`
   let paymentMethod = 'cod'
   let paymentStatus: 'pending' | 'paid' = 'pending'
   let paymentLink: string | undefined
@@ -1146,43 +1151,72 @@ async function handlePaymentSelected(
   }
 
   // Create order
-  const [order] = await db.insert(orders).values({
-    org_id: orgId,
-    contact_id: contact.id,
-    order_number: orderNumber,
-    items: JSON.stringify(cart),
-    subtotal,
-    delivery_fee: deliveryFee,
-    total,
-    currency: org.currency || 'KES',
-    payment_method: paymentMethod,
-    payment_status: paymentStatus,
-    payment_link: paymentLink || null,
-    order_status: 'new',
-    delivery_address: flow.delivery,
-  }).returning()
-
-  // Update contact stats
-  await db.update(contacts).set({
-    total_orders: (contact.total_orders || 0) + 1,
-    total_spent: (contact.total_spent || 0) + total,
-  }).where(and(eq(contacts.id, contact.id), eq(contacts.org_id, orgId)))
-
-  // Decrement inventory for non-digital products
-  for (const item of cart) {
-    const product = await db.query.products.findFirst({
-      where: and(eq(products.id, item.product_id), eq(products.org_id, orgId))
+  let order: typeof orders.$inferSelect | undefined
+  try {
+    const [inserted] = await db.insert(orders).values({
+      org_id: orgId,
+      contact_id: contact.id,
+      order_number: orderNumber,
+      items: JSON.stringify(cart),
+      subtotal,
+      delivery_fee: deliveryFee,
+      total,
+      currency: org.currency || 'KES',
+      payment_method: paymentMethod,
+      payment_status: paymentStatus,
+      payment_link: paymentLink || null,
+      order_status: 'new',
+      delivery_address: flow.delivery,
+    }).returning()
+    order = inserted
+  } catch (err) {
+    console.error('Order creation failed:', err)
+    return await sendTextMessage(waConfig, {
+      to: phone,
+      body: '  We encountered an issue creating your order. Please try again.\n\nType *cart* to go back to your cart.',
     })
-    if (product && product.product_type !== 'digital') {
-      await db.update(products)
-        .set({ inventory_count: sql`MAX(0, ${products.inventory_count} - ${item.qty})` })
-        .where(and(eq(products.id, item.product_id), eq(products.org_id, orgId)))
+  }
+
+  if (!order) {
+    return await sendTextMessage(waConfig, {
+      to: phone,
+      body: '  We encountered an issue creating your order. Please try again.\n\nType *cart* to go back to your cart.',
+    })
+  }
+
+  // Update contact stats (non-fatal if fails)
+  try {
+    await db.update(contacts).set({
+      total_orders: (contact.total_orders || 0) + 1,
+      total_spent: (contact.total_spent || 0) + total,
+    }).where(and(eq(contacts.id, contact.id), eq(contacts.org_id, orgId)))
+  } catch (err) {
+    console.error('Contact stats update failed for order', order.id, err)
+  }
+
+  // Decrement inventory for non-digital products (non-fatal if fails)
+  for (const item of cart) {
+    try {
+      const product = await db.query.products.findFirst({
+        where: and(eq(products.id, item.product_id), eq(products.org_id, orgId))
+      })
+      if (product && product.product_type !== 'digital') {
+        await db.update(products)
+          .set({ inventory_count: sql`MAX(0, ${products.inventory_count} - ${item.qty})` })
+          .where(and(eq(products.id, item.product_id), eq(products.org_id, orgId)))
+      }
+    } catch (err) {
+      console.error('Inventory decrement failed for item', item.product_id, err)
     }
   }
 
-  // Track for abandoned cart reminders (only for pending payment orders)
+  // Track for abandoned cart reminders (non-fatal if fails)
   if (paymentStatus === 'pending') {
-    await setCartAbandoned(orgId, phone, order.id)
+    try {
+      await setCartAbandoned(orgId, phone, order.id)
+    } catch (err) {
+      console.error('Set cart abandoned failed:', err)
+    }
   }
 
   // Clear cart & flow
