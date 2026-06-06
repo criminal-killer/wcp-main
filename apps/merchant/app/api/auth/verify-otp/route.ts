@@ -4,15 +4,18 @@ import { auth } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
 
-const OTP_SECRET = process.env.OTP_HMAC_SECRET
-if (!OTP_SECRET) throw new Error('OTP_HMAC_SECRET environment variable is required')
+function getOTPSecret(): string {
+  const secret = process.env.OTP_HMAC_SECRET
+  if (!secret) throw new Error('OTP_HMAC_SECRET environment variable is required')
+  return secret
+}
 
 // How long the "unlocked" state persists after a successful OTP verification (20 minutes)
 const UNLOCK_TTL_MS = 20 * 60 * 1000
 const UNLOCK_TTL_SECONDS = UNLOCK_TTL_MS / 1000
 
 function signPayload(payload: string): string {
-  const sig = crypto.createHmac('sha256', OTP_SECRET).update(payload).digest('hex')
+  const sig = crypto.createHmac('sha256', getOTPSecret()).update(payload).digest('hex')
   return Buffer.from(JSON.stringify({ payload, sig })).toString('base64url')
 }
 
@@ -22,7 +25,7 @@ function verifyToken(token: string, userId: string, submittedCode: string): { va
     const { payload, sig } = decoded as { payload: string; sig: string }
 
     // Verify signature
-    const expectedSig = crypto.createHmac('sha256', OTP_SECRET).update(payload).digest('hex')
+    const expectedSig = crypto.createHmac('sha256', getOTPSecret()).update(payload).digest('hex')
     if (!crypto.timingSafeEqual(Buffer.from(sig, 'hex'), Buffer.from(expectedSig, 'hex'))) {
       return { valid: false, reason: 'Invalid token signature.' }
     }

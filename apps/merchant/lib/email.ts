@@ -113,6 +113,57 @@ export async function sendOrderConfirmationEmail(
   return { sent: true }
 }
 
+export async function sendPaymentPendingEmail(
+  email: string,
+  orderNumber: string,
+  total: string,
+  currency: string,
+  customerName: string,
+  customerPhone: string,
+  items: Array<{ name: string; quantity: number; price: number }>
+): Promise<SendResult> {
+  const resend = getResend()
+  if (!resend) return { skipped: true, reason: 'RESEND_API_KEY not set' }
+  const dashboardUrl = `${APP_URL}/dashboard/orders?highlight=${orderNumber}`
+  await resend.emails.send({
+    from: FROM,
+    to: email,
+    subject: `Payment Pending Approval — Order ${orderNumber}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background: #FF9800; padding: 20px; text-align: center; border-radius: 8px 8px 0 0;">
+          <h2 style="color: white; margin: 0;">Payment Awaiting Approval</h2>
+        </div>
+        <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 8px 8px;">
+          <p>A customer has reported payment for order <strong>${orderNumber}</strong>.</p>
+          <table style="width: 100%; margin: 20px 0;">
+            <tr><td style="padding: 8px; font-weight: bold;">Customer:</td><td>${customerName} (${customerPhone})</td></tr>
+            <tr><td style="padding: 8px; font-weight: bold;">Amount:</td><td>${currency} ${total}</td></tr>
+          </table>
+          <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+            ${items.map(item => `
+              <tr>
+                <td style="padding: 8px; border-bottom: 1px solid #eee;">${item.name}</td>
+                <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: center;">x${item.quantity}</td>
+                <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">${currency} ${item.price}</td>
+              </tr>
+            `).join('')}
+          </table>
+          <p>Review and approve the payment from your dashboard:</p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${dashboardUrl}"
+               style="background: #25D366; color: white; padding: 15px 30px;
+                      text-decoration: none; border-radius: 8px; font-weight: bold;">
+              Approve Payment
+            </a>
+          </div>
+        </div>
+      </div>
+    `,
+  })
+  return { sent: true }
+}
+
 export async function sendTrialEndingEmail(
   email: string,
   name: string,

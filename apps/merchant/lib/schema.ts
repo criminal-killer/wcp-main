@@ -37,6 +37,9 @@ export const organizations = sqliteTable('organizations', {
   subscription_id: text('subscription_id'),
   payment_provider: text('payment_provider'),
 
+  // Discount Rules (JSON)
+  discount_rules: text('discount_rules').default('[]'),
+
   // Store Payment Setup
   store_paystack_key_encrypted: text('store_paystack_key_encrypted'),
   store_stripe_account_id: text('store_stripe_account_id'),

@@ -9,10 +9,10 @@ import { sendTextMessage } from '@/lib/whatsapp'
 import { decrypt } from '@/lib/encryption'
 import { logError, categorizeError } from '@/lib/error-logger'
 
-const VALID_STATUSES = ['new', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded'] as const
+const VALID_STATUSES = ['new', 'confirmed', 'processing', 'shipped', 'delivered', 'closed', 'cancelled', 'refunded'] as const
 type OrderStatus = typeof VALID_STATUSES[number]
 
-const VALID_PAYMENT_STATUSES = ['pending', 'paid', 'failed', 'refunded'] as const
+const VALID_PAYMENT_STATUSES = ['pending', 'pending_approval', 'paid', 'failed', 'refunded'] as const
 type PaymentStatus = typeof VALID_PAYMENT_STATUSES[number]
 
 function isValidStatus(s: string): s is OrderStatus {
@@ -26,25 +26,31 @@ function isValidPaymentStatus(s: string): s is PaymentStatus {
 // WhatsApp notification messages
 const ORDER_MESSAGES: Record<string, { order: string; payment?: string }> = {
   'payment_paid': {
-    order: 'Payment confirmed! Your order is being processed.',
+    order: 'Payment confirmed! Your order is being processed. Thank you for shopping with us!',
+  },
+  'payment_pending_approval': {
+    order: 'Your payment has been received and is being verified. We\'ll confirm shortly!',
   },
   confirmed: {
-    order: 'Great news! Your order has been confirmed and will be prepared for you.',
+    order: 'Your order has been confirmed and will be prepared for you.',
   },
   processing: {
-    order: 'Your order is now being prepared. We\'ll ship it soon!',
+    order: 'Your order is now being prepared. We\'ll let you know when it ships!',
   },
   shipped: {
-    order: 'Your order is on its way! 🚚 Track with your tracking number.',
+    order: 'Your order is on its way! You\'ll be notified when it arrives.',
   },
   delivered: {
-    order: 'Your order has been delivered! 🎉 Thank you for shopping with us!',
+    order: 'Your order has been delivered! Did everything arrive correctly? Reply *yes* to confirm or *issue* if there\'s a problem.',
   },
   cancelled: {
     order: 'Your order has been cancelled. Contact us if you need any help.',
   },
   refunded: {
     order: 'Your refund has been processed. The money will be returned to your account shortly.',
+  },
+  closed: {
+    order: 'Your order is now complete. Thank you for shopping with us!',
   },
 }
 
@@ -114,6 +120,11 @@ export async function PATCH(
   if (tracking_number) updatePayload.tracking_number = tracking_number
   if (notes) updatePayload.notes = notes
 
+  // When merchant approves payment from pending_approval, auto-confirm the order
+  if (payment_status === 'paid' && order.payment_status === 'pending_approval' && !order_status) {
+    updatePayload.order_status = 'confirmed'
+  }
+
   await db.update(orders).set(updatePayload).where(and(eq(orders.id, params.id), eq(orders.org_id, user.org_id!)))
 
   // Send WhatsApp notification if requested
@@ -121,8 +132,14 @@ export async function PATCH(
     try {
       let notificationMsg = ''
 
-      if (payment_status === 'paid' && !order_status) {
+      if (payment_status === 'paid' && order.payment_status === 'pending_approval') {
+        // Merchant approved the payment
+        notificationMsg = '  *Payment Approved!*\n\nYour payment has been verified. Your order is now confirmed and will be prepared for you.'
+      } else if (payment_status === 'paid') {
         notificationMsg = ORDER_MESSAGES['payment_paid']?.order || 'Payment confirmed!'
+      } else if (order_status === 'delivered') {
+        // Delivery confirmation — ask customer to confirm receipt
+        notificationMsg = '  *Order Delivered!*\n\nYour order *' + order.order_number + '* has been marked as delivered.\n\nDid everything arrive correctly? Reply:\n*yes* — Confirm receipt\n*issue* — Report a problem'
       } else if (order_status) {
         notificationMsg = ORDER_MESSAGES[order_status]?.order || `Order status updated to ${order_status}`
       }

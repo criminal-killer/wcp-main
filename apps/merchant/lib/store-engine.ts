@@ -1,7 +1,8 @@
 import { db } from '@/lib/db'
-import { organizations, stores, contacts, conversations, products, orders, messages } from '@/lib/schema'
+import { organizations, stores, contacts, conversations, products, orders, messages, users } from '@/lib/schema'
 import { eq, and, sql, desc } from 'drizzle-orm'
 import { sendTextMessage, sendInteractiveButtonMessage, sendInteractiveListMessage, sendInteractiveCTAUrlMessage, sendCarouselMessage, sendCatalogMessage } from '@/lib/whatsapp'
+import { sendPaymentPendingEmail } from '@/lib/email'
 import { getFlowState, setFlowState, deleteFlowState, getCart, setCart, clearCart, setCartAbandoned, clearCartAbandoned as clearCartAbandonedState } from '@/lib/redis'
 import { decrypt } from '@/lib/encryption'
 
@@ -171,18 +172,40 @@ export async function processIncomingMessage(ctx: EngineContext) {
     }
 
     if (targetOrder) {
+      // Mark as pending_approval — merchant must verify before confirming
       await db.update(orders).set({
-        payment_status: 'paid',
-        order_status: 'confirmed',
+        payment_status: 'pending_approval',
         payment_reference: `manual_${Date.now()}`,
         updated_at: new Date().toISOString()
       }).where(eq(orders.id, targetOrder.id))
 
       await clearCartAbandonedState(orgId, phone)
 
+      // Email merchant to approve the payment
+      try {
+        const { sendPaymentPendingEmail } = await import('@/lib/email')
+        const merchant = await db.query.users.findFirst({
+          where: eq(users.org_id, orgId),
+        })
+        if (merchant?.email) {
+          const cartItems = JSON.parse(targetOrder.items || '[]') as Array<{ product_name: string; qty: number; price: number }>
+          await sendPaymentPendingEmail(
+            merchant.email,
+            targetOrder.order_number || '',
+            String(targetOrder.total),
+            targetOrder.currency || 'KES',
+            contact.name || 'Customer',
+            phone,
+            cartItems.map(i => ({ name: i.product_name, quantity: i.qty, price: i.price }))
+          )
+        }
+      } catch (err) {
+        console.error('[handlePayment] Failed to send merchant email:', err)
+      }
+
       return await sendTextMessage(waConfigObj, {
         to: phone,
-        body: `  Payment Confirmed!\n\nYour order *${targetOrder.order_number}* has been marked as paid.\n\nWe'll process it right away! Thank you for shopping with *${org.name}*   `,
+        body: `  *Payment Received!*\n\nYour order *${targetOrder.order_number}* has been submitted for verification.\n\nWe'll confirm your payment shortly. Thank you for your patience!`,
       })
     }
   }
@@ -206,6 +229,40 @@ export async function processIncomingMessage(ctx: EngineContext) {
 
   if (['cart', 'view cart', '#cart'].includes(inputNorm)) {
     return await showCart(waConfigObj, org, store, phone, orgId)
+  }
+
+  // === ORDER TRACKING (always check) ===
+  if (['track', 'status', 'my orders', 'order status', 'track order', 'orders'].includes(inputNorm)) {
+    return await showOrders(waConfigObj, org, phone, orgId, contact.id)
+  }
+
+  // === DELIVERY CONFIRMATION (always check) ===
+  if (['yes', 'received', 'got it', 'arrived'].includes(inputNorm)) {
+    // Find the most recent delivered order and close it
+    const deliveredOrders = await db.select().from(orders)
+      .where(and(eq(orders.org_id, orgId), eq(orders.contact_id, contact.id), eq(orders.order_status, 'delivered')))
+      .orderBy(orders.created_at)
+      .limit(1)
+    if (deliveredOrders.length > 0) {
+      await db.update(orders).set({ order_status: 'closed', updated_at: new Date().toISOString() })
+        .where(eq(orders.id, deliveredOrders[0].id))
+      return await sendTextMessage(waConfigObj, {
+        to: phone,
+        body: `Thank you! Your order *${deliveredOrders[0].order_number}* has been marked as complete.\n\nWe hope to see you again soon!`,
+      })
+    }
+  }
+  if (['issue', 'problem', 'not received', 'missing', 'wrong'].includes(inputNorm)) {
+    const deliveredOrders = await db.select().from(orders)
+      .where(and(eq(orders.org_id, orgId), eq(orders.contact_id, contact.id), eq(orders.order_status, 'delivered')))
+      .orderBy(orders.created_at)
+      .limit(1)
+    if (deliveredOrders.length > 0) {
+      return await sendTextMessage(waConfigObj, {
+        to: phone,
+        body: `We're sorry to hear that! Please describe the issue with your order *${deliveredOrders[0].order_number}* and we'll help resolve it.\n\nYou can also contact us directly if needed.`,
+      })
+    }
   }
 
   if (!flow) {
@@ -815,7 +872,6 @@ async function showOrders(waConfig: { phoneNumberId: string; accessToken: string
 
 async function showCart(waConfig: { phoneNumberId: string; accessToken: string }, org: RunnerOrg, store: RunnerStore | null, phone: string, orgId: string) {
   const cart = await getCart(orgId, phone) as CartItem[] | null
-  await setFlowState(orgId, phone, { step: 'cart_review' })
 
   if (!cart || cart.length === 0) {
     return await sendInteractiveButtonMessage(waConfig, {
@@ -967,7 +1023,8 @@ async function handleDeliveryInfo(
   const paymentOptions = []
   
   // DEFAULT: Managed Payment (MoR) or Direct Paystack
-  if (org.payment_mode === 'managed' || org.store_paystack_key_encrypted) {
+  // Always show M-Pesa/Card — falls back to Chatevo-Managed MoR when no merchant key
+  if (org.payment_mode === 'managed' || org.store_paystack_key_encrypted || !org.store_paystack_key_encrypted) {
     paymentOptions.push({ id: 'pay_paystack', title: 'M-Pesa / Card' })
   }
   
@@ -1057,12 +1114,20 @@ async function handlePaymentSelected(
       })
     } catch (err) {
       console.error('Paystack payment link error:', err)
+    }
+    if (!paymentLink) {
       return await sendTextMessage(waConfig, {
         to: phone,
         body: '  Payment link generation failed. Please try again or choose a different payment method.\n\nType *cart* to go back to your cart.',
       })
     }
-  } else if (inputNorm === 'pay_paypal' && org.store_paypal_email) {
+  } else if (inputNorm === 'pay_paypal') {
+    if (!org.store_paypal_email) {
+      return await sendTextMessage(waConfig, {
+        to: phone,
+        body: '  PayPal is not configured yet. Please choose a different payment method.\n\nType *cart* to go back to your cart.',
+      })
+    }
     paymentMethod = 'paypal'
     if (org.store_paypal_username) {
       paymentLink = `https://www.paypal.me/${org.store_paypal_username}/${total}`

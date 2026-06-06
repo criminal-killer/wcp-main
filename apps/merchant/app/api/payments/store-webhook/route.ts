@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { organizations, orders } from '@/lib/schema'
+import { organizations, orders, contacts } from '@/lib/schema'
 import { eq, and, sql } from 'drizzle-orm'
 import { verifyPaystackSignature } from '@/lib/payments'
 import { logError, categorizeError } from '@/lib/error-logger'
+import { sendTextMessage } from '@/lib/whatsapp'
+import { decrypt } from '@/lib/encryption'
 
 export const dynamic = 'force-dynamic'
 
@@ -55,13 +57,40 @@ export async function POST(req: NextRequest) {
 
   // Update Order Status
   await db.update(orders)
-    .set({ 
+    .set({
       payment_status: 'paid',
       payment_reference: data.reference,
       order_status: 'confirmed',
       updated_at: new Date().toISOString()
     })
     .where(and(eq(orders.order_number, orderNumber), eq(orders.org_id, orgId)))
+
+  // Notify customer via WhatsApp that payment was confirmed
+  try {
+    const order = await db.query.orders.findFirst({
+      where: and(eq(orders.order_number, orderNumber), eq(orders.org_id, orgId)),
+    })
+    if (order) {
+      const customer = await db.query.contacts.findFirst({
+        where: and(eq(contacts.id, order.contact_id), eq(contacts.org_id, orgId)),
+      })
+      if (customer) {
+        const waConfig = {
+          phoneNumberId: org.wa_phone_number_id || '',
+          accessToken: decrypt(org.wa_access_token_encrypted || ''),
+        }
+        const total = (data.amount / 100).toLocaleString()
+        const currency = org.currency || 'KES'
+        await sendTextMessage(waConfig, {
+          to: customer.phone,
+          body: `*Payment Confirmed!*\n\nYour order *${orderNumber}* has been paid successfully.\n\nAmount: *${currency} ${total}*\n\nWe'll process your order now. Thank you for shopping with *${org.name}*!`,
+        })
+      }
+    }
+  } catch (err) {
+    console.error('Failed to send payment confirmation to customer:', err)
+    // Don't fail the webhook — payment is still confirmed
+  }
 
   // --- Managed Balance Logic (5% Fee) ---
   if (org.payment_mode === 'managed' || !org.store_paystack_key_encrypted) {

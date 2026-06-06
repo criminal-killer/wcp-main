@@ -1,7 +1,7 @@
 # Chatevo Fixes Applied
 
 **Last updated:** 2026-05-25
-**Total fixes:** 91
+**Total fixes:** 101
 
 ---
 
@@ -145,6 +145,16 @@
 | 89 | sendCatalogMessage + sendSingleProductMessage added | `lib/whatsapp.ts` | ✅ |
 | 90 | Carousel flow: handleCategorySelected + handleSubCategorySelected | `lib/store-engine.ts` | ✅ |
 | 91 | Webhook: product_item type + parseInput handler | `api/webhook/route.ts` + `lib/store-engine.ts` | ✅ |
+| 92 | Paystack webhook: send customer payment confirmation via WhatsApp | `api/payments/store-webhook/route.ts` | ✅ |
+| 93 | "paid" keyword → pending_approval (not auto-confirmed) | `lib/store-engine.ts` | ✅ |
+| 94 | Merchant email notification on "paid" via sendPaymentPendingEmail | `lib/store-engine.ts` + `lib/email.ts` | ✅ |
+| 95 | "track"/"status"/"orders" keyword → show order status | `lib/store-engine.ts` | ✅ |
+| 96 | Delivery confirmation: merchant marks "delivered" → customer asked to confirm | `api/orders/[id]/status/route.ts` | ✅ |
+| 97 | Delivery confirmation: "yes"/"received" → order closed | `lib/store-engine.ts` | ✅ |
+| 98 | Delivery confirmation: "issue"/"problem" → customer support message | `lib/store-engine.ts` | ✅ |
+| 99 | Schema: add discount_rules to organizations | `lib/schema.ts` | ✅ |
+| 100 | Email: sendPaymentPendingEmail duplicate removal + signature fix | `lib/email.ts` | ✅ |
+| 101 | Remove duplicate ORDER TRACKING block in processIncomingMessage | `lib/store-engine.ts` | ✅ |
 
 ---
 
