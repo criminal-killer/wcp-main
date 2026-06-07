@@ -8,7 +8,7 @@ export default function AiAssist() {
   const [isOpen, setIsOpen] = useState(false)
   const [isMinimized, setIsMinimized] = useState(false)
   const [messages, setMessages] = useState<{ role: 'user' | 'assistant', content: string }[]>([
-    { role: 'assistant', content: "Hi! I'm **Chatevo AI**. I can help you set up your store, connect WhatsApp, or explain referrals. Would you like a **Full Guide** or a **Step-by-Step** walkthrough?" }
+    { role: 'assistant', content: "Hey! I'm **Chatevo AI**, your store assistant. Ask me about your products, orders, customers, or anything about running your store." }
   ])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)

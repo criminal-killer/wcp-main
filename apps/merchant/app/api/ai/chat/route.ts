@@ -81,7 +81,7 @@ export async function POST(req: Request) {
       plan: org.plan,
     }, enhancedPrompt)
 
-    const response = await agent.generate(message)
+    const response = await agent.generateLegacy(message)
 
     return NextResponse.json({
       reply: response.text || "I'm having trouble processing that right now.",
@@ -90,9 +90,11 @@ export async function POST(req: Request) {
   } catch (error: any) {
     console.error('AI Chat Error:', error)
     try { const info = categorizeError(error instanceof Error ? error : new Error(String(error))); await logError({ org_id: 'unknown', severity: info.severity, category: info.category, message: error instanceof Error ? error.message : String(error), cause: info.cause, fix: info.fix, stack: error instanceof Error ? error.stack : undefined }) } catch { /* */ }
+    const errorMessage = error instanceof Error ? `${error.name}: ${error.message}` : String(error)
+    console.error('AI Chat Error:', errorMessage, error instanceof Error ? error.stack : '')
     return NextResponse.json({
-      reply: "I'm experiencing a high volume of requests. Please try again or contact support at mazaoedu@gmail.com"
-    })
+      reply: "Sorry, I hit an error. Please try again or contact support at mazaoedu@gmail.com"
+    }, { status: 200 })
   }
 }
 

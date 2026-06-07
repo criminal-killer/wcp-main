@@ -62,7 +62,7 @@ export async function routeToAgent(
       break
   }
 
-  const response = await agent.generate(input, { maxSteps: 3 })
+  const response = await agent.generateLegacy(input, { maxSteps: 3 })
   return response.text || ''
 }
 
