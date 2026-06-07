@@ -497,7 +497,7 @@ async function handleCategorySelected(waConfig: { phoneNumberId: string; accessT
   await setFlowState(orgId, phone, { step: 'browsing_products', category, store_id: store?.id })
 
   if (hasCatalog(org)) {
-    return await sendProductListMessage(waConfig, {
+    const catalogResult = await sendProductListMessage(waConfig, {
       to: phone,
       catalogId: org.wa_catalog_id!,
       header: `   ${category || 'Products'}`,
@@ -509,6 +509,7 @@ async function handleCategorySelected(waConfig: { phoneNumberId: string; accessT
         },
       ],
     })
+    if (!catalogResult?.error) return catalogResult
   }
 
   const rows = productList.map(p => ({
@@ -562,7 +563,7 @@ async function handleSubCategorySelected(waConfig: { phoneNumberId: string; acce
   await setFlowState(orgId, phone, { step: 'browsing_products', category, sub_category: subCategory, store_id: store?.id })
 
   if (hasCatalog(org)) {
-    return await sendProductListMessage(waConfig, {
+    const catalogResult = await sendProductListMessage(waConfig, {
       to: phone,
       catalogId: org.wa_catalog_id!,
       header: `   ${subCategory || category}`,
@@ -574,6 +575,7 @@ async function handleSubCategorySelected(waConfig: { phoneNumberId: string; acce
         },
       ],
     })
+    if (!catalogResult?.error) return catalogResult
   }
 
   const rows = productList.map(p => ({
