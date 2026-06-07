@@ -234,9 +234,6 @@ export async function sendCarouselMessage(
         }
         if (card.imageUrl) {
           cardObj.header = { type: 'image', image: { link: card.imageUrl } }
-        } else {
-          // Carousel cards require a header; fall back to text if no image
-          cardObj.header = { type: 'text', text: card.title.slice(0, 60) }
         }
         return cardObj
       }),
