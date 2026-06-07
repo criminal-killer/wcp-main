@@ -184,4 +184,21 @@ export function createStoreTools(orgId: string) {
   }
 }
 
+export function createContactTools(orgId: string, contactId: string) {
+  return {
+    setContactName: createTool({
+      id: 'setContactName',
+      description: 'Save the customer\'s name so it can be used in this and future conversations',
+      inputSchema: z.object({
+        name: z.string().describe('The full name the customer wants to be called'),
+      }),
+      execute: async ({ context: { name } }) => {
+        await db.update(contacts).set({ name, updated_at: new Date().toISOString() })
+          .where(eq(contacts.id, contactId))
+        return { saved: true, name }
+      },
+    }),
+  }
+}
+
 export type StoreTools = ReturnType<typeof createStoreTools>

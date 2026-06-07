@@ -70,7 +70,7 @@ export async function processIncomingMessage(ctx: EngineContext) {
     })
   }
 
-  // === PAYMENT CONFIRMATION (always check — survives flow reset) ===
+  // === PAYMENT CONFIRMATION (always check) ===
   const paymentKeywords = ['paid', 'done', 'sent', 'completed', 'paid already', 'already paid', 'mpesa sent', 'transaction done', 'payment done', 'i have paid', 'paid via']
   const isPaymentConfirmation = paymentKeywords.some(kw => inputNorm.includes(kw))
 
@@ -140,7 +140,7 @@ export async function processIncomingMessage(ctx: EngineContext) {
     }
   }
 
-  // === AI HANDLES EVERYTHING naturally (hi, hello, questions, orders, etc.) ===
+  // === AI HANDLES EVERYTHING via multi-agent orchestrator ===
   return await handleWithAI(waConfigObj, org, phone, inputRaw, contact, storeUrl)
 }
 
@@ -149,69 +149,18 @@ async function handleWithAI(
   org: RunnerOrg, phone: string, input: string, contact: RunnerContact, storeUrl: string,
 ) {
   try {
-    const { createGroq } = await import('@ai-sdk/groq')
-    const { Agent } = await import('@mastra/core/agent')
-    const { createTool } = await import('@mastra/core/tools')
-    const { createStoreTools } = await import('@/mastra/tools/store-tools')
-    const { z } = await import('zod')
+    const { routeToAgent } = await import('@/mastra/agents/orchestrator')
 
-    const tools = createStoreTools(org.id)
-
-    const setContactName = createTool({
-      id: 'setContactName',
-      description: 'Save the customer\'s name so it can be used in this and future conversations',
-      inputSchema: z.object({
-        name: z.string().describe('The full name the customer wants to be called'),
-      }),
-      execute: async ({ context: { name } }) => {
-        await db.update(contacts).set({ name, updated_at: new Date().toISOString() })
-          .where(eq(contacts.id, contact.id))
-        return { saved: true, name }
-      },
-    })
-
-    const hasName = !!contact.name
-
-    const agent = new Agent({
-      id: 'chatevo-ai',
-      name: 'Chatevo AI',
-      instructions: `You are Chatevo AI, the friendly WhatsApp assistant for "${org.name}".
-
-CUSTOMER PHONE: ${phone}
-CUSTOMER NAME: ${contact.name || '(not set yet)'}
-CURRENCY: ${org.currency || 'KES'}
-STORE LINK: ${storeUrl}
-
-${!hasName ? `FIRST TIME: This customer has no saved name. When they say hello, greet them warmly and ask for their name so you can address them properly. Once they provide it, use setContactName to save it.` : `RETURNING CUSTOMER: Their name is ${contact.name}. Welcome them back warmly!`}
-
-CONVERSATION FLOW:
-1. Greet warmly and ask how you can help today.
-2. If they want to buy something or browse products, ask what they're looking for, then share the store link to browse and order.
-3. If they ask about something specific (e.g. "I need a WiFi router for my office"), use getProducts to check what's available and give helpful suggestions based on what you find.
-4. If they have a question about their existing order, use getOrder to check and update them.
-5. Be patient — if they're indecisive, offer to help narrow it down.
-6. If they come back after checking out, welcome them and ask how the order is going.
-
-LANGUAGE: Detect the language the customer writes in. Reply in the SAME language naturally. If unsure, ask briefly if they prefer English or their language. Never make them feel bad about their language choice.
-
-PRODUCT SUGGESTIONS: When a customer asks about a need (e.g. "I want to set up WiFi", "I need a gift", "What do you have for baking?"), use getProducts to look up relevant items and suggest them based on what's in stock. Be helpful like a real shop assistant would.
-
-RULES:
-- Be warm, human, and concise (1-3 sentences usually).
-- NEVER list products or show prices inside WhatsApp. Say "Let me check what we have..." then send the store link.
-- If it's a buying intent, share the store link at the right moment — don't just dump it immediately.
-- If it's unrelated to the store, gently redirect back.
-- Use emojis sparingly and naturally.`,
-      model: createGroq({ apiKey: process.env.GROQ_API_KEY })('llama-3.3-70b-versatile'),
-      tools: {
-        getProducts: tools.getProducts,
-        getOrder: tools.getOrder,
-        setContactName,
-      },
-    })
-
-    const response = await agent.generate(input, { maxSteps: 3 })
-    const reply = response.text || ''
+    const reply = await routeToAgent(input, {
+      id: contact.id,
+      name: contact.name,
+      phone: contact.phone,
+    }, {
+      id: org.id,
+      name: org.name,
+      currency: org.currency || 'KES',
+      slug: org.slug,
+    }, storeUrl)
 
     return await sendTextMessage(waConfig, {
       to: phone,

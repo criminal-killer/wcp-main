@@ -73,7 +73,7 @@ export async function POST(req: Request, { params }: { params: { slug: string } 
     }
 
     // Build wa.me link
-    const waPhone = (org.wa_bot_number || org.wa_phone_number_id || '').replace(/\D/g, '')
+    const waPhone = (org.wa_bot_number || '').replace(/\D/g, '')
     const encodedMsg = encodeURIComponent(
       `Hi! I'm looking for something not listed on your store.\n\nRequest: ${requestMessage}${name ? `\n\n- ${name}` : ''}`
     )
