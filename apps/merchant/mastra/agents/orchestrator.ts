@@ -4,6 +4,9 @@ import { createGreeterAgent } from './greeter-agent'
 import { createSalesAgent } from './sales-agent'
 import { createSupportAgent } from './support-agent'
 import { createStoreTools, createContactTools } from '../tools/store-tools'
+import { db } from '@/lib/db'
+import { products, orders, contacts } from '@/lib/schema'
+import { eq, and, desc, sql } from 'drizzle-orm'
 
 type OrgConfig = {
   id: string
@@ -31,6 +34,111 @@ function classifyIntent(input: string, contact: ContactInfo): string {
   if (/\b(buy|want|need|looking for|price|cost|how much|available|have you|sell|product|item)\b/i.test(trimmed)) return 'sales'
 
   return 'sales'
+}
+
+function formatCurrency(amount: number, currency: string): string {
+  const symbols: Record<string, string> = { KES: 'KSh ', TZS: 'TSh ', UGX: 'USh ', USD: '$', EUR: '€', GBP: '£' }
+  return (symbols[currency] || currency + ' ') + amount.toLocaleString()
+}
+
+function buildProductsResponse(results: any[], storeUrl: string, currency: string): string {
+  if (!results || results.length === 0) {
+    return `I checked but I couldn't find anything matching what you're looking for. You can browse our full catalog here: ${storeUrl}`
+  }
+
+  const items = results.slice(0, 5).map(p => {
+    const price = formatCurrency(p.price ?? 0, currency)
+    const stock = p.inventory_count != null ? ` (${p.inventory_count} left)` : ''
+    return `${p.name} - ${price}${stock}`
+  }).join('\n')
+
+  const total = results.length
+  const count = total > 5 ? `Showing ${5} of ${total}` : `Found ${total}`
+  return `${count}:\n\n${items}\n\nCheck them all out here: ${storeUrl}`
+}
+
+function buildOrderResponse(order: any, currency: string): string | null {
+  if (!order) return null
+  const total = formatCurrency(order.total ?? 0, currency)
+  let msg = `*Order ${order.order_number}*\nStatus: ${order.order_status}\nTotal: ${total}\nPayment: ${order.payment_status}`
+  if (order.delivery_address) msg += `\nDelivery: ${order.delivery_address}`
+  return msg
+}
+
+function buildOrdersResponse(results: any[], currency: string): string {
+  if (!results || results.length === 0) return "You don't have any orders yet."
+  return results.slice(0, 5).map(o => {
+    const total = formatCurrency(o.total ?? 0, currency)
+    return `*${o.order_number}* - ${o.order_status} - ${total}`
+  }).join('\n') || "You don't have any orders yet."
+}
+
+async function executeFunctionCall(fnName: string, args: any, orgId: string, currency: string, storeUrl: string): Promise<string | null> {
+  try {
+    switch (fnName) {
+      case 'getProducts': {
+        const conditions = [eq(products.org_id, orgId), eq(products.is_active, 1)]
+        if (args.search) conditions.push(sql`${products.name} LIKE ${'%' + args.search + '%'}`)
+        if (args.category) conditions.push(eq(products.category, args.category))
+        const results = await db.select({
+          id: products.id,
+          name: products.name,
+          price: products.price,
+          category: products.category,
+          inventory_count: products.inventory_count,
+        }).from(products).where(and(...conditions)).limit(args.limit || 20)
+        return buildProductsResponse(results, storeUrl, currency)
+      }
+
+      case 'getOrder': {
+        const conditions = [eq(orders.org_id, orgId)]
+        if (args.orderId?.toUpperCase().startsWith('ORD-')) {
+          conditions.push(eq(orders.order_number, args.orderId.toUpperCase()))
+        } else {
+          conditions.push(eq(orders.id, args.orderId))
+        }
+        const order = await db.query.orders.findFirst({ where: and(...conditions) })
+        return buildOrderResponse(order, currency)
+      }
+
+      case 'getOrders': {
+        const conditions = [eq(orders.org_id, orgId)]
+        if (args.status) conditions.push(eq(orders.order_status, args.status))
+        if (args.paymentStatus) conditions.push(eq(orders.payment_status, args.paymentStatus))
+        if (args.daysBack) conditions.push(sql`${orders.created_at} >= datetime('now', '-' || ${args.daysBack} || ' days')`)
+        const results = await db.select({
+          id: orders.id,
+          order_number: orders.order_number,
+          total: orders.total,
+          currency: orders.currency,
+          order_status: orders.order_status,
+          payment_status: orders.payment_status,
+        }).from(orders).where(and(...conditions)).orderBy(desc(orders.created_at)).limit(args.limit || 10)
+        return buildOrdersResponse(results, currency)
+      }
+
+      case 'getContacts': {
+        const conditions = [eq(contacts.org_id, orgId)]
+        if (args.search) conditions.push(sql`(${contacts.name} LIKE ${'%' + args.search + '%'} OR ${contacts.phone} LIKE ${'%' + args.search + '%'})`)
+        const results = await db.select({
+          name: contacts.name,
+          phone: contacts.phone,
+          total_orders: contacts.total_orders,
+          total_spent: contacts.total_spent,
+        }).from(contacts).where(and(...conditions)).orderBy(desc(contacts.last_order_at)).limit(args.limit || 20)
+        if (!results || results.length === 0) return "I couldn't find any customers matching that."
+        return results.slice(0, 5).map(c =>
+          `${c.name || 'Unknown'} - ${c.phone} - ${c.total_orders || 0} orders`
+        ).join('\n')
+      }
+
+      default:
+        return null
+    }
+  } catch (err) {
+    console.error(`[orchestrator] tool execution error: ${fnName}`, err)
+    return null
+  }
 }
 
 export async function routeToAgent(
@@ -63,7 +171,30 @@ export async function routeToAgent(
   }
 
   const response = await agent.generateLegacy(input, { maxSteps: 3, temperature: 0.7 })
-  return response.text || ''
+  let text = (response.text || '').trim()
+
+  // Check for <function> XML tags (Llama sometimes uses these instead of proper tool calls)
+  const fnRegex = /<function=(\w+)>([\s\S]*?)<\/function>/g
+  let match
+  let hasFunctionCalls = false
+
+  while ((match = fnRegex.exec(text)) !== null) {
+    hasFunctionCalls = true
+    const [, fnName, fnArgsStr] = match
+    try {
+      const args = JSON.parse(fnArgsStr)
+      const toolResult = await executeFunctionCall(fnName, args, org.id, org.currency || 'KES', storeUrl)
+      if (toolResult) return toolResult
+    } catch { /* parsed failed, skip */ }
+  }
+
+  // If we extracted function calls, strip all XML and text before them
+  if (hasFunctionCalls) {
+    text = text.split('</function>').pop() || text
+    text = text.replace(/<function[^>]*>[\s\S]*?<\/function>/g, '').trim()
+  }
+
+  return text || 'Sorry, I didn\'t catch that. Type *Hi* to start again.'
 }
 
 export type { OrgConfig, ContactInfo }

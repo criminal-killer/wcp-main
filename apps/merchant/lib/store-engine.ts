@@ -149,6 +149,11 @@ async function handleWithAI(
   org: RunnerOrg, phone: string, input: string, contact: RunnerContact, storeUrl: string,
 ) {
   try {
+    await sendTextMessage(waConfig, {
+      to: phone,
+      body: 'Let me check that for you...',
+    })
+
     const { routeToAgent } = await import('@/mastra/agents/orchestrator')
 
     const reply = await routeToAgent(input, {
