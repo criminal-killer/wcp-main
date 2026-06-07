@@ -81,7 +81,7 @@ export async function POST(req: Request) {
       plan: org.plan,
     }, enhancedPrompt)
 
-    const response = await agent.generateLegacy(message)
+    const response = await agent.generateLegacy(message, { temperature: 0.7 })
 
     return NextResponse.json({
       reply: response.text || "I'm having trouble processing that right now.",

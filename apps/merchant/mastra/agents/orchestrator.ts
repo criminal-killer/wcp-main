@@ -62,7 +62,7 @@ export async function routeToAgent(
       break
   }
 
-  const response = await agent.generateLegacy(input, { maxSteps: 3 })
+  const response = await agent.generateLegacy(input, { maxSteps: 3, temperature: 0.7 })
   return response.text || ''
 }
 
