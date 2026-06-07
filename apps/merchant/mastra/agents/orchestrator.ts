@@ -28,7 +28,7 @@ function classifyIntent(input: string, contact: ContactInfo): string {
   const trimmed = input.trim().toLowerCase()
   const isGreeting = /^(hi|hello|hey|start|morning|evening|yo|howdy|sasa|jambo|hujambo|hola|ola|bonjour|hallo|hei)\b/i.test(trimmed)
 
-  if (!hasName && isGreeting) return 'greeter'
+  if (isGreeting) return 'greeter'
   if (/\b(order|ORD-|tracking|delivery|shipped|status|cancel)\b/i.test(trimmed)) return 'support'
   if (/\b(paid|payment|money|mpesa|sent|done|completed|paid already)\b/i.test(trimmed)) return 'support'
   if (/\b(buy|want|need|looking for|price|cost|how much|available|have you|sell|product|item)\b/i.test(trimmed)) return 'sales'
