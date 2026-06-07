@@ -14,12 +14,12 @@ interface Org {
   wa_phone_number_id: string | null
   wa_bot_number: string | null
   wa_business_account_id: string | null
-  meta_business_id: string | null
-  wa_catalog_id: string | null
+  wa_webhook_verified: number | null
+  notification_preference: string | null
+  notification_phone: string | null
   store_paypal_email: string | null
   store_cod_enabled: number | null
   whatsapp_verified: number | null
-  wa_webhook_verified: number | null
   plan: string | null
   trial_ends_at: string | null
 }
@@ -274,8 +274,8 @@ function SettingsContent({ org, autoReplies, waVerifyToken }: { org: Org, autoRe
     wa_bot_number: org.wa_bot_number || '',
     access_token: '',
     wa_business_account_id: org.wa_business_account_id || '',
-    meta_business_id: org.meta_business_id || '',
-    wa_catalog_id: org.wa_catalog_id || '',
+    notification_preference: org.notification_preference || 'dashboard',
+    notification_phone: org.notification_phone || '',
   })
   const [aiForm, setAiForm] = useState({
     provider: (org as any).ai_provider || 'Chatevo',
@@ -494,26 +494,60 @@ function SettingsContent({ org, autoReplies, waVerifyToken }: { org: Org, autoRe
       {/* WhatsApp Tab */}
       {tab === 'whatsapp' && (
         <SecureSection email={userEmail} onUnlock={() => setUnlockedTabs([...unlockedTabs, 'whatsapp'])}>
-          <div className="bg-card rounded-2xl border border-border p-8 space-y-6 max-w-xl shadow-sm">
-            <h2 className="font-bold text-foreground italic font-serif text-lg text-primary text-center">Engine Connectivity</h2>
-            <div className={`flex items-center justify-center gap-3 px-4 py-4 rounded-xl text-[10px] font-black uppercase tracking-widest border-2 ${org.wa_webhook_verified ? 'bg-green-50 text-green-700 border-green-100' : 'bg-amber-50 text-amber-700 border-amber-100'}`}>
-              <div className={`w-2 h-2 rounded-full ${org.wa_webhook_verified ? 'bg-green-500 animate-pulse' : 'bg-amber-500'}`} />
-              {org.wa_webhook_verified ? 'Webhook Status: Active' : 'Webhook Status: Pending Setup'}
+          <div className="space-y-6 max-w-xl">
+
+            {/* Setup Progress Bar */}
+            <div className="bg-card rounded-2xl border border-border p-6 shadow-sm">
+              <h2 className="font-bold text-foreground italic font-serif text-lg text-primary mb-4">   Setup Progress</h2>
+              <div className="space-y-3">
+                {[
+                  { label: 'Phone Number ID', done: !!org.wa_phone_number_id, help: 'Required to send/receive WhatsApp messages' },
+                  { label: 'System Access Token', done: !!org.wa_phone_number_id, help: 'Required to authenticate with Meta API' },
+                  { label: 'WhatsApp Bot Number', done: !!org.wa_bot_number, help: 'The number customers see & message' },
+                  { label: 'Webhook Verified', done: !!org.wa_webhook_verified, help: 'Confirms Meta can reach your bot' },
+                  { label: 'Products Added', done: true, help: 'Add products via the Products page' },
+                  { label: 'Payment Methods', done: true, help: 'Configure in the Payments tab' },
+                  { label: 'Notification Preference', done: true, help: 'Choose how you get notified' },
+                ].map((item) => (
+                  <div key={item.label} className="flex items-center gap-3">
+                    <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${item.done ? 'bg-green-500' : 'bg-slate-200'}`}>
+                      {item.done ? <CheckCircle2 size={14} className="text-white" /> : <div className="w-2 h-2 rounded-full bg-slate-300" />}
+                    </div>
+                    <div>
+                      <span className={`text-sm font-bold ${item.done ? 'text-green-700' : 'text-slate-400'}`}>{item.label}</span>
+                      <p className="text-[10px] text-slate-400 font-medium">{item.help}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
 
-            <div className="space-y-4">
+            {/* Credentials */}
+            <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-4">
+              <h2 className="font-bold text-foreground italic font-serif text-lg text-primary">WhatsApp Credentials</h2>
+              <p className="text-[10px] text-slate-400 font-bold leading-relaxed">
+                These are the connection details from Meta. Follow the guide below if you need help finding them.
+              </p>
               <div>
                 <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">WhatsApp Phone ID</label>
                 <input value={waForm.phone_number_id} onChange={e => setWaForm({ ...waForm, phone_number_id: e.target.value })}
-                  placeholder="From Meta Developer Console"
+                  placeholder="e.g. 123456789012345"
                   className="w-full border border-border rounded-xl px-4 py-3 text-sm font-bold font-mono focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50" />
+                <p className="text-[9px] text-slate-400 font-bold mt-1">The numeric ID of your phone number in Meta's system (not the actual phone number).</p>
               </div>
               <div>
                 <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">System Access Token</label>
                 <input type="password" value={waForm.access_token} onChange={e => setWaForm({ ...waForm, access_token: e.target.value })}
                   placeholder="Paste your permanent access token"
                   className="w-full border border-border rounded-xl px-4 py-3 text-sm font-bold font-mono focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50" />
-                <p className="text-[9px] text-muted-foreground/70 mt-2 font-bold uppercase tracking-tight">Token is AES-256 encrypted. Decryption only occurs at the edge during bot execution.</p>
+                <p className="text-[9px] text-slate-400 font-bold mt-1">A permanent token from Meta Business Settings. AES-256 encrypted at rest.</p>
+              </div>
+              <div>
+                <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">WABA ID</label>
+                <input value={waForm.wa_business_account_id} onChange={e => setWaForm({ ...waForm, wa_business_account_id: e.target.value })}
+                  placeholder="From WhatsApp Manager"
+                  className="w-full border border-border rounded-xl px-4 py-3 text-sm font-bold font-mono focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50" />
+                <p className="text-[9px] text-slate-400 font-bold mt-1">Your WhatsApp Business Account ID. Optional but helps with debugging.</p>
               </div>
             </div>
 
@@ -523,71 +557,67 @@ function SettingsContent({ org, autoReplies, waVerifyToken }: { org: Org, autoRe
                 <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center text-emerald-600 font-bold">📞</div>
                 <div>
                   <h3 className="text-xs font-black uppercase tracking-widest text-emerald-700">Your Bot Number</h3>
-                  <p className="text-[10px] text-emerald-600/70 font-medium mt-0.5">The phone number customers text on WhatsApp</p>
+                  <p className="text-[10px] text-emerald-600/70 font-medium mt-0.5">The phone number customers will text on WhatsApp</p>
                 </div>
               </div>
               {org.wa_bot_number ? (
-                <div className="flex items-center gap-3 bg-white rounded-xl px-4 py-3 border border-emerald-100">
+                <div className="flex items-center gap-3 bg-white rounded-xl px-4 py-3 border border-emerald-100 mb-3">
                   <span className="text-lg font-bold text-emerald-700 select-all">{org.wa_bot_number}</span>
                   <button onClick={() => { navigator.clipboard.writeText(org.wa_bot_number || ''); }} className="text-[10px] font-black uppercase tracking-widest text-emerald-600 hover:text-emerald-800 ml-auto">Copy</button>
                 </div>
               ) : (
-                <p className="text-xs text-emerald-600/50 font-medium italic">Not set yet — customers won't have a number to message.</p>
+                <p className="text-xs text-emerald-600/50 font-medium italic mb-3">Not set yet — customers won't have a number to message.</p>
               )}
               <input value={waForm.wa_bot_number} onChange={e => setWaForm({ ...waForm, wa_bot_number: e.target.value })}
-                placeholder="e.g. 254712345678 (no +)"
-                className="w-full border border-emerald-200 rounded-xl px-4 py-3 text-sm font-bold font-mono focus:outline-none focus:ring-2 focus:ring-emerald-400 bg-white mt-3" />
-              <p className="text-[10px] text-emerald-600/50 font-bold mt-2">This number is used in the "Chat on WhatsApp" button on your storefront. Enter it without the + sign.</p>
+                placeholder="e.g. 254712345678 (country code + number, no +)"
+                className="w-full border border-emerald-200 rounded-xl px-4 py-3 text-sm font-bold font-mono focus:outline-none focus:ring-2 focus:ring-emerald-400 bg-white" />
+              <p className="text-[10px] text-emerald-600/50 font-bold mt-2">This is used for the "Chat on WhatsApp" button on your store. Just the digits, no + or spaces.</p>
             </div>
 
-            <div className="bg-card rounded-2xl border border-border p-6 space-y-4">
-              <h3 className="text-xs font-black uppercase tracking-widest text-primary">Meta Commerce Catalog</h3>
-              <p className="text-[10px] text-muted-foreground font-bold leading-relaxed">
-                Connect your Meta Commerce Catalog to enable product carousel messages in WhatsApp.
-                <a href="/docs/catalog-setup" target="_blank" className="text-primary underline ml-1">Learn how →</a>
+            {/* Notification Preferences */}
+            <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-4">
+              <h3 className="text-xs font-black uppercase tracking-widest text-primary">Notification Preferences</h3>
+              <p className="text-[10px] text-slate-400 font-bold leading-relaxed">
+                When a customer requests an item not in your catalog, where should the alert go?
               </p>
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Meta Business ID</label>
-                  <input value={waForm.meta_business_id} onChange={e => setWaForm({ ...waForm, meta_business_id: e.target.value })}
-                    placeholder="From Meta Business Settings"
-                    className="w-full border border-border rounded-xl px-4 py-3 text-sm font-bold font-mono focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50" />
-                </div>
-                <div>
-                  <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">WABA ID</label>
-                  <input value={waForm.wa_business_account_id} onChange={e => setWaForm({ ...waForm, wa_business_account_id: e.target.value })}
-                    placeholder="From WhatsApp Manager"
-                    className="w-full border border-border rounded-xl px-4 py-3 text-sm font-bold font-mono focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50" />
-                </div>
-                <div>
-                  <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Catalog ID</label>
-                  <input value={waForm.wa_catalog_id} onChange={e => setWaForm({ ...waForm, wa_catalog_id: e.target.value })}
-                    placeholder="From Commerce Manager"
-                    className="w-full border border-border rounded-xl px-4 py-3 text-sm font-bold font-mono focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50" />
-                </div>
+              <div className="flex gap-3">
+                <button onClick={() => setWaForm({ ...waForm, notification_preference: 'dashboard' })}
+                  className={`flex-1 p-4 rounded-xl border-2 text-center transition-all ${waForm.notification_preference === 'dashboard' ? 'border-primary bg-primary/5' : 'border-border bg-slate-50'}`}>
+                  <span className="text-sm font-bold block">📋 Dashboard</span>
+                  <span className="text-[10px] text-slate-400 font-medium">Default — shows up in your dashboard notifications</span>
+                </button>
+                <button onClick={() => setWaForm({ ...waForm, notification_preference: 'whatsapp' })}
+                  className={`flex-1 p-4 rounded-xl border-2 text-center transition-all ${waForm.notification_preference === 'whatsapp' ? 'border-primary bg-primary/5' : 'border-border bg-slate-50'}`}>
+                  <span className="text-sm font-bold block">💬 WhatsApp</span>
+                  <span className="text-[10px] text-slate-400 font-medium">Get a WhatsApp message directly</span>
+                </button>
               </div>
+              {waForm.notification_preference === 'whatsapp' && (
+                <div>
+                  <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Your WhatsApp Number</label>
+                  <input value={waForm.notification_phone} onChange={e => setWaForm({ ...waForm, notification_phone: e.target.value })}
+                    placeholder="e.g. 254712345678 (country code + number)"
+                    className="w-full border border-border rounded-xl px-4 py-3 text-sm font-bold font-mono focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50" />
+                </div>
+              )}
             </div>
 
+            {/* Webhook Setup */}
             <div className="bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 p-6 space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-xs font-black uppercase tracking-widest text-slate-500">Meta Webhook Setup</h3>
+                <h3 className="text-xs font-black uppercase tracking-widest text-slate-500">Webhook Setup</h3>
                 <button onClick={() => setShowInstructions(!showInstructions)} className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-black hover:bg-blue-200 transition-colors">!</button>
               </div>
               <div className="space-y-3">
                 <div className="bg-white rounded-xl p-3 border border-slate-100">
                   <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Callback URL</p>
-                  <code className="text-[11px] font-bold text-primary break-all">
-                    {process.env.NEXT_PUBLIC_APP_URL}/api/webhook
-                  </code>
+                  <code className="text-[11px] font-bold text-primary break-all">{process.env.NEXT_PUBLIC_APP_URL}/api/webhook</code>
                 </div>
                 <div className="bg-white rounded-xl p-3 border border-slate-100">
                   <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Verify Token</p>
-                  <code className="text-[11px] font-bold text-primary">
-                    {waVerifyToken || '(Token missing in server env)'}
-                  </code>
+                  <code className="text-[11px] font-bold text-primary">{waVerifyToken || '(Token missing in server env)'}</code>
                 </div>
               </div>
-              
               {showInstructions && (
                 <div className="mt-4 p-4 bg-white border border-blue-100 rounded-xl space-y-3 animate-in slide-in-from-top-2 duration-200">
                   <p className="text-[10px] font-black uppercase tracking-widest text-blue-600 mb-2">How to get your System Access Token</p>
@@ -599,7 +629,6 @@ function SettingsContent({ org, autoReplies, waVerifyToken }: { org: Org, autoRe
                     <li>Select your App, and ensure you check: <code>whatsapp_business_messaging</code> and <code>whatsapp_business_management</code>.</li>
                     <li>Copy the token and paste it into the <strong>System Access Token</strong> field above.</li>
                   </ul>
-                  
                   <p className="text-[10px] font-black uppercase tracking-widest text-blue-600 mb-2">How to verify your Webhook</p>
                   <ul className="text-[10px] font-bold text-slate-500 space-y-2 list-decimal pl-4">
                     <li>Go to your App in the <strong>Meta Developers Console</strong>.</li>
@@ -613,6 +642,7 @@ function SettingsContent({ org, autoReplies, waVerifyToken }: { org: Org, autoRe
               )}
             </div>
 
+            {/* Test Connection */}
             <div className="bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 p-6 space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-xs font-black uppercase tracking-widest text-slate-500">Test Connection</h3>
@@ -622,66 +652,78 @@ function SettingsContent({ org, autoReplies, waVerifyToken }: { org: Org, autoRe
                   <span className="text-[9px] font-black bg-amber-100 text-amber-700 px-2 py-0.5 rounded uppercase">Inactive</span>
                 )}
               </div>
-              <p className="text-[10px] text-muted-foreground font-bold leading-relaxed italic">
-                Send a test message to your phone to verify your credentials are correct.
-              </p>
+              <p className="text-[10px] text-muted-foreground font-bold leading-relaxed italic">Send a test message to your phone to verify credentials are correct.</p>
               <div className="flex gap-2">
-                <input 
-                  value={testPhone} onChange={e => setTestPhone(e.target.value)}
+                <input value={testPhone} onChange={e => setTestPhone(e.target.value)}
                   placeholder="e.g. 254712345678"
-                  className="flex-1 border border-border rounded-xl px-4 py-3 text-sm font-bold font-mono focus:outline-none focus:ring-2 focus:ring-primary bg-white shadow-sm" 
-                />
-                <button 
-                  onClick={async () => {
-                    setTestingBot(true);
-                    setTestResult(null);
-                    try {
-                      const r = await fetch('/api/settings/whatsapp/test-connection', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ test_phone: testPhone })
-                      });
-                      const data = await r.json();
-                      if (data.success) {
-                        setTestResult({ success: true });
-                        router.refresh();
-                      } else {
-                        const errString = typeof data.error === 'object' ? JSON.stringify(data.error) : String(data.error);
-                        if (errString.includes('190') || errString.includes('OAuthException') || errString.includes('Authentication Error')) {
-                          setTestResult({ error: 'Your System Access Token is invalid or expired. Please generate a new permanent token in Meta Business Settings and save it above.' });
-                        } else {
-                          setTestResult({ error: errString });
-                        }
-                      }
-                    } catch (e) {
-                      setTestResult({ error: 'Network error' });
+                  className="flex-1 border border-border rounded-xl px-4 py-3 text-sm font-bold font-mono focus:outline-none focus:ring-2 focus:ring-primary bg-white shadow-sm" />
+                <button onClick={async () => {
+                  setTestingBot(true); setTestResult(null);
+                  try {
+                    const r = await fetch('/api/settings/whatsapp/test-connection', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ test_phone: testPhone }) });
+                    const data = await r.json();
+                    if (data.success) { setTestResult({ success: true }); router.refresh(); }
+                    else {
+                      const errString = typeof data.error === 'object' ? JSON.stringify(data.error) : String(data.error);
+                      if (errString.includes('190') || errString.includes('OAuthException') || errString.includes('Authentication Error')) {
+                        setTestResult({ error: 'Your System Access Token is invalid or expired. Please generate a new permanent token in Meta Business Settings and save it above.' });
+                      } else { setTestResult({ error: errString }); }
                     }
-                    setTestingBot(false);
-                  }}
-                  disabled={testingBot || !testPhone}
-                  className="bg-primary text-white p-3 rounded-xl hover:opacity-90 transition-all flex items-center justify-center aspect-square disabled:opacity-50"
-                >
-                  {testingBot ? (
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  ) : (
-                    <SendHorizonal size={20} />
-                  )}
+                  } catch (e) { setTestResult({ error: 'Network error' }); }
+                  setTestingBot(false);
+                }} disabled={testingBot || !testPhone}
+                  className="bg-primary text-white p-3 rounded-xl hover:opacity-90 transition-all flex items-center justify-center aspect-square disabled:opacity-50">
+                  {testingBot ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <SendHorizonal size={20} />}
                 </button>
               </div>
               {testResult?.error && <p className="text-[10px] text-red-500 font-bold bg-red-50 p-3 rounded-lg border border-red-100 italic">{testResult.error}</p>}
               {testResult?.success && <p className="text-[10px] text-green-600 font-bold bg-green-50 p-3 rounded-lg border border-green-100 italic font-serif">Success! Engine is now activated.</p>}
             </div>
 
-            <button onClick={async () => { setSaving(true); await fetch('/api/settings/whatsapp', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
-              phone_number_id: waForm.phone_number_id,
-              access_token: waForm.access_token,
-              meta_business_id: waForm.meta_business_id,
-              wa_catalog_id: waForm.wa_catalog_id,
-              wa_business_account_id: waForm.wa_business_account_id,
-              wa_bot_number: waForm.wa_bot_number,
-            }) }); setSaving(false); setSaved(true); setTimeout(() => setSaved(false), 2000) }} disabled={saving}
+            {/* User Manual / Field Guide */}
+            <div className="bg-card rounded-2xl border border-border p-6 shadow-sm">
+              <h3 className="text-xs font-black uppercase tracking-widest text-primary mb-4">   Field Guide — What does each field mean?</h3>
+              <div className="space-y-4 text-[11px] text-slate-600 font-medium leading-relaxed">
+                <div className="bg-slate-50 rounded-xl p-4">
+                  <p className="font-black text-slate-700">📱 WhatsApp Phone ID</p>
+                  <p className="mt-1">This is a <strong>number ID</strong> from Meta, NOT your phone number. It looks like <code className="text-primary">123456789012345</code>. Find it in Meta Developer Console → WhatsApp → API Setup. It tells Meta which phone line to send messages from.</p>
+                </div>
+                <div className="bg-slate-50 rounded-xl p-4">
+                  <p className="font-black text-slate-700">🔑 System Access Token</p>
+                  <p className="mt-1">A <strong>permanent password</strong> for your bot to talk to Meta's servers. Create one in Meta Business Settings → System Users → Generate New Token. Check <code className="text-primary">whatsapp_business_messaging</code> permission. <strong>Never share this with anyone.</strong></p>
+                </div>
+                <div className="bg-slate-50 rounded-xl p-4">
+                  <p className="font-black text-slate-700">📞 Bot Number</p>
+                  <p className="mt-1">Your actual WhatsApp business number that customers will message. Enter it without +, e.g. <code className="text-primary">254712345678</code> for a Kenyan number. This is used for the "Chat on WhatsApp" button on your store page.</p>
+                </div>
+                <div className="bg-slate-50 rounded-xl p-4">
+                  <p className="font-black text-slate-700">🌐 Webhook</p>
+                  <p className="mt-1">A webhook is like a phone line for your bot — Meta calls it when a customer sends a message. The <strong>Callback URL</strong> and <strong>Verify Token</strong> above go into Meta Developer Console → WhatsApp → Configuration → Webhook. Once verified, your bot can receive messages.</p>
+                </div>
+                <div className="bg-slate-50 rounded-xl p-4">
+                  <p className="font-black text-slate-700">📋 Notifications</p>
+                  <p className="mt-1">When a customer requests an item you don't have, you can see it in your <strong>Dashboard notifications</strong> (bell icon) or get a <strong>WhatsApp message</strong> directly. Choose what works for you.</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Save Button */}
+            <button onClick={async () => {
+              setSaving(true);
+              await fetch('/api/settings/whatsapp', {
+                method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
+                  phone_number_id: waForm.phone_number_id,
+                  access_token: waForm.access_token,
+                  wa_bot_number: waForm.wa_bot_number,
+                  wa_business_account_id: waForm.wa_business_account_id,
+                  notification_preference: waForm.notification_preference,
+                  notification_phone: waForm.notification_phone,
+                })
+              });
+              setSaving(false); setSaved(true); setTimeout(() => setSaved(false), 2000);
+            }} disabled={saving}
               className="w-full bg-[#075E54] text-white py-4 rounded-xl font-bold hover:shadow-xl hover:shadow-[#075E54]/20 transition-all disabled:opacity-60">
-              {saved ? '✓ Credentials Saved' : saving ? 'Saving...' : 'Save WhatsApp Credentials'}
+              {saved ? '✓ All Saved' : saving ? 'Saving...' : 'Save WhatsApp Settings'}
             </button>
           </div>
         </SecureSection>

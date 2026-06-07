@@ -87,6 +87,10 @@ export const organizations = sqliteTable('organizations', {
   bot_show_cart: integer('bot_show_cart').default(1),
   bot_show_orders: integer('bot_show_orders').default(1),
 
+  // Notification Preferences
+  notification_preference: text('notification_preference').default('dashboard'),
+  notification_phone: text('notification_phone'),
+
   // Usage Tracking
   usage_ai_daily_count: integer('usage_ai_daily_count').default(0),
   usage_ai_monthly_count: integer('usage_ai_monthly_count').default(0),

@@ -17,14 +17,23 @@ type OrgShape = {
   wa_phone_number_id: string | null
   wa_bot_number: string | null
   wa_business_account_id: string | null
-  meta_business_id: string | null
-  wa_catalog_id: string | null
+  wa_webhook_verified: number | null
+  notification_preference: string | null
+  notification_phone: string | null
   store_paypal_email: string | null
   store_cod_enabled: number | null
   whatsapp_verified: number | null
-  wa_webhook_verified: number | null
   plan: string | null
   trial_ends_at: string | null
+  payment_methods: string | null
+  ai_provider: string | null
+  ai_model: string | null
+  ai_persona: string | null
+  ai_endpoint_url: string | null
+  ai_system_prompt: string | null
+  logo_url: string | null
+  delivery_fee: number | null
+  free_delivery_above: number | null
   [key: string]: unknown
 }
 

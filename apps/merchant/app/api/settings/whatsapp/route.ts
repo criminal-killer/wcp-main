@@ -16,30 +16,30 @@ export async function PUT(req: NextRequest) {
   const body = await req.json() as {
     phone_number_id?: string
     access_token?: string
-    meta_business_id?: string
-    wa_catalog_id?: string
-    wa_business_account_id?: string
     wa_bot_number?: string
+    wa_business_account_id?: string
+    notification_preference?: string
+    notification_phone?: string
   }
   const update: Partial<typeof organizations.$inferInsert> = { updated_at: new Date().toISOString() }
 
   if (body.phone_number_id) update.wa_phone_number_id = body.phone_number_id
   if (body.access_token) update.wa_access_token_encrypted = encrypt(body.access_token)
-  if (body.meta_business_id !== undefined) update.meta_business_id = body.meta_business_id
-  if (body.wa_catalog_id !== undefined) update.wa_catalog_id = body.wa_catalog_id
-  if (body.wa_business_account_id !== undefined) update.wa_business_account_id = body.wa_business_account_id
   if (body.wa_bot_number !== undefined) update.wa_bot_number = body.wa_bot_number
-  // Reset webhook verification when credentials change
+  if (body.wa_business_account_id !== undefined) update.wa_business_account_id = body.wa_business_account_id
+  if (body.notification_preference !== undefined) update.notification_preference = body.notification_preference
+  if (body.notification_phone !== undefined) update.notification_phone = body.notification_phone
   if (body.phone_number_id || body.access_token) update.wa_webhook_verified = 0
 
   const [org] = await db.update(organizations).set(update).where(eq(organizations.id, user.org_id)).returning()
   return NextResponse.json({
     data: {
       phone_number_id: org.wa_phone_number_id,
+      wa_bot_number: org.wa_bot_number,
       verified: org.wa_webhook_verified,
-      meta_business_id: org.meta_business_id,
-      wa_catalog_id: org.wa_catalog_id,
       wa_business_account_id: org.wa_business_account_id,
+      notification_preference: org.notification_preference,
+      notification_phone: org.notification_phone,
     },
     message: 'WhatsApp settings saved'
   })

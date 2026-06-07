@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { organizations, contacts, conversations, messages } from '@/lib/schema'
+import { organizations, contacts, conversations, messages, notifications } from '@/lib/schema'
 import { eq } from 'drizzle-orm'
+import { sendTextMessage } from '@/lib/whatsapp'
+import { decrypt } from '@/lib/encryption'
 
 export async function POST(req: Request, { params }: { params: { slug: string } }) {
   try {
@@ -30,7 +32,7 @@ export async function POST(req: Request, { params }: { params: { slug: string } 
       contact = newContact
     }
 
-    // Create conversation entry so merchant sees it
+    // Create conversation entry
     const [conv] = await db.insert(conversations).values({
       org_id: org.id,
       contact_id: contact.id,
@@ -47,6 +49,30 @@ export async function POST(req: Request, { params }: { params: { slug: string } 
       message_type: 'text',
     })
 
+    // Create dashboard notification
+    await db.insert(notifications).values({
+      org_id: org.id,
+      title: 'New Item Request',
+      message: `${name || phoneClean} requested: ${requestMessage}`,
+      type: 'info',
+      action_url: `/dashboard/inbox?contact=${contact.id}`,
+    })
+
+    // If notification preference is WhatsApp, send message to merchant's phone
+    if (org.notification_preference === 'whatsapp' && org.notification_phone && org.wa_phone_number_id && org.wa_access_token_encrypted) {
+      try {
+        const accessToken = decrypt(org.wa_access_token_encrypted)
+        const waNumber = org.notification_phone.replace(/\D/g, '')
+        await sendTextMessage(
+          { phoneNumberId: org.wa_phone_number_id, accessToken },
+          { to: waNumber, body: `   New Request from ${name || phoneClean}:\n\n"${requestMessage}"\n\nView in dashboard: ${process.env.NEXT_PUBLIC_APP_URL || 'https://chatevo.com'}/dashboard/inbox` }
+        )
+      } catch (err) {
+        console.error('[request] Failed to send WhatsApp notification:', err)
+      }
+    }
+
+    // Build wa.me link
     const waPhone = (org.wa_bot_number || org.wa_phone_number_id || '').replace(/\D/g, '')
     const encodedMsg = encodeURIComponent(
       `Hi! I'm looking for something not listed on your store.\n\nRequest: ${requestMessage}${name ? `\n\n- ${name}` : ''}`

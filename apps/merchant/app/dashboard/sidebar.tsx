@@ -19,6 +19,7 @@ const NAV_ITEMS = [
   { href: '/dashboard/products', label: 'Products', icon: Package },
   { href: '/dashboard/orders', label: 'Orders', icon: ShoppingCart },
   { href: '/dashboard/inbox', label: 'Inbox', icon: MessageSquare },
+  { href: '/dashboard/notifications', label: 'Notifications', icon: Bell },
   { href: '/dashboard/contacts', label: 'Contacts', icon: Users },
   { href: '/dashboard/docs', label: 'Help & Docs', icon: BookOpen },
   { href: '/dashboard/settings', label: 'Settings', icon: Settings },
@@ -114,8 +115,7 @@ export default function DashboardSidebar({
           </button>
         </div>
         <div className="flex-1 overflow-y-auto pt-4">
-           {/* Sidebar contents duplicated or extracted */}
-           <NavContent pathname={pathname} org={org} />
+           <NavContent pathname={pathname} org={org} unreadCount={unreadCount} />
         </div>
       </aside>
 
@@ -186,7 +186,7 @@ export default function DashboardSidebar({
           </div>
         </div>
         <div className="flex-1 px-4 py-4 overflow-y-auto">
-          <NavContent pathname={pathname} org={org} />
+          <NavContent pathname={pathname} org={org} unreadCount={unreadCount} />
         </div>
         <div className="p-4 border-t border-border mt-auto space-y-2">
           <div className="flex items-center gap-3 p-2 hover:bg-secondary rounded-2xl transition-all group cursor-pointer">
@@ -210,12 +210,13 @@ export default function DashboardSidebar({
   )
 }
 
-function NavContent({ pathname, org }: { pathname: string; org: Org }) {
+function NavContent({ pathname, org, unreadCount = 0 }: { pathname: string; org: Org; unreadCount?: number }) {
   return (
     <nav className="space-y-1 px-2">
       {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
         const isActive = pathname === href || (href !== '/dashboard' && pathname.startsWith(href))
         const isEarnSection = label === 'Become Affiliate'
+        const isNotifications = label === 'Notifications'
         
         return (
           <Fragment key={href}>
@@ -234,6 +235,11 @@ function NavContent({ pathname, org }: { pathname: string; org: Org }) {
             >
             <Icon size={20} className={isActive ? 'text-whatsapp' : 'text-muted-foreground/50'} />
             {label}
+            {isNotifications && unreadCount > 0 && (
+              <span className="ml-auto min-w-[20px] h-5 bg-red-500 text-white text-[10px] font-black flex items-center justify-center rounded-full px-1.5 shadow-lg">
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </span>
+            )}
             {label === 'Inbox' && (
               <span className="ml-auto bg-whatsapp text-white text-[10px] px-2 py-0.5 rounded-full shadow-lg shadow-whatsapp/30">
                 LIVE
