@@ -552,26 +552,36 @@ function SettingsContent({ org, autoReplies, waVerifyToken }: { org: Org, autoRe
             </div>
 
             {/* Bot Phone Number */}
-            <div className="bg-emerald-50 rounded-2xl border border-emerald-100 p-6">
+            <div className={(org.wa_bot_number ? 'bg-emerald-50 border-emerald-100' : 'bg-red-50 border-red-200') + ' rounded-2xl border-2 p-6'}>
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center text-emerald-600 font-bold">📞</div>
+                <div className={(org.wa_bot_number ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600') + ' w-8 h-8 rounded-lg flex items-center justify-center font-bold'}>📞</div>
                 <div>
-                  <h3 className="text-xs font-black uppercase tracking-widest text-emerald-700">Your Bot Number</h3>
-                  <p className="text-[10px] text-emerald-600/70 font-medium mt-0.5">The phone number customers will text on WhatsApp</p>
+                  <h3 className={(org.wa_bot_number ? 'text-emerald-700' : 'text-red-700') + ' text-xs font-black uppercase tracking-widest'}>Your Bot Number</h3>
+                  <p className={(org.wa_bot_number ? 'text-emerald-600/70' : 'text-red-600/70') + ' text-[10px] mt-0.5 font-medium'}>The phone number customers will text on WhatsApp</p>
                 </div>
               </div>
-              {org.wa_bot_number ? (
+
+              {!org.wa_bot_number && (
+                <div className="bg-red-100 border border-red-200 rounded-xl px-4 py-3 mb-4 flex items-start gap-3">
+                  <span className="text-red-500 text-lg font-bold shrink-0 mt-0.5">⚠️</span>
+                  <div>
+                    <p className="text-sm font-black text-red-700">Bot Number Not Set</p>
+                    <p className="text-xs text-red-600/80 font-medium mt-1">The "Chat on WhatsApp" button <strong>will NOT appear</strong> on your storefront until you add a bot number below. Your customers won't have a way to message you. Add it now to activate WhatsApp from your store.</p>
+                  </div>
+                </div>
+              )}
+
+              {org.wa_bot_number && (
                 <div className="flex items-center gap-3 bg-white rounded-xl px-4 py-3 border border-emerald-100 mb-3">
                   <span className="text-lg font-bold text-emerald-700 select-all">{org.wa_bot_number}</span>
                   <button onClick={() => { navigator.clipboard.writeText(org.wa_bot_number || ''); }} className="text-[10px] font-black uppercase tracking-widest text-emerald-600 hover:text-emerald-800 ml-auto">Copy</button>
                 </div>
-              ) : (
-                <p className="text-xs text-emerald-600/50 font-medium italic mb-3">Not set yet — customers won't have a number to message.</p>
               )}
+
               <input value={waForm.wa_bot_number} onChange={e => setWaForm({ ...waForm, wa_bot_number: e.target.value })}
                 placeholder="e.g. 254712345678 (country code + number, no +)"
-                className="w-full border border-emerald-200 rounded-xl px-4 py-3 text-sm font-bold font-mono focus:outline-none focus:ring-2 focus:ring-emerald-400 bg-white" />
-              <p className="text-[10px] text-emerald-600/50 font-bold mt-2">This is used for the "Chat on WhatsApp" button on your store. Just the digits, no + or spaces.</p>
+                className={(org.wa_bot_number ? 'border-emerald-200 focus:ring-emerald-400' : 'border-red-300 focus:ring-red-400') + ' w-full border-2 rounded-xl px-4 py-3 text-sm font-bold font-mono focus:outline-none focus:ring-2 bg-white'} />
+              <p className={(org.wa_bot_number ? 'text-emerald-600/50' : 'text-red-500') + ' text-[10px] font-bold mt-2'}>Enter your WhatsApp number (digits only, no +). Used for the "Chat on WhatsApp" button on your storefront.</p>
             </div>
 
             {/* Notification Preferences */}
