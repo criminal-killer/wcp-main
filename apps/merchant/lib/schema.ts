@@ -48,6 +48,7 @@ export const organizations = sqliteTable('organizations', {
   store_mpesa_till: text('store_mpesa_till'),
   store_cod_enabled: integer('store_cod_enabled').default(1),
   store_bank_details: text('store_bank_details'),
+  payment_methods: text('payment_methods').default('[]'),
 
   // Delivery
   delivery_fee: real('delivery_fee').default(0),

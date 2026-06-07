@@ -111,9 +111,9 @@ const SecureSection = ({ children, email, onUnlock }: { children: React.ReactNod
     return (
       <div className="bg-card rounded-2xl border border-border p-12 text-center flex items-center justify-center">
         <Loader2 className="animate-spin text-muted-foreground" size={24} />
-      </div>
-    )
-  }
+    </div>
+  )
+}
 
   if (unlocked) return <>{children}</>
 
@@ -167,6 +167,56 @@ const SecureSection = ({ children, email, onUnlock }: { children: React.ReactNod
     </div>
   )
 }
+
+const ALL_PAYMENT_METHODS = [
+  {
+    type: 'paypal', label: 'PayPal', icon: 'P', regions: 'Global — US, UK, Europe, Asia',
+    fields: [{ key: 'email', label: 'PayPal Email', type: 'email' as const, placeholder: 'you@example.com' }],
+  },
+  {
+    type: 'stripe', label: 'Credit/Debit Card (Stripe)', icon: '💳', regions: 'Global — US, UK, Europe, Australia',
+    fields: [
+      { key: 'publishable_key', label: 'Stripe Publishable Key', type: 'text' as const, placeholder: 'pk_live_...' },
+      { key: 'secret_key', label: 'Stripe Secret Key', type: 'password' as const, placeholder: 'sk_live_...' },
+    ],
+  },
+  {
+    type: 'paystack', label: 'Paystack', icon: '₦', regions: 'Africa — Nigeria, Ghana, South Africa, Kenya',
+    fields: [{ key: 'secret_key', label: 'Paystack Secret Key', type: 'password' as const, placeholder: 'sk_live_...' }],
+  },
+  {
+    type: 'mpesa', label: 'M-Pesa', icon: 'MP', regions: 'East Africa — Kenya, Tanzania, Uganda',
+    fields: [{ key: 'till', label: 'Till / Paybill Number', type: 'text' as const, placeholder: 'e.g. 123456' }],
+  },
+  {
+    type: 'bank_transfer', label: 'Bank Transfer', icon: '🏦', regions: 'Global',
+    fields: [{ key: 'details', label: 'Bank Details (account name, number, bank, routing)', type: 'text' as const, placeholder: 'e.g. Acme Corp, 1234567890, Chase Bank' }],
+  },
+  {
+    type: 'cashapp', label: 'Cash App', icon: '$', regions: 'US, UK',
+    fields: [{ key: 'cashtag', label: '$Cashtag', type: 'text' as const, placeholder: '$yourcashtag' }],
+  },
+  {
+    type: 'venmo', label: 'Venmo', icon: 'V', regions: 'US',
+    fields: [{ key: 'username', label: 'Venmo Username', type: 'text' as const, placeholder: '@username' }],
+  },
+  {
+    type: 'upi', label: 'UPI (Google Pay / PhonePe / Paytm)', icon: 'UP', regions: 'India',
+    fields: [{ key: 'upi_id', label: 'UPI ID', type: 'text' as const, placeholder: 'merchant@upi' }],
+  },
+  {
+    type: 'gcash', label: 'GCash', icon: 'GC', regions: 'Philippines',
+    fields: [{ key: 'number', label: 'GCash Number', type: 'tel' as const, placeholder: '+63 9XX XXX XXXX' }],
+  },
+  {
+    type: 'pix', label: 'Pix', icon: 'P', regions: 'Brazil',
+    fields: [{ key: 'pix_key', label: 'Pix Key (CPF/CNPJ/Email/Phone)', type: 'text' as const, placeholder: 'your@email.com' }],
+  },
+  {
+    type: 'cod', label: 'Cash on Delivery', icon: '📦', regions: 'Global',
+    fields: [],
+  },
+]
 
 export default function SettingsClient({ org, autoReplies, waVerifyToken }: { org: Org, autoReplies: AutoReply[], waVerifyToken?: string }) {
   return (
@@ -225,11 +275,6 @@ function SettingsContent({ org, autoReplies, waVerifyToken }: { org: Org, autoRe
     meta_business_id: org.meta_business_id || '',
     wa_catalog_id: org.wa_catalog_id || '',
   })
-  const [payForm, setPayForm] = useState({
-    paystack_key: '',
-    store_mpesa_till: (org as any).store_mpesa_till || '',
-    cod_enabled: String(org.store_cod_enabled ?? 1) === '1',
-  })
   const [aiForm, setAiForm] = useState({
     provider: (org as any).ai_provider || 'Chatevo',
     model: (org as any).ai_model || '',
@@ -238,6 +283,28 @@ function SettingsContent({ org, autoReplies, waVerifyToken }: { org: Org, autoRe
     endpoint_url: (org as any).ai_endpoint_url || '',
     system_prompt: (org as any).ai_system_prompt || '',
   })
+
+  const existingPaymentMethods: Array<{ type: string; label: string; details: Record<string, string> }> = (org as any).payment_methods
+    ? (() => { try { return JSON.parse((org as any).payment_methods); } catch { return []; } })()
+    : []
+
+  const [enabledMethods, setEnabledMethods] = useState<string[]>(
+    existingPaymentMethods.length > 0
+      ? existingPaymentMethods.map((pm: any) => pm.type)
+      : (org.store_cod_enabled ? ['cod'] : [])
+  )
+  const [methodDetails, setMethodDetails] = useState<Record<string, Record<string, string>>>(
+    existingPaymentMethods.length > 0
+      ? existingPaymentMethods.reduce((acc: any, pm: any) => ({ ...acc, [pm.type]: pm.details || {} }), {})
+      : {}
+  )
+  const [customMethods, setCustomMethods] = useState<Array<{ type: string; label: string }>>(
+    existingPaymentMethods.length > 0
+      ? existingPaymentMethods
+          .filter((pm: any) => pm.type.startsWith('custom_'))
+          .map((pm: any) => ({ type: pm.type, label: pm.label }))
+      : []
+  )
 
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null)
   const [subscribeError, setSubscribeError] = useState('')
@@ -597,40 +664,138 @@ function SettingsContent({ org, autoReplies, waVerifyToken }: { org: Org, autoRe
       {/* Payments Tab */}
       {tab === 'payments' && (
         <SecureSection email={userEmail} onUnlock={() => setUnlockedTabs([...unlockedTabs, 'payments'])}>
-          <div className="bg-card rounded-2xl border border-border p-8 space-y-6 max-w-xl shadow-sm">
-            <h2 className="font-bold text-foreground italic font-serif text-lg text-primary text-center">Payment Gateway</h2>
-            <div className="bg-slate-50 border border-slate-100 rounded-2xl p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center text-white font-black text-xs italic">$</div>
-                  <p className="font-black text-sm text-[#075E54]">Secret Key</p>
+          <div className="bg-card rounded-2xl border border-border p-8 max-w-xl shadow-sm">
+            <h2 className="font-bold text-foreground italic font-serif text-lg text-primary text-center mb-6">Payment Methods</h2>
+
+            {ALL_PAYMENT_METHODS.map((pm) => {
+              const isEnabled = enabledMethods.includes(pm.type)
+              const details = methodDetails[pm.type] || {}
+              return (
+                <div key={pm.type} className="bg-slate-50 border border-slate-100 rounded-2xl p-5 mb-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center text-sm font-black shadow-sm">
+                        {pm.icon}
+                      </div>
+                      <div>
+                        <p className="font-black text-sm text-[#075E54]">{pm.label}</p>
+                        {pm.regions && <p className="text-[10px] text-muted-foreground font-medium">{pm.regions}</p>}
+                      </div>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input type="checkbox" checked={isEnabled} onChange={(e) => {
+                        if (e.target.checked) {
+                          setEnabledMethods([...enabledMethods, pm.type])
+                        } else {
+                          setEnabledMethods(enabledMethods.filter(t => t !== pm.type))
+                          const d = { ...methodDetails }
+                          delete d[pm.type]
+                          setMethodDetails(d)
+                        }
+                      }} className="sr-only peer" />
+                      <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+                    </label>
+                  </div>
+
+                  {isEnabled && pm.fields && (
+                    <div className="space-y-3 pt-3 border-t border-slate-200">
+                      {pm.fields.map((field) => (
+                        <div key={field.key}>
+                          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{field.label}</label>
+                          <input
+                            value={details[field.key] || ''}
+                            onChange={(e) => setMethodDetails({ ...methodDetails, [pm.type]: { ...details, [field.key]: e.target.value } })}
+                            type={field.type || 'text'}
+                            placeholder={field.placeholder}
+                            className="w-full border-2 border-slate-100 rounded-xl px-4 py-3 text-sm font-bold font-mono focus:border-primary focus:outline-none shadow-sm mt-1"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              </div>
-              <input value={payForm.paystack_key} onChange={e => setPayForm({ ...payForm, paystack_key: e.target.value })}
-                type="password" placeholder="Enter your secret key"
-                className="w-full border-2 border-slate-100 rounded-xl px-4 py-3 text-sm font-bold font-mono focus:border-primary focus:outline-none shadow-sm" />
-              <p className="text-[10px] text-muted-foreground/70 mt-2 font-bold">This key is used to process payments from your customers. Keep it private.</p>
-            </div>
-            <div className="bg-slate-50 border border-slate-100 rounded-2xl p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-orange-600 rounded-lg flex items-center justify-center text-white font-black text-xs">MP</div>
-                  <p className="font-black text-sm text-[#075E54]">M-Pesa Till / Paybill</p>
+              )
+            })}
+
+            {/* Custom payment method */}
+            <div className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl p-5 mb-4">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center text-sm font-black shadow-sm">+</div>
+                  <p className="font-black text-sm text-[#075E54]">Custom Payment Method</p>
                 </div>
+                <button onClick={() => {
+                  const name = prompt('Enter payment method name (e.g. "Cash App", "GCash"):')
+                  if (name && name.trim()) {
+                    const type = `custom_${Date.now()}`
+                    setCustomMethods([...customMethods, { type, label: name.trim() }])
+                    setEnabledMethods([...enabledMethods, type])
+                  }
+                }} className="text-xs font-bold text-primary hover:underline">+ Add Custom</button>
               </div>
-              <input value={payForm.store_mpesa_till || ''} onChange={e => setPayForm({ ...payForm, store_mpesa_till: e.target.value })}
-                type="text" placeholder="e.g. 123456 (Till Number)"
-                className="w-full border-2 border-slate-100 rounded-xl px-4 py-3 text-sm font-bold font-mono focus:border-primary focus:outline-none shadow-sm" />
+
+              {customMethods.map((cm) => {
+                const isEnabled = enabledMethods.includes(cm.type)
+                const details = methodDetails[cm.type] || {}
+                return (
+                  <div key={cm.type} className="bg-white rounded-xl p-4 mb-3 border border-slate-200">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input type="checkbox" checked={isEnabled} onChange={(e) => {
+                            if (e.target.checked) setEnabledMethods([...enabledMethods, cm.type])
+                            else setEnabledMethods(enabledMethods.filter(t => t !== cm.type))
+                          }} className="sr-only peer" />
+                          <div className="w-9 h-5 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+                        </label>
+                        <p className="font-bold text-sm text-[#075E54]">{cm.label}</p>
+                      </div>
+                      <button onClick={() => {
+                        setCustomMethods(customMethods.filter(c => c.type !== cm.type))
+                        setEnabledMethods(enabledMethods.filter(t => t !== cm.type))
+                        const d = { ...methodDetails }
+                        delete d[cm.type]
+                        setMethodDetails(d)
+                      }} className="text-[10px] text-red-400 font-bold hover:text-red-600">Remove</button>
+                    </div>
+                    {isEnabled && (
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Payment Details / Instructions</label>
+                        <textarea
+                          value={details.instruction || ''}
+                          onChange={(e) => setMethodDetails({ ...methodDetails, [cm.type]: { ...details, instruction: e.target.value } })}
+                          placeholder="e.g. Send to $cashtag, Phone: +1234567890"
+                          rows={2}
+                          className="w-full border-2 border-slate-100 rounded-xl px-4 py-3 text-sm font-bold font-mono focus:border-primary focus:outline-none shadow-sm mt-1"
+                        />
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+
+              {enabledMethods.length === 0 && (
+                <p className="text-xs text-muted-foreground font-medium text-center py-4">No payment methods enabled. Toggle the ones you want above.</p>
+              )}
             </div>
-            <div className="flex items-center gap-3">
-              <input type="checkbox" id="cod" checked={payForm.cod_enabled}
-                onChange={e => setPayForm({ ...payForm, cod_enabled: e.target.checked })}
-                className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary" />
-              <label htmlFor="cod" className="text-xs font-bold text-slate-500">Accept Cash on Delivery</label>
-            </div>
-            <button onClick={async () => { setSaving(true); await fetch('/api/settings/payments', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payForm) }); setSaving(false); setSaved(true); setTimeout(() => setSaved(false), 2000) }} disabled={saving}
+
+            <button onClick={async () => {
+              setSaving(true)
+              const payload = {
+                payment_methods: ALL_PAYMENT_METHODS
+                  .filter(pm => enabledMethods.includes(pm.type))
+                  .map(pm => ({ type: pm.type, label: pm.label, details: methodDetails[pm.type] || {} }))
+                  .concat(
+                    customMethods
+                      .filter(cm => enabledMethods.includes(cm.type))
+                      .map(cm => ({ type: cm.type, label: cm.label, details: methodDetails[cm.type] || {} }))
+                  ),
+              }
+              await fetch('/api/settings/payments', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+              setSaving(false); setSaved(true); setTimeout(() => setSaved(false), 2000)
+            }} disabled={saving}
               className="w-full bg-[#075E54] text-white py-4 rounded-xl font-bold hover:shadow-xl hover:shadow-[#075E54]/20 transition-all disabled:opacity-60">
-              {saved ? '✓ Saved' : saving ? 'Saving...' : 'Save Payment Settings'}
+              {saved ? '✓ Saved' : saving ? 'Saving...' : 'Save Payment Methods'}
             </button>
           </div>
         </SecureSection>

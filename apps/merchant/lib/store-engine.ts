@@ -1012,25 +1012,22 @@ async function handleDeliveryInfo(
   }
   await setFlowState(orgId, phone, { ...flow, step: 'payment_select', delivery: address })
 
-  const paymentOptions = []
-  
-  // Pay Now — online card/mobile money via Paystack (always available)
-  paymentOptions.push({ id: 'pay_paystack', title: 'Pay Now' })
+  const paymentMethods: Array<{ type: string; label: string; details: Record<string, string> }> = (() => {
+    try { return JSON.parse(org.payment_methods || '[]') } catch { return [] }
+  })()
 
-  // M-Pesa Till — manual payment, owner confirms
-  if (org.store_mpesa_till) {
-    paymentOptions.push({ id: 'pay_mpesa', title: 'M-Pesa' })
+  // Fallback for older orgs that haven't saved payment_methods yet
+  if (paymentMethods.length === 0) {
+    paymentMethods.push({ type: 'paystack', label: 'Pay Now (Card / Mobile Money)', details: {} })
+    if (org.store_mpesa_till) paymentMethods.push({ type: 'mpesa', label: 'M-Pesa', details: { till: org.store_mpesa_till } })
+    if (org.store_bank_details) paymentMethods.push({ type: 'bank_transfer', label: 'Bank Transfer', details: { details: org.store_bank_details } })
+    if (org.store_cod_enabled) paymentMethods.push({ type: 'cod', label: 'Cash on Delivery', details: {} })
   }
 
-  // Bank Transfer — manual payment, owner confirms
-  if (org.store_bank_details) {
-    paymentOptions.push({ id: 'pay_bank', title: 'Bank Transfer' })
-  }
-
-  // Cash on Delivery
-  if (org.store_cod_enabled) {
-    paymentOptions.push({ id: 'pay_cod', title: 'Cash on Delivery' })
-  }
+  const paymentOptions = paymentMethods.map(pm => ({
+    id: `pay_${pm.type}`,
+    title: waTitle(pm.label, 20),
+  }))
 
   if (paymentOptions.length > 3) {
     return await sendInteractiveListMessage(waConfig, {
@@ -1084,9 +1081,21 @@ async function handlePaymentSelected(
     return await showMainMenu(waConfig, org, store, phone, orgId)
   }
 
-  // Only accept known payment options — reject any other text
-  const validPaymentInputs = ['pay_paystack', 'pay_mpesa', 'pay_bank', 'pay_cod']
-  if (!validPaymentInputs.includes(inputNorm)) {
+  // Build available payment methods
+  const paymentMethods: Array<{ type: string; label: string; details: Record<string, string> }> = (() => {
+    try { return JSON.parse(org.payment_methods || '[]') } catch { return [] }
+  })()
+  if (paymentMethods.length === 0) {
+    paymentMethods.push({ type: 'paystack', label: 'Pay Now', details: {} })
+    if (org.store_mpesa_till) paymentMethods.push({ type: 'mpesa', label: 'M-Pesa', details: { till: org.store_mpesa_till } })
+    if (org.store_bank_details) paymentMethods.push({ type: 'bank_transfer', label: 'Bank Transfer', details: { details: org.store_bank_details } })
+    if (org.store_cod_enabled) paymentMethods.push({ type: 'cod', label: 'Cash on Delivery', details: {} })
+  }
+
+  // Get the selected payment method
+  const selectedType = inputNorm.replace('pay_', '')
+  const selected = paymentMethods.find(pm => pm.type === selectedType)
+  if (!selected) {
     return await sendTextMessage(waConfig, {
       to: phone,
       body: 'Please choose a payment method from the options above.\n\nType *menu* to go back to shopping.',
@@ -1098,18 +1107,14 @@ async function handlePaymentSelected(
   const total = subtotal + deliveryFee
 
   const orderNumber = `ORD-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`
-  let paymentMethod = 'cod'
-  let paymentStatus: 'pending' | 'paid' = 'pending'
+  let paymentMethod = selected.type
+  let paymentStatus: 'pending' | 'paid' = selected.type === 'cod' ? 'paid' : 'pending'
   let paymentLink: string | undefined
 
-  if (inputNorm === 'pay_paystack') {
-    paymentMethod = 'paystack'
-    // Generate Paystack payment link
+  if (selected.type === 'paystack') {
     try {
       const { createStorePaymentLink } = await import('@/lib/payments')
-      // Decrypt merchant key if available, otherwise use null (triggers Chatevo-Managed MoR)
       const secretKey = org.store_paystack_key_encrypted ? decrypt(org.store_paystack_key_encrypted) : null
-      
       paymentLink = await createStorePaymentLink(secretKey, {
         email: contact.email || `${phone.replace(/\D/g, '')}@whatsapp.customer`,
         amount: total,
@@ -1126,15 +1131,6 @@ async function handlePaymentSelected(
         body: '  Payment link generation failed. Please try again or choose a different payment method.\n\nType *cart* to go back to your cart.',
       })
     }
-  } else if (inputNorm === 'pay_mpesa') {
-    paymentMethod = 'mpesa'
-    paymentStatus = 'pending'
-  } else if (inputNorm === 'pay_bank') {
-    paymentMethod = 'bank'
-    paymentStatus = 'pending'
-  } else if (inputNorm === 'pay_cod') {
-    paymentMethod = 'cod'
-    paymentStatus = 'pending'
   }
 
   // Create order
@@ -1229,23 +1225,21 @@ async function handlePaymentSelected(
     })
   }
 
-  if (paymentMethod === 'mpesa') {
-    return await sendTextMessage(waConfig, {
-      to: phone,
-      body: `  *Order Placed!*\n\nOrder: *${orderNumber}*\nTotal: *${org.currency} ${total.toLocaleString()}*\n\n*M-Pesa Till:* ${org.store_mpesa_till}\n\nAfter payment, type *paid* to confirm. The store owner will verify your payment.`,
-    })
-  }
+  // Dynamic confirmation for manual payment methods
+  const detailLines = Object.entries(selected.details || {})
+    .filter(([key]) => key !== 'secret_key')
+    .map(([key, val]) => `*${key}:* ${val}`)
 
-  if (paymentMethod === 'bank') {
+  if (detailLines.length > 0) {
     return await sendTextMessage(waConfig, {
       to: phone,
-      body: `  *Order Placed!*\n\nOrder: *${orderNumber}*\nTotal: *${org.currency} ${total.toLocaleString()}*\n\n*Bank Details:*\n${org.store_bank_details}\n\nAfter payment, type *paid* to confirm. The store owner will verify your payment.`,
+      body: `  *Order Placed!*\n\nOrder: *${orderNumber}*\nTotal: *${org.currency} ${total.toLocaleString()}*\n\nPayment: *${selected.label}*\n${detailLines.join('\n')}\n\nAfter payment, type *paid* to confirm. The store owner will verify your payment.`,
     })
   }
 
   return await sendTextMessage(waConfig, {
     to: phone,
-    body: `  *Order Confirmed!*\n\nOrder: *${orderNumber}*\nTotal: *${org.currency} ${total.toLocaleString()}*\nPayment: Cash on Delivery\n\nWe'll contact you to arrange delivery. Thank you for shopping with *${org.name}*!   `,
+    body: `  *Order Confirmed!*\n\nOrder: *${orderNumber}*\nTotal: *${org.currency} ${total.toLocaleString()}*\nPayment: ${selected.label}\n\nWe'll contact you to arrange delivery. Thank you for shopping with *${org.name}*!   `,
   })
 }
 
