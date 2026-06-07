@@ -131,6 +131,9 @@ export async function sendInteractiveButtonMessage(
     (payload.interactive as Record<string, unknown>).header = { type: 'image', image: { link: imageUrl } }
   } else if (header) {
     (payload.interactive as Record<string, unknown>).header = { type: 'text', text: header }
+  } else {
+    // Meta v21.0+ requires header for button messages
+    (payload.interactive as Record<string, unknown>).header = { type: 'text', text: ' ' }
   }
   if (footer) {
     (payload.interactive as Record<string, unknown>).footer = { text: footer }
@@ -160,6 +163,8 @@ export async function sendInteractiveCTAUrlMessage(
   }
   if (header) {
     (payload.interactive as Record<string, unknown>).header = { type: 'text', text: header }
+  } else {
+    (payload.interactive as Record<string, unknown>).header = { type: 'text', text: ' ' }
   }
   if (footer) {
     (payload.interactive as Record<string, unknown>).footer = { text: footer }
@@ -183,6 +188,8 @@ export async function sendInteractiveListMessage(
   }
   if (header) {
     (payload.interactive as Record<string, unknown>).header = { type: 'text', text: header }
+  } else {
+    (payload.interactive as Record<string, unknown>).header = { type: 'text', text: ' ' }
   }
   if (footer) {
     (payload.interactive as Record<string, unknown>).footer = { text: footer }
@@ -227,6 +234,9 @@ export async function sendCarouselMessage(
         }
         if (card.imageUrl) {
           cardObj.header = { type: 'image', image: { link: card.imageUrl } }
+        } else {
+          // Carousel cards require a header; fall back to text if no image
+          cardObj.header = { type: 'text', text: card.title.slice(0, 60) }
         }
         return cardObj
       }),
