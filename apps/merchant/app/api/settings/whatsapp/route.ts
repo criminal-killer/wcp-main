@@ -19,6 +19,7 @@ export async function PUT(req: NextRequest) {
     meta_business_id?: string
     wa_catalog_id?: string
     wa_business_account_id?: string
+    wa_bot_number?: string
   }
   const update: Partial<typeof organizations.$inferInsert> = { updated_at: new Date().toISOString() }
 
@@ -27,6 +28,7 @@ export async function PUT(req: NextRequest) {
   if (body.meta_business_id !== undefined) update.meta_business_id = body.meta_business_id
   if (body.wa_catalog_id !== undefined) update.wa_catalog_id = body.wa_catalog_id
   if (body.wa_business_account_id !== undefined) update.wa_business_account_id = body.wa_business_account_id
+  if (body.wa_bot_number !== undefined) update.wa_bot_number = body.wa_bot_number
   // Reset webhook verification when credentials change
   if (body.phone_number_id || body.access_token) update.wa_webhook_verified = 0
 

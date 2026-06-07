@@ -22,7 +22,7 @@ export default async function StoreHome({ params, searchParams }: {
   const categories = await getStoreCategories(org.id)
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://chatevo.com'
-  const waNumber = org.wa_phone_number_id || ''
+  const waNumber = org.wa_bot_number || org.wa_phone_number_id || ''
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">

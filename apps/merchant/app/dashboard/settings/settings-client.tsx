@@ -12,6 +12,7 @@ interface Org {
   theme_color: string | null
   currency: string | null
   wa_phone_number_id: string | null
+  wa_bot_number: string | null
   wa_business_account_id: string | null
   meta_business_id: string | null
   wa_catalog_id: string | null
@@ -270,6 +271,7 @@ function SettingsContent({ org, autoReplies, waVerifyToken }: { org: Org, autoRe
   })
   const [waForm, setWaForm] = useState({
     phone_number_id: org.wa_phone_number_id || '',
+    wa_bot_number: org.wa_bot_number || '',
     access_token: '',
     wa_business_account_id: org.wa_business_account_id || '',
     meta_business_id: org.meta_business_id || '',
@@ -515,6 +517,29 @@ function SettingsContent({ org, autoReplies, waVerifyToken }: { org: Org, autoRe
               </div>
             </div>
 
+            {/* Bot Phone Number */}
+            <div className="bg-emerald-50 rounded-2xl border border-emerald-100 p-6">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center text-emerald-600 font-bold">📞</div>
+                <div>
+                  <h3 className="text-xs font-black uppercase tracking-widest text-emerald-700">Your Bot Number</h3>
+                  <p className="text-[10px] text-emerald-600/70 font-medium mt-0.5">The phone number customers text on WhatsApp</p>
+                </div>
+              </div>
+              {org.wa_bot_number ? (
+                <div className="flex items-center gap-3 bg-white rounded-xl px-4 py-3 border border-emerald-100">
+                  <span className="text-lg font-bold text-emerald-700 select-all">{org.wa_bot_number}</span>
+                  <button onClick={() => { navigator.clipboard.writeText(org.wa_bot_number || ''); }} className="text-[10px] font-black uppercase tracking-widest text-emerald-600 hover:text-emerald-800 ml-auto">Copy</button>
+                </div>
+              ) : (
+                <p className="text-xs text-emerald-600/50 font-medium italic">Not set yet — customers won't have a number to message.</p>
+              )}
+              <input value={waForm.wa_bot_number} onChange={e => setWaForm({ ...waForm, wa_bot_number: e.target.value })}
+                placeholder="e.g. 254712345678 (no +)"
+                className="w-full border border-emerald-200 rounded-xl px-4 py-3 text-sm font-bold font-mono focus:outline-none focus:ring-2 focus:ring-emerald-400 bg-white mt-3" />
+              <p className="text-[10px] text-emerald-600/50 font-bold mt-2">This number is used in the "Chat on WhatsApp" button on your storefront. Enter it without the + sign.</p>
+            </div>
+
             <div className="bg-card rounded-2xl border border-border p-6 space-y-4">
               <h3 className="text-xs font-black uppercase tracking-widest text-primary">Meta Commerce Catalog</h3>
               <p className="text-[10px] text-muted-foreground font-bold leading-relaxed">
@@ -653,6 +678,7 @@ function SettingsContent({ org, autoReplies, waVerifyToken }: { org: Org, autoRe
               meta_business_id: waForm.meta_business_id,
               wa_catalog_id: waForm.wa_catalog_id,
               wa_business_account_id: waForm.wa_business_account_id,
+              wa_bot_number: waForm.wa_bot_number,
             }) }); setSaving(false); setSaved(true); setTimeout(() => setSaved(false), 2000) }} disabled={saving}
               className="w-full bg-[#075E54] text-white py-4 rounded-xl font-bold hover:shadow-xl hover:shadow-[#075E54]/20 transition-all disabled:opacity-60">
               {saved ? '✓ Credentials Saved' : saving ? 'Saving...' : 'Save WhatsApp Credentials'}

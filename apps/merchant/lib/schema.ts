@@ -11,6 +11,7 @@ export const organizations = sqliteTable('organizations', {
 
   // WhatsApp Connection
   wa_phone_number_id: text('wa_phone_number_id'),
+  wa_bot_number: text('wa_bot_number'),
   wa_business_account_id: text('wa_business_account_id'),
   wa_access_token_encrypted: text('wa_access_token_encrypted'),
   wa_webhook_verified: integer('wa_webhook_verified').default(0),

@@ -13,6 +13,7 @@ export type StoreOrg = {
   delivery_fee: number | null
   free_delivery_above: number | null
   wa_phone_number_id: string | null
+  wa_bot_number: string | null
 }
 
 export type StoreProduct = {
@@ -45,6 +46,7 @@ export async function getStoreBySlug(slug: string): Promise<StoreOrg | null> {
       delivery_fee: true,
       free_delivery_above: true,
       wa_phone_number_id: true,
+      wa_bot_number: true,
     },
   })
   return org as StoreOrg | null

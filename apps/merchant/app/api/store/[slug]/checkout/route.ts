@@ -82,7 +82,7 @@ export async function POST(req: Request, { params }: { params: { slug: string } 
     }).where(eq(contacts.id, contact.id))
 
     // Build WhatsApp link
-    const waPhone = org.wa_phone_number_id?.replace(/\D/g, '') || ''
+    const waPhone = (org.wa_bot_number || org.wa_phone_number_id || '').replace(/\D/g, '')
     const message = encodeURIComponent(
       `Hi! I've placed an order *${orderNumber}* for *${org.currency || 'KES'} ${total.toLocaleString()}*. I'm ready to complete payment.`
     )

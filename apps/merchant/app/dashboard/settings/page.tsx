@@ -15,6 +15,7 @@ type OrgShape = {
   theme_color: string | null
   currency: string | null
   wa_phone_number_id: string | null
+  wa_bot_number: string | null
   wa_business_account_id: string | null
   meta_business_id: string | null
   wa_catalog_id: string | null
