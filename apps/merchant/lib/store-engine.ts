@@ -159,7 +159,6 @@ async function handleWithAI(
 
     const setContactName = createTool({
       id: 'setContactName',
-      name: 'Set customer name',
       description: 'Save the customer\'s name so it can be used in this and future conversations',
       inputSchema: z.object({
         name: z.string().describe('The full name the customer wants to be called'),
