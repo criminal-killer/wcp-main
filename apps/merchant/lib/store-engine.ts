@@ -1,7 +1,7 @@
 import { db } from '@/lib/db'
 import { organizations, stores, contacts, conversations, products, orders, messages, users } from '@/lib/schema'
 import { eq, and, sql, desc } from 'drizzle-orm'
-import { sendTextMessage, sendInteractiveButtonMessage, sendInteractiveListMessage, sendInteractiveCTAUrlMessage } from '@/lib/whatsapp'
+import { sendTextMessage, sendInteractiveButtonMessage, sendInteractiveListMessage, sendInteractiveCTAUrlMessage, sendProductListMessage } from '@/lib/whatsapp'
 import { sendPaymentPendingEmail } from '@/lib/email'
 import { getFlowState, setFlowState, deleteFlowState, getCart, setCart, clearCart, setCartAbandoned, clearCartAbandoned as clearCartAbandonedState } from '@/lib/redis'
 import { decrypt } from '@/lib/encryption'
@@ -61,6 +61,10 @@ const waConfig = (org: RunnerOrg, accessToken: string, store: RunnerStore | null
 function waTitle(s: string, max = 24): string {
   const chars = Array.from(s)
   return chars.length > max ? chars.slice(0, max - 1).join('') + '…' : s
+}
+
+function hasCatalog(org: RunnerOrg): boolean {
+  return !!(org.wa_catalog_id && org.meta_business_id)
 }
 
 /** Check if org has Meta Commerce Catalog configured */
@@ -492,7 +496,21 @@ async function handleCategorySelected(waConfig: { phoneNumberId: string; accessT
 
   await setFlowState(orgId, phone, { step: 'browsing_products', category, store_id: store?.id })
 
-  // List format (Meta interactive does not support carousel without template)
+  if (hasCatalog(org)) {
+    return await sendProductListMessage(waConfig, {
+      to: phone,
+      catalogId: org.wa_catalog_id!,
+      header: `   ${category || 'Products'}`,
+      body: `Browse ${category || 'our products'}`,
+      sections: [
+        {
+          title: category || 'Products',
+          product_items: productList.map(p => ({ product_retailer_id: p.id })),
+        },
+      ],
+    })
+  }
+
   const rows = productList.map(p => ({
     id: `prod_${p.id}`,
     title: waTitle(p.name),
@@ -543,7 +561,21 @@ async function handleSubCategorySelected(waConfig: { phoneNumberId: string; acce
 
   await setFlowState(orgId, phone, { step: 'browsing_products', category, sub_category: subCategory, store_id: store?.id })
 
-  // List format (Meta interactive does not support carousel without template)
+  if (hasCatalog(org)) {
+    return await sendProductListMessage(waConfig, {
+      to: phone,
+      catalogId: org.wa_catalog_id!,
+      header: `   ${subCategory || category}`,
+      body: `Browse ${subCategory || category}`,
+      sections: [
+        {
+          title: subCategory || category,
+          product_items: productList.map(p => ({ product_retailer_id: p.id })),
+        },
+      ],
+    })
+  }
+
   const rows = productList.map(p => ({
     id: `prod_${p.id}`,
     title: waTitle(p.name),
