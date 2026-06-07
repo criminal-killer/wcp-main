@@ -1,7 +1,7 @@
 import { db } from '@/lib/db'
 import { organizations, stores, contacts, conversations, products, orders, messages, users } from '@/lib/schema'
 import { eq, and, sql, desc } from 'drizzle-orm'
-import { sendTextMessage, sendInteractiveButtonMessage, sendInteractiveListMessage, sendInteractiveCTAUrlMessage, sendCarouselMessage, sendCatalogMessage } from '@/lib/whatsapp'
+import { sendTextMessage, sendInteractiveButtonMessage, sendInteractiveListMessage, sendInteractiveCTAUrlMessage } from '@/lib/whatsapp'
 import { sendPaymentPendingEmail } from '@/lib/email'
 import { getFlowState, setFlowState, deleteFlowState, getCart, setCart, clearCart, setCartAbandoned, clearCartAbandoned as clearCartAbandonedState } from '@/lib/redis'
 import { decrypt } from '@/lib/encryption'
@@ -492,34 +492,7 @@ async function handleCategorySelected(waConfig: { phoneNumberId: string; accessT
 
   await setFlowState(orgId, phone, { step: 'browsing_products', category, store_id: store?.id })
 
-  // Use carousel with images when products have valid images
-  const cards = productList
-    .filter(p => {
-      const images = JSON.parse(p.images || '[]') as string[]
-      return images[0] && images[0].startsWith('http')
-    })
-    .slice(0, 10)
-    .map(p => {
-      const images = JSON.parse(p.images || '[]') as string[]
-      const price = (p.price ?? 0).toLocaleString()
-      return {
-        id: `prod_${p.id}`,
-        title: waTitle(p.name),
-        description: `${org.currency} ${price}${p.description ? `\n${p.description.slice(0, 100)}` : ''}${p.inventory_count === 0 ? '\n*Out of Stock*' : ''}`,
-        imageUrl: images[0],
-        buttonTitle: 'View',
-      }
-    })
-  if (cards.length > 0) {
-    return await sendCarouselMessage(waConfig, {
-      to: phone,
-      body: `   ${category || 'Products'} — ${productList.length} items`,
-      cards,
-      footer: 'Tap a product to view details',
-    })
-  }
-
-  // Fallback: list message (no images available)
+  // List format (Meta interactive does not support carousel without template)
   const rows = productList.map(p => ({
     id: `prod_${p.id}`,
     title: waTitle(p.name),
@@ -570,34 +543,7 @@ async function handleSubCategorySelected(waConfig: { phoneNumberId: string; acce
 
   await setFlowState(orgId, phone, { step: 'browsing_products', category, sub_category: subCategory, store_id: store?.id })
 
-  // Use carousel with images when products have valid images
-  const cards = productList
-    .filter(p => {
-      const images = JSON.parse(p.images || '[]') as string[]
-      return images[0] && images[0].startsWith('http')
-    })
-    .slice(0, 10)
-    .map(p => {
-      const images = JSON.parse(p.images || '[]') as string[]
-      const price = (p.price ?? 0).toLocaleString()
-      return {
-        id: `prod_${p.id}`,
-        title: waTitle(p.name),
-        description: `${org.currency} ${price}${p.description ? `\n${p.description.slice(0, 100)}` : ''}${p.inventory_count === 0 ? '\n*Out of Stock*' : ''}`,
-        imageUrl: images[0],
-        buttonTitle: 'View',
-      }
-    })
-  if (cards.length > 0) {
-    return await sendCarouselMessage(waConfig, {
-      to: phone,
-      body: `   ${subCategory || category} — ${productList.length} items`,
-      cards,
-      footer: 'Tap a product to view details',
-    })
-  }
-
-  // Fallback: list message (no images available)
+  // List format (Meta interactive does not support carousel without template)
   const rows = productList.map(p => ({
     id: `prod_${p.id}`,
     title: waTitle(p.name),

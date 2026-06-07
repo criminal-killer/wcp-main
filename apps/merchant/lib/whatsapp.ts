@@ -193,56 +193,6 @@ export async function sendInteractiveListMessage(
   return sendWhatsAppRequest(credentials, payload)
 }
 
-export async function sendCarouselMessage(
-  credentials: WhatsAppCredentials,
-  { to, body, cards, footer }: {
-    to: string
-    body: string
-    cards: Array<{
-      id: string
-      title: string
-      description: string
-      imageUrl?: string
-      buttonTitle?: string
-    }>
-    footer?: string
-  }
-) {
-  const payload: Record<string, unknown> = {
-    to,
-    messaging_product: 'whatsapp',
-    recipient_type: 'individual',
-    type: 'interactive',
-    interactive: {
-      type: 'carousel',
-      body: { text: body },
-      action: {
-        cards: cards.map((card) => {
-          const cardObj: Record<string, unknown> = {
-            card_id: card.id,
-            title: card.title?.slice(0, 24),
-            description: card.description?.slice(0, 72),
-          }
-          if (card.imageUrl) {
-            cardObj.media = { type: 'image', link: card.imageUrl }
-          }
-          cardObj.buttons = [
-            {
-              type: 'reply',
-              reply: { id: card.id, title: (card.buttonTitle || 'View').slice(0, 20) },
-            },
-          ]
-          return cardObj
-        }),
-      },
-    },
-  }
-  if (footer) {
-    (payload.interactive as Record<string, unknown>).footer = { text: footer }
-  }
-  return sendWhatsAppRequest(credentials, payload)
-}
-
 export async function sendCatalogMessage(
   credentials: WhatsAppCredentials,
   { to, body, footer }: { to: string; body: string; footer?: string }
