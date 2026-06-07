@@ -2,12 +2,11 @@ export const dynamic = "force-dynamic"
 
 import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
-import Groq from 'groq-sdk'
 import { db } from '@/lib/db'
 import { users, organizations, products } from '@/lib/schema'
 import { eq, and } from 'drizzle-orm'
-import { decrypt } from '@/lib/encryption'
 import { logError, categorizeError } from '@/lib/error-logger'
+import { createStoreAgent } from '@/mastra/agents/store-agent'
 
 const GENERAL_SYSTEM_PROMPT = `You are Chatevo AI, a friendly and helpful assistant for merchants using the Chatevo WhatsApp Commerce platform.
 
@@ -30,6 +29,12 @@ const GENERAL_SYSTEM_PROMPT = `You are Chatevo AI, a friendly and helpful assist
 - 7-day free trial for new merchants
 - Referrals: earn 40% commission on first subscription payment, then 10% recurring for 6 months
 - Product types: Physical, Digital (instant delivery), Services (bookings)
+- You have tools available to look up products, orders, analytics, and customers in real time.
+- Use getProducts when the merchant asks about their products.
+- Use getOrders/getOrder when they ask about orders.
+- Use getAnalytics when they want store performance data.
+- Use getContacts when they ask about customer information.
+- Use updateSetting only when explicitly asked to change a setting.
 
 ### Tone:
 - Warm and friendly
@@ -53,68 +58,34 @@ export async function POST(req: Request) {
     const org = await db.query.organizations.findFirst({ where: eq(organizations.id, targetOrgId) })
     if (!org) return NextResponse.json({ reply: "Organization context not found." })
 
-    // Build Context
-    let context = `\nStore Context: Brand name is "${org.name}", currency is ${org.currency}. `
-    if (org.description) context += `Description: ${org.description}. `
-
-    // Inject Products if merchant wants sales-focused AI
+    // Inject products into context if sales persona
+    let enhancedPrompt = GENERAL_SYSTEM_PROMPT
     if (org.ai_persona === 'sales') {
       const activeProducts = await db.select().from(products).where(and(eq(products.org_id, org.id), eq(products.is_active, 1))).limit(20)
       if (activeProducts.length > 0) {
-        context += `\nAvailable Products:\n${activeProducts.map(p => `- ${p.name}: ${org.currency} ${p.price} (${p.category})`).join('\n')}`
+        enhancedPrompt += `\n\nNote: Your store has ${activeProducts.length} active products. Use getProducts tool to look them up when needed.`
       }
     }
 
-    const systemPrompt = GENERAL_SYSTEM_PROMPT + context + (org.ai_system_prompt || '')
+    const agent = createStoreAgent({
+      id: org.id,
+      name: org.name,
+      currency: org.currency || 'USD',
+      description: org.description,
+      ai_provider: org.ai_provider,
+      ai_model: org.ai_model,
+      ai_api_key_encrypted: org.ai_api_key_encrypted,
+      ai_endpoint_url: org.ai_endpoint_url,
+      ai_system_prompt: org.ai_system_prompt,
+      ai_persona: org.ai_persona,
+      plan: org.plan,
+    }, enhancedPrompt)
 
-    // AI Provider Gating
-    const isPremium = ['pro', 'elite', 'custom'].includes(org.plan || '')
-    const provider = (isPremium || org.ai_provider === 'Chatevo') ? (org.ai_provider || 'Chatevo') : 'Chatevo'
-    
-    let reply = ""
+    const response = await agent.generate(message)
 
-    if (provider === 'Chatevo') {
-      const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
-      const completion = await groq.chat.completions.create({
-        messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: message }],
-        model: 'llama-3.3-70b-versatile',
-      })
-      reply = completion.choices[0]?.message?.content || ""
-    } else {
-      // Custom AI Providers (OpenAI, Gemini, Claude, Custom)
-      const apiKey = org.ai_api_key_encrypted ? decrypt(org.ai_api_key_encrypted) : ""
-      if (!apiKey) throw new Error("Custom AI provider selected but no API key found.")
-
-      let endpoint = ""
-      let headers: Record<string, string> = { 'Content-Type': 'application/json' }
-      let payload: any = { model: org.ai_model || 'gpt-4o-mini', messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: message }] }
-
-      if (provider === 'google') {
-        endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${org.ai_model || 'gemini-1.5-flash'}:generateContent?key=${apiKey}`
-        payload = { contents: [{ role: 'user', parts: [{ text: systemPrompt + "\n\nUser: " + message }] }] }
-      } else if (provider === 'anthropic') {
-        endpoint = "https://api.anthropic.com/v1/messages"
-        headers['x-api-key'] = apiKey
-        headers['anthropic-version'] = '2023-06-01'
-        payload = { model: org.ai_model || 'claude-3-5-sonnet-20240620', max_tokens: 1024, system: systemPrompt, messages: [{ role: 'user', content: message }] }
-      } else {
-        // OpenAI or Custom
-        endpoint = provider === 'custom' ? (org.ai_endpoint_url || "") : "https://api.openai.com/v1/chat/completions"
-        headers['Authorization'] = `Bearer ${apiKey}`
-      }
-
-      if (!endpoint) throw new Error("API endpoint missing for custom provider.")
-
-      const response = await fetch(endpoint, { method: 'POST', headers, body: JSON.stringify(payload) })
-      const data = await response.json()
-      
-      // Basic response parsing for OpenAI-compatible and specialty formats
-      if (provider === 'google') reply = data.candidates?.[0]?.content?.parts?.[0]?.text
-      else if (provider === 'anthropic') reply = data.content?.[0]?.text
-      else reply = data.choices?.[0]?.message?.content
-    }
-
-    return NextResponse.json({ reply: reply || "I'm having trouble processing that right now." })
+    return NextResponse.json({
+      reply: response.text || "I'm having trouble processing that right now.",
+    })
 
   } catch (error: any) {
     console.error('AI Chat Error:', error)

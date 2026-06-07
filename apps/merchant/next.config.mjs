@@ -6,7 +6,7 @@ const nextConfig = {
     ],
   },
   // Turso/libsql must run in Node.js runtime, not Edge
-  serverExternalPackages: ['@libsql/client', 'drizzle-orm', 'libsql'],
+  serverExternalPackages: ['@libsql/client', 'drizzle-orm', 'libsql', '@mastra/*'],
   // Transpile local workspace packages
   transpilePackages: ['@chatevo/db', '@chatevo/shared'],
 }
