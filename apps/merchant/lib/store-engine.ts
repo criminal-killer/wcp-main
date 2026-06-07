@@ -140,15 +140,7 @@ export async function processIncomingMessage(ctx: EngineContext) {
     }
   }
 
-  // === HI / HELLO — fresh start ===
-  if (['hi', 'hello', 'hey', 'start'].includes(inputNorm)) {
-    return await sendTextMessage(waConfigObj, {
-      to: phone,
-      body: `Hey there! Welcome to *${org.name}*   \n\nBrowse our catalog: ${storeUrl}\n\nOr just tell me what you're looking for — I'm here to help!`,
-    })
-  }
-
-  // === AI HANDLES EVERYTHING ELSE naturally ===
+  // === AI HANDLES EVERYTHING naturally (hi, hello, questions, orders, etc.) ===
   return await handleWithAI(waConfigObj, org, phone, inputRaw, contact, storeUrl)
 }
 
@@ -159,23 +151,45 @@ async function handleWithAI(
   try {
     const { createGroq } = await import('@ai-sdk/groq')
     const { Agent } = await import('@mastra/core/agent')
+    const { createTool } = await import('@mastra/core/tools')
     const { createStoreTools } = await import('@/mastra/tools/store-tools')
+    const { z } = await import('zod')
 
     const tools = createStoreTools(org.id)
+
+    const setContactName = createTool({
+      id: 'setContactName',
+      name: 'Set customer name',
+      description: 'Save the customer\'s name so it can be used in this and future conversations',
+      inputSchema: z.object({
+        name: z.string().describe('The full name the customer wants to be called'),
+      }),
+      execute: async ({ context: { name } }) => {
+        await db.update(contacts).set({ name, updated_at: new Date().toISOString() })
+          .where(eq(contacts.id, contact.id))
+        return { saved: true, name }
+      },
+    })
+
+    const hasName = !!contact.name
 
     const agent = new Agent({
       id: 'chatevo-ai',
       name: 'Chatevo AI',
       instructions: `You are Chatevo AI, the friendly WhatsApp assistant for "${org.name}".
 
-CUSTOMER: ${contact.name || phone}
+CUSTOMER PHONE: ${phone}
+CUSTOMER NAME: ${contact.name || '(not set yet)'}
 CURRENCY: ${org.currency || 'KES'}
 STORE LINK: ${storeUrl}
+
+${!hasName ? `IMPORTANT FIRST STEP: This customer has no name saved yet. When they say hello or start chatting, greet them warmly and ask for their name so you can address them properly. Tell them their name will be used in all future conversations with the store. Once they provide it, use the setContactName tool to save it.` : ''}
 
 GUIDELINES:
 - Talk naturally like a real human. No scripts, no robotic greetings.
 - Understand ANY language and reply in the same language the customer uses.
 - Be concise (1-3 sentences usually), warm, and helpful.
+${hasName ? `- Address the customer by their name (${contact.name}) naturally.` : ''}
 - If the customer asks about products or what you sell, use the getProducts tool.
 - If they ask about their order status, use the getOrder tool.
 - When they want to buy something, send them the store link to browse and order.
@@ -186,6 +200,7 @@ GUIDELINES:
       tools: {
         getProducts: tools.getProducts,
         getOrder: tools.getOrder,
+        setContactName,
       },
     })
 
