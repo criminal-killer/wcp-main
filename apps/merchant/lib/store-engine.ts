@@ -59,9 +59,8 @@ const waConfig = (org: RunnerOrg, accessToken: string, store: RunnerStore | null
 
 /** Truncate a string to WhatsApp's 24-char row title limit */
 function waTitle(s: string, max = 24): string {
-  // Array.from handles multi-byte chars (emojis, accented) correctly
   const chars = Array.from(s)
-  return chars.length > max ? chars.slice(0, max).join('') + '…' : s
+  return chars.length > max ? chars.slice(0, max - 1).join('') + '…' : s
 }
 
 /** Check if org has Meta Commerce Catalog configured */
