@@ -132,9 +132,10 @@ export async function POST(req: NextRequest) {
     return response
   } catch (error: any) {
     console.error('Onboarding error:', error)
-    if (error?.status === 401 || error?.message?.includes('Unauthorized')) {
+    const msg = error?.message || String(error)
+    if (error?.status === 401 || msg.includes('Unauthorized')) {
       return NextResponse.json({ error: 'Database connection failed: Unauthorized. Please check your Turso credentials.' }, { status: 500 })
     }
-    return NextResponse.json({ error: 'Failed to create store. Please try again later.' }, { status: 500 })
+    return NextResponse.json({ error: msg.length > 300 ? msg.slice(0, 300) : msg }, { status: 500 })
   }
 }
