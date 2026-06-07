@@ -115,6 +115,7 @@ export async function sendInteractiveButtonMessage(
   const payload: Record<string, unknown> = {
     to,
     messaging_product: 'whatsapp',
+    recipient_type: 'individual',
     type: 'interactive',
     interactive: {
       type: 'button',
@@ -145,6 +146,7 @@ export async function sendInteractiveCTAUrlMessage(
   const payload: Record<string, unknown> = {
     to,
     messaging_product: 'whatsapp',
+    recipient_type: 'individual',
     type: 'interactive',
     interactive: {
       type: 'cta_url',
@@ -174,6 +176,7 @@ export async function sendInteractiveListMessage(
   const payload: Record<string, unknown> = {
     to,
     messaging_product: 'whatsapp',
+    recipient_type: 'individual',
     type: 'interactive',
     interactive: {
       type: 'list',
@@ -192,7 +195,7 @@ export async function sendInteractiveListMessage(
 
 export async function sendCarouselMessage(
   credentials: WhatsAppCredentials,
-  { to, body, cards, header, footer }: {
+  { to, body, cards, footer }: {
     to: string
     body: string
     cards: Array<{
@@ -202,38 +205,37 @@ export async function sendCarouselMessage(
       imageUrl?: string
       buttonTitle?: string
     }>
-    header?: string
     footer?: string
   }
 ) {
   const payload: Record<string, unknown> = {
     to,
     messaging_product: 'whatsapp',
+    recipient_type: 'individual',
     type: 'interactive',
     interactive: {
       type: 'carousel',
       body: { text: body },
-      cards: cards.map((card) => {
-        const cardObj: Record<string, unknown> = {
-          body: { text: card.description },
-          action: {
-            buttons: [
-              {
-                type: 'reply',
-                reply: { id: card.id, title: (card.buttonTitle || 'View').slice(0, 20) },
-              },
-            ],
-          },
-        }
-        if (card.imageUrl) {
-          cardObj.header = { type: 'image', image: { link: card.imageUrl } }
-        }
-        return cardObj
-      }),
+      action: {
+        cards: cards.map((card) => {
+          const cardObj: Record<string, unknown> = {
+            card_id: card.id,
+            title: card.title?.slice(0, 24),
+            description: card.description?.slice(0, 72),
+          }
+          if (card.imageUrl) {
+            cardObj.media = { type: 'image', link: card.imageUrl }
+          }
+          cardObj.buttons = [
+            {
+              type: 'reply',
+              reply: { id: card.id, title: (card.buttonTitle || 'View').slice(0, 20) },
+            },
+          ]
+          return cardObj
+        }),
+      },
     },
-  }
-  if (header) {
-    (payload.interactive as Record<string, unknown>).header = { type: 'text', text: header }
   }
   if (footer) {
     (payload.interactive as Record<string, unknown>).footer = { text: footer }
@@ -248,6 +250,7 @@ export async function sendCatalogMessage(
   const payload: Record<string, unknown> = {
     to,
     messaging_product: 'whatsapp',
+    recipient_type: 'individual',
     type: 'interactive',
     interactive: {
       type: 'catalog',
@@ -268,6 +271,7 @@ export async function sendSingleProductMessage(
   const payload: Record<string, unknown> = {
     to,
     messaging_product: 'whatsapp',
+    recipient_type: 'individual',
     type: 'interactive',
     interactive: {
       type: 'product',
