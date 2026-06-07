@@ -65,10 +65,6 @@ function waTitle(s: string, max = 24): string {
 }
 
 /** Check if org has Meta Commerce Catalog configured */
-function hasCatalog(org: RunnerOrg): boolean {
-  return !!(org.wa_catalog_id && org.meta_business_id)
-}
-
 function parseInput(msg: InboundMessage): string {
   return (
     msg.text?.body?.trim() ||
@@ -497,36 +493,34 @@ async function handleCategorySelected(waConfig: { phoneNumberId: string; accessT
 
   await setFlowState(orgId, phone, { step: 'browsing_products', category, store_id: store?.id })
 
-  // Use carousel with images when catalog is configured
-  if (hasCatalog(org)) {
-    const cards = productList
-      .filter(p => {
-        const images = JSON.parse(p.images || '[]') as string[]
-        return images[0] && images[0].startsWith('http')
-      })
-      .slice(0, 10)
-      .map(p => {
-        const images = JSON.parse(p.images || '[]') as string[]
-        const price = (p.price ?? 0).toLocaleString()
-        return {
-          id: `prod_${p.id}`,
-          title: waTitle(p.name),
-          description: `${org.currency} ${price}${p.description ? `\n${p.description.slice(0, 100)}` : ''}${p.inventory_count === 0 ? '\n*Out of Stock*' : ''}`,
-          imageUrl: images[0],
-          buttonTitle: 'View',
-        }
-      })
-    if (cards.length > 0) {
-      return await sendCarouselMessage(waConfig, {
-        to: phone,
-        body: `   ${category || 'Products'} — ${productList.length} items`,
-        cards,
-        footer: 'Tap a product to view details',
-      })
-    }
+  // Use carousel with images when products have valid images
+  const cards = productList
+    .filter(p => {
+      const images = JSON.parse(p.images || '[]') as string[]
+      return images[0] && images[0].startsWith('http')
+    })
+    .slice(0, 10)
+    .map(p => {
+      const images = JSON.parse(p.images || '[]') as string[]
+      const price = (p.price ?? 0).toLocaleString()
+      return {
+        id: `prod_${p.id}`,
+        title: waTitle(p.name),
+        description: `${org.currency} ${price}${p.description ? `\n${p.description.slice(0, 100)}` : ''}${p.inventory_count === 0 ? '\n*Out of Stock*' : ''}`,
+        imageUrl: images[0],
+        buttonTitle: 'View',
+      }
+    })
+  if (cards.length > 0) {
+    return await sendCarouselMessage(waConfig, {
+      to: phone,
+      body: `   ${category || 'Products'} — ${productList.length} items`,
+      cards,
+      footer: 'Tap a product to view details',
+    })
   }
 
-  // Fallback: list message (no images / empty carousel)
+  // Fallback: list message (no images available)
   const rows = productList.map(p => ({
     id: `prod_${p.id}`,
     title: waTitle(p.name),
@@ -577,36 +571,34 @@ async function handleSubCategorySelected(waConfig: { phoneNumberId: string; acce
 
   await setFlowState(orgId, phone, { step: 'browsing_products', category, sub_category: subCategory, store_id: store?.id })
 
-  // Use carousel with images when catalog is configured
-  if (hasCatalog(org)) {
-    const cards = productList
-      .filter(p => {
-        const images = JSON.parse(p.images || '[]') as string[]
-        return images[0] && images[0].startsWith('http')
-      })
-      .slice(0, 10)
-      .map(p => {
-        const images = JSON.parse(p.images || '[]') as string[]
-        const price = (p.price ?? 0).toLocaleString()
-        return {
-          id: `prod_${p.id}`,
-          title: waTitle(p.name),
-          description: `${org.currency} ${price}${p.description ? `\n${p.description.slice(0, 100)}` : ''}${p.inventory_count === 0 ? '\n*Out of Stock*' : ''}`,
-          imageUrl: images[0],
-          buttonTitle: 'View',
-        }
-      })
-    if (cards.length > 0) {
-      return await sendCarouselMessage(waConfig, {
-        to: phone,
-        body: `   ${subCategory || category} — ${productList.length} items`,
-        cards,
-        footer: 'Tap a product to view details',
-      })
-    }
+  // Use carousel with images when products have valid images
+  const cards = productList
+    .filter(p => {
+      const images = JSON.parse(p.images || '[]') as string[]
+      return images[0] && images[0].startsWith('http')
+    })
+    .slice(0, 10)
+    .map(p => {
+      const images = JSON.parse(p.images || '[]') as string[]
+      const price = (p.price ?? 0).toLocaleString()
+      return {
+        id: `prod_${p.id}`,
+        title: waTitle(p.name),
+        description: `${org.currency} ${price}${p.description ? `\n${p.description.slice(0, 100)}` : ''}${p.inventory_count === 0 ? '\n*Out of Stock*' : ''}`,
+        imageUrl: images[0],
+        buttonTitle: 'View',
+      }
+    })
+  if (cards.length > 0) {
+    return await sendCarouselMessage(waConfig, {
+      to: phone,
+      body: `   ${subCategory || category} — ${productList.length} items`,
+      cards,
+      footer: 'Tap a product to view details',
+    })
   }
 
-  // Fallback: list message (no images)
+  // Fallback: list message (no images available)
   const rows = productList.map(p => ({
     id: `prod_${p.id}`,
     title: waTitle(p.name),
