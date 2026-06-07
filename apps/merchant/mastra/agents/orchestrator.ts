@@ -46,15 +46,32 @@ function buildProductsResponse(results: any[], storeUrl: string, currency: strin
     return `I checked but I couldn't find anything matching what you're looking for. You can browse our full catalog here: ${storeUrl}`
   }
 
-  const items = results.slice(0, 5).map(p => {
-    const price = formatCurrency(p.price ?? 0, currency)
-    const stock = p.inventory_count != null ? ` (${p.inventory_count} left)` : ''
-    return `${p.name} - ${price}${stock}`
-  }).join('\n')
+  const byCategory = new Map<string, any[]>()
+  for (const p of results) {
+    const cat = p.category || 'Other'
+    if (!byCategory.has(cat)) byCategory.set(cat, [])
+    byCategory.get(cat)!.push(p)
+  }
+
+  const lines: string[] = []
+  const cats = Array.from(byCategory.keys())
+  for (const cat of cats) {
+    const items = byCategory.get(cat)!
+    lines.push(`*${cat}:*`)
+    for (const p of items.slice(0, 5)) {
+      const price = formatCurrency(p.price ?? 0, currency)
+      const stock = p.inventory_count != null ? ` (${p.inventory_count} left)` : ''
+      lines.push(`• ${p.name} - ${price}${stock}`)
+    }
+    lines.push('')
+  }
 
   const total = results.length
-  const count = total > 5 ? `Showing ${5} of ${total}` : `Found ${total}`
-  return `${count}:\n\n${items}\n\nCheck them all out here: ${storeUrl}`
+  const count = total > 10 ? `Showing ${Math.min(total, 10)} of ${total} products` : `Found ${total} products`
+  lines.push(`${count}`)
+  lines.push(`Browse the full catalog: ${storeUrl}`)
+
+  return lines.join('\n')
 }
 
 function buildOrderResponse(order: any, currency: string): string | null {
