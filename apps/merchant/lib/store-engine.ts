@@ -224,7 +224,7 @@ async function handleWithAI(
     console.error('[ai-handler]', err)
     return await sendTextMessage(waConfig, {
       to: phone,
-      body: `Sorry, I didn\'t catch that. Browse our catalog here: ${storeUrl}\n\nOr type *Hi* to start again.`,
+      body: `For now you can browse our store and choose what you need: ${storeUrl}\n\nOr type *Hi* to start again.`,
     })
   }
 }
