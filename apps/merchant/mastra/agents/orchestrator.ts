@@ -156,6 +156,7 @@ function reviewResponse(text: string): string {
 async function generateText(prompt: string, model: any, fallbackUrl: string): Promise<string> {
   const agent = new Agent({
     id: 'text-gen',
+    name: 'Text Generator',
     instructions: `You are a friendly WhatsApp store assistant.
 Reply in the same language the customer wrote in.
 Be warm, concise (2-4 sentences), and natural.
