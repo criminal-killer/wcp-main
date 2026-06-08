@@ -1,6 +1,14 @@
 import { Agent } from '@mastra/core/agent'
 
-export function createSalesAgent(orgName: string, currency: string, storeUrl: string, model: any, tools: Record<string, any>) {
+function buildHistoryBlock(history?: Array<{ role: string; text: string }>): string {
+  if (!history || history.length === 0) return ''
+  const lines = history.slice(-6).map(h =>
+    h.role === 'user' ? `Customer: ${h.text}` : `You: ${h.text}`
+  )
+  return `\n\nRecent conversation:\n${lines.join('\n')}\n\n(Use this to remember what was discussed.)`
+}
+
+export function createSalesAgent(orgName: string, currency: string, storeUrl: string, model: any, tools: Record<string, any>, history?: Array<{ role: string; text: string }>) {
   return new Agent({
     id: 'sales',
     name: 'Sales Agent',
@@ -29,7 +37,7 @@ Browse the full catalog: [store link]
 
 After getting tool results, mention the best options and recommend. Use line breaks and bullet points for readability.
 
-Always reply in the same language the customer writes in. Be warm and natural — like a real shopkeeper waiting to help, not a sales pitch.`,
+Always reply in the same language the customer writes in. Be warm and natural — like a real shopkeeper waiting to help, not a sales pitch.${buildHistoryBlock(history)}`,
     model,
     tools,
   })

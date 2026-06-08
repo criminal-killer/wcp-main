@@ -2,7 +2,7 @@ import { db } from '@/lib/db'
 import { organizations, stores, contacts, conversations, products, orders, users } from '@/lib/schema'
 import { eq, and, desc } from 'drizzle-orm'
 import { sendTextMessage } from '@/lib/whatsapp'
-import { clearCart, setCartAbandoned, clearCartAbandoned as clearCartAbandonedState } from '@/lib/redis'
+import { clearCart, setCartAbandoned, clearCartAbandoned as clearCartAbandonedState, getContinueOrder, setContinueOrder, clearContinueOrder, getContext, pushContext, clearContext } from '@/lib/redis'
 
 type RunnerOrg = typeof organizations.$inferSelect
 type RunnerStore = typeof stores.$inferSelect
@@ -68,6 +68,49 @@ export async function processIncomingMessage(ctx: EngineContext) {
       to: phone,
       body: `   *${org.name}*\n\nBrowse our catalog: ${storeUrl}\n\nNeed help? Just ask!`,
     })
+  }
+
+  // === PENDING ORDER CONTINUATION ===
+  const continueOrderId = await getContinueOrder(orgId, phone)
+  if (continueOrderId) {
+    await clearContinueOrder(orgId, phone)
+    const isYes = /^(yes|yeah|yep|sure|ok|okay|continue|proceed|ndio|ndiyo|ndioyo|eh|sawa|sawa sawa|poa)\b/i.test(inputNorm)
+    if (isYes) {
+      const pendingOrder = await db.query.orders.findFirst({
+        where: and(eq(orders.id, continueOrderId), eq(orders.org_id, orgId)),
+      })
+      if (pendingOrder) {
+        const total = `${org.currency || 'KES'} ${Number(pendingOrder.total).toLocaleString()}`
+        return await sendTextMessage(waConfigObj, {
+          to: phone,
+          body: `Great! Your order *${pendingOrder.order_number}* (${total}) is ready.\n\nType *paid* when you've made the payment and we'll verify it for you.\n\nOr visit the store to modify it: ${storeUrl}`,
+        })
+      }
+    }
+    await clearCart(orgId, phone)
+    return await sendTextMessage(waConfigObj, {
+      to: phone,
+      body: 'No problem! Starting fresh. How can I help you today?',
+    })
+  }
+
+  // === GREETING WITH PENDING ORDER CHECK ===
+  const isGreeting = /^(hi|hello|hey|start|morning|evening|yo|howdy|sasa|jambo|hujambo|hola|ola|bonjour|hallo|hei)\b/i.test(inputNorm)
+  if (isGreeting) {
+    const pendingOrders = await db.select({ id: orders.id, order_number: orders.order_number, total: orders.total })
+      .from(orders)
+      .where(and(eq(orders.org_id, orgId), eq(orders.contact_id, contact.id), eq(orders.payment_status, 'pending')))
+      .orderBy(desc(orders.created_at))
+      .limit(1)
+
+    if (pendingOrders.length > 0) {
+      await setContinueOrder(orgId, phone, pendingOrders[0].id)
+      const total = `${org.currency || 'KES'} ${Number(pendingOrders[0].total).toLocaleString()}`
+      return await sendTextMessage(waConfigObj, {
+        to: phone,
+        body: `Welcome back! I see you have a pending order (*${pendingOrders[0].order_number}*) for ${total}.\n\nWould you like to continue with it?`,
+      })
+    }
   }
 
   // === PAYMENT CONFIRMATION (always check) ===
@@ -149,13 +192,17 @@ async function handleWithAI(
   org: RunnerOrg, phone: string, input: string, contact: RunnerContact, storeUrl: string,
 ) {
   try {
-    await sendTextMessage(waConfig, {
-      to: phone,
-      body: 'Let me check that for you...',
-    })
+    const { routeToAgent, classifyIntent } = await import('@/mastra/agents/orchestrator')
 
-    const { routeToAgent } = await import('@/mastra/agents/orchestrator')
+    const intent = classifyIntent(input, { id: contact.id, name: contact.name, phone: contact.phone })
+    if (intent !== 'greeter') {
+      await sendTextMessage(waConfig, {
+        to: phone,
+        body: 'Let me check that for you...',
+      })
+    }
 
+    const history = await getContext(org.id, phone)
     const reply = await routeToAgent(input, {
       id: contact.id,
       name: contact.name,
@@ -165,7 +212,9 @@ async function handleWithAI(
       name: org.name,
       currency: org.currency || 'KES',
       slug: org.slug,
-    }, storeUrl)
+    }, storeUrl, history || undefined)
+
+    await pushContext(org.id, phone, input, reply || '')
 
     return await sendTextMessage(waConfig, {
       to: phone,

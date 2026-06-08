@@ -1,6 +1,14 @@
 import { Agent } from '@mastra/core/agent'
 
-export function createSupportAgent(orgName: string, currency: string, storeUrl: string, model: any, tools: Record<string, any>) {
+function buildHistoryBlock(history?: Array<{ role: string; text: string }>): string {
+  if (!history || history.length === 0) return ''
+  const lines = history.slice(-6).map(h =>
+    h.role === 'user' ? `Customer: ${h.text}` : `You: ${h.text}`
+  )
+  return `\n\nRecent conversation:\n${lines.join('\n')}\n\n(Use this to remember what was discussed.)`
+}
+
+export function createSupportAgent(orgName: string, currency: string, storeUrl: string, model: any, tools: Record<string, any>, history?: Array<{ role: string; text: string }>) {
   return new Agent({
     id: 'support',
     name: 'Support Agent',
@@ -19,7 +27,7 @@ For delivery questions: look up the order and share the status.
 
 If they want to cancel or change something, let them know they can reply with "cancel" or "stop".
 
-Always reply in the same language the customer writes in. Be warm, reassuring, and helpful.`,
+Always reply in the same language the customer writes in. Be warm, reassuring, and helpful.${buildHistoryBlock(history)}`,
     model,
     tools,
   })

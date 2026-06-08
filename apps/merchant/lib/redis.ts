@@ -121,3 +121,50 @@ export async function clearCartAbandoned(orgId: string, phone: string) {
   }, null)
 }
 
+// Conversation memory (last 5 interactions)
+export async function getContext(orgId: string, phone: string) {
+  return await exec(async (r) => {
+    const key = `Chatevo:ctx:${orgId}:${phone}`
+    return await r.get<Array<{ role: string; text: string }>>(key)
+  }, null)
+}
+
+export async function pushContext(orgId: string, phone: string, userMsg: string, botReply: string) {
+  await exec(async (r) => {
+    const key = `Chatevo:ctx:${orgId}:${phone}`
+    const existing = await r.get<Array<{ role: string; text: string }>>(key) || []
+    existing.push({ role: 'user', text: userMsg }, { role: 'bot', text: botReply })
+    const trimmed = existing.slice(-10)
+    await r.setex(key, 604800, JSON.stringify(trimmed))
+  }, null)
+}
+
+export async function clearContext(orgId: string, phone: string) {
+  await exec(async (r) => {
+    const key = `Chatevo:ctx:${orgId}:${phone}`
+    await r.del(key)
+  }, null)
+}
+
+// Pending order continuation
+export async function getContinueOrder(orgId: string, phone: string) {
+  return await exec(async (r) => {
+    const key = `Chatevo:continue:${orgId}:${phone}`
+    return await r.get<string>(key)
+  }, null)
+}
+
+export async function setContinueOrder(orgId: string, phone: string, orderId: string) {
+  const key = `Chatevo:continue:${orgId}:${phone}`
+  await exec(async (r) => {
+    await r.setex(key, 1800, orderId)
+  }, null)
+}
+
+export async function clearContinueOrder(orgId: string, phone: string) {
+  const key = `Chatevo:continue:${orgId}:${phone}`
+  await exec(async (r) => {
+    await r.del(key)
+  }, null)
+}
+

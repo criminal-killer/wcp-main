@@ -160,11 +160,30 @@ async function executeFunctionCall(fnName: string, args: any, orgId: string, cur
   }
 }
 
+// Final safety net: strip any leftover function/XML artifacts from the response
+// Also handles edge cases like partial tags or malformed function calls
+function cleanResponse(raw: string): string {
+  let text = raw.trim()
+
+  // Strip <function...>...</function> blocks (any format)
+  text = text.replace(/<function[\s\S]*?<\/function>/g, '')
+  // Strip lone <function or </function> leftovers
+  text = text.replace(/<function[^>]*>/g, '')
+  text = text.replace(/<\/function>/g, '')
+  // Strip any { and } pairs that look like JSON artifacts at the end
+  text = text.replace(/\{["\w,\s:]+\}\s*$/, '')
+  // Remove leading/trailing whitespace and empty lines
+  text = text.replace(/\n{3,}/g, '\n\n').trim()
+
+  return text
+}
+
 export async function routeToAgent(
   input: string,
   contact: ContactInfo,
   org: OrgConfig,
   storeUrl: string,
+  history?: Array<{ role: string; text: string }>,
 ) {
   const model = defaultModel
   const storeTools = createStoreTools(org.id)
@@ -180,11 +199,11 @@ export async function routeToAgent(
       console.log(`[orchestrator] routing to Greeter agent for ${contact.phone}`)
       break
     case 'support':
-      agent = createSupportAgent(org.name, org.currency, storeUrl, model, storeTools)
+      agent = createSupportAgent(org.name, org.currency, storeUrl, model, storeTools, history)
       console.log(`[orchestrator] routing to Support agent for ${contact.phone}`)
       break
     default:
-      agent = createSalesAgent(org.name, org.currency, storeUrl, model, storeTools)
+      agent = createSalesAgent(org.name, org.currency, storeUrl, model, storeTools, history)
       console.log(`[orchestrator] routing to Sales agent for ${contact.phone}`)
       break
   }
@@ -192,28 +211,26 @@ export async function routeToAgent(
   const response = await agent.generateLegacy(input, { maxSteps: 3, temperature: 0.7 })
   let text = (response.text || '').trim()
 
-  // Check for <function> XML tags (Llama sometimes uses these instead of proper tool calls)
-  const fnRegex = /<function=(\w+)>([\s\S]*?)<\/function>/g
-  let match
-  let hasFunctionCalls = false
-
-  while ((match = fnRegex.exec(text)) !== null) {
-    hasFunctionCalls = true
-    const [, fnName, fnArgsStr] = match
+  // Handle <function> XML tags (Llama outputs these instead of proper tool calls)
+  // The model outputs: <function=getProducts{...args...}</function> (no > before args)
+  // Standard XML: <function=getProducts>json</function>
+  const fnTag = /<function=(\w+)(?:\{([\s\S]*?)\}|>([\s\S]*?))<\/function>/
+  const fnMatch = text.match(fnTag)
+  if (fnMatch) {
+    const fnName = fnMatch[1]
+    const fnArgsStr = fnMatch[2] || fnMatch[3]
     try {
       const args = JSON.parse(fnArgsStr)
       const toolResult = await executeFunctionCall(fnName, args, org.id, org.currency || 'KES', storeUrl)
       if (toolResult) return toolResult
-    } catch { /* parsed failed, skip */ }
+    } catch { /* parse or exec failed - fall through to cleanup */ }
   }
 
-  // If we extracted function calls, strip all XML and text before them
-  if (hasFunctionCalls) {
-    text = text.split('</function>').pop() || text
-    text = text.replace(/<function[^>]*>[\s\S]*?<\/function>/g, '').trim()
-  }
+  // Final cleanup: strip any leftover artifacts before returning to the user
+  text = cleanResponse(text)
 
   return text || 'Sorry, I didn\'t catch that. Type *Hi* to start again.'
 }
 
+export { classifyIntent }
 export type { OrgConfig, ContactInfo }
